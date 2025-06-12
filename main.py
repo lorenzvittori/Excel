@@ -52,12 +52,47 @@ df['Data'] = df['Data'].dt.strftime('%d/%m/%Y')
 
 
 # ------------------------------ RIGHE STANDARD ------------------------------
-nuove_righe = pd.DataFrame({
-    'Data': ['04/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '05/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '11/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '20/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale],
-    'Categoria': ['Commissione CC', 'Rata PDR', 'Abbonamento Telefono', 'Spotify'],
-    'Importo': [1.6, 50, 7.99, 3]
-})
+# ------------------------------ FUNZIONI ------------------------------
+def genera_data_formattata(giorno: str) -> str:
+    return f"{giorno.zfill(2)}/{DizMesi[MeseAttuale]}/{AnnoAttuale}"
 
+
+# ------------------------------ RIGHE STANDARD ------------------------------
+nuove_righe_array = [
+    {
+        'GiornoData': '04',
+        'Categoria': 'Commissione CC',
+        'Importo': 1.6
+    },
+    {
+        'GiornoData': '05',
+        'Categoria': 'Rata PDR',
+        'Importo': 50
+    },
+    {
+        'GiornoData': '11',
+        'Categoria': 'Abbonamento Telefono',
+        'Importo': 7.99
+    },
+    {
+        'GiornoData': '20',
+        'Categoria': 'Spotify',
+        'Importo': 3
+    },
+]
+
+# Genera il DataFrame da nuove_righe_array
+nuove_righe = pd.DataFrame([
+    {
+        'Data': genera_data_formattata(riga['GiornoData']),
+        'Categoria': riga['Categoria'],
+        'Importo': riga['Importo'],
+        'Commento': ''
+    }
+    for riga in nuove_righe_array
+])
+
+# Unione al DataFrame principale
 df = pd.concat([df, nuove_righe], ignore_index=True)
 
 
