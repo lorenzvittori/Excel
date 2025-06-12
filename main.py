@@ -1,6 +1,6 @@
 import pandas as pd
 
-MeseAttuale = 'Aprile'
+MeseAttuale = 'Maggio'
 AnnoAttuale = '2025'
 
 AnnoAttualeShort = AnnoAttuale[2:]
@@ -53,7 +53,7 @@ df['Data'] = df['Data'].dt.strftime('%d/%m/%Y')
 
 # ------------------------------ RIGHE STANDARD ------------------------------
 nuove_righe = pd.DataFrame({
-    'Data': ['04/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '05/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '11/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '20/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '23/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale],
+    'Data': ['04/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '05/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '11/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale, '20/'+DizMesi[MeseAttuale]+'/'+AnnoAttuale],
     'Categoria': ['Commissione CC', 'Rata PDR', 'Abbonamento Telefono', 'Spotify'],
     'Importo': [1.6, 50, 7.99, 3]
 })
