@@ -2,7 +2,7 @@ import pandas as pd
 
 # ------------------------------ CONFIGURAZIONE ------------------------------
 
-MeseAttuale = 'Maggio'
+MeseAttuale = 'Giugno'
 AnnoAttuale = '2025'
 
 
@@ -33,16 +33,20 @@ default_output = fr'{folder_path}\{AnnoAttuale}\{MeseAttuale} {AnnoAttualeShort}
 
 
 # Opzionali input/output personalizzati
-customize_input = r''
-customize_output = r''
+customize_input = r'Dati\2025_07_02_11_21_49_685694.xlsx'
+customize_output = fr'Dati\p_{MeseAttuale}{AnnoAttuale}.xlsx'
 
 input_file = default_input if customize_input == '' else customize_input
 output_file = default_output if customize_output == '' else customize_output
 
 # ------------------------------ FUNZIONI UTILI ------------------------------
 
-def DAY_TO_DATA(giorno: str) -> str:
-    return f"{giorno.zfill(2)}/{DizMesi[MeseAttuale]}/{AnnoAttuale}"
+def DAY_TO_DATA(giorno) -> str:
+    try:
+        giorno_str = str(int(giorno)).zfill(2)
+        return f"{giorno_str}/{DizMesi[MeseAttuale]}/{AnnoAttuale}"
+    except (ValueError, TypeError):
+        return 'INVALID_DATE'
 
 # ------------------------------ LETTURA FILE PRINCIPALE ------------------------------
 
