@@ -1,24 +1,6 @@
 import pandas as pd
 import os 
 
-
-#-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Agosto'
-AnnoAttuale = '2025'
-
-# Base path for all your files
-base_folder_path = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati'
-
-# Define the output directory based on your base path
-output_directory = base_folder_path
-
-
-# Opzionali input/output personalizzati
-customize_input = r'Dati\app_Agosto25.xlsx'
-customize_output = fr'Dati\p_{MeseAttuale}{AnnoAttuale}.xlsx'
-
-#--------------------------------^ MODIFICABILE ^---------------------------------
-
 # ------------------------------ CONFIGURAZIONE ------------------------------
 DizMesi = {
     "Gennaio": "01", 
@@ -35,9 +17,24 @@ DizMesi = {
     "Dicembre": "12"
 }
 
-customize_input = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati\app_Luglio25.xlsx'
 
+#-------------------------------- v MODIFICABILE  v---------------------------------
+MeseAttuale = 'Agosto'
+AnnoAttuale = '2025'
+
+# Base path for all your files
+base_folder_path = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati'
+
+# Define the output directory based on your base path
+output_directory = base_folder_path
+
+
+# Opzionali input/output personalizzati
+customize_input = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati\app_Agosto25.xlsx'
 customize_output_filename = f'p_{MeseAttuale}{AnnoAttuale}.xlsx'
+
+#--------------------------------^ MODIFICABILE ^---------------------------------
+
 
 
 # ---- SET UP --------
@@ -55,7 +52,7 @@ output_file = os.path.join(output_directory, output_filename)
 
 # ---- LETTURA FILE PRINCIPALE ----
 
-df_spese = pd.read_excel(input_file, sheet_name='Spese', skiprows=1, header=0)
+df_spese = pd.read_excel(input_file, sheet_name='Expenses', skiprows=1, header=0)
 
 # Rimuovo colonne inutili
 colonne_da_rimuovere = [2, 3, 4, 6, 7, 8, 9]
@@ -110,7 +107,7 @@ if duplicati:
 
 # ---- LETTURA FILE PRINCIPALE ----
 
-df_entrate = pd.read_excel(input_file, sheet_name='Entrate', skiprows=1, header=0)
+df_entrate = pd.read_excel(input_file, sheet_name='Income', skiprows=1, header=0)
 
 # Rimuovo colonne inutili
 colonne_da_rimuovere = [2, 3, 4, 6, 7, 8, 9] #prima colonna -> indice 0
