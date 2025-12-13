@@ -19,27 +19,30 @@ DizMesi = {
 
 
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Settembre'
+MeseAttuale = 'Ottobre'
 AnnoAttuale = '2025'
 
-# Base path for all your files
-base_folder_path = r'C:\Users\sstam\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati'
-#r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati'
+PC = 0  #0 per Santa, 1 per Rimini
 
+
+#-------------------------------- SET UP --------------------------------
+AnnoAttualeShort = AnnoAttuale[2:]
+# Base path for all your files
+
+if (PC == 0):
+    base_folder_path = r'ExcelProcesserSpeseEntrate\Excel\Dati' 
+elif (PC == 1):
+    base_folder_path = r'C:\Users\stefa\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati'
+    
 # Define the output directory based on your base path
 output_directory = base_folder_path
 
 
 # Opzionali input/output personalizzati
-customize_input = r'C:\Users\sstam\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati\app_Settembre25.xlsx'
-customize_output_filename = f'p_{MeseAttuale}{AnnoAttuale}.xlsx'
+customize_input = os.path.join(base_folder_path, f'app_{MeseAttuale}{AnnoAttualeShort}.xlsx')
 
-#--------------------------------^ MODIFICABILE ^---------------------------------
+customize_output_filename = f'p_{MeseAttuale}{AnnoAttualeShort}.xlsx'
 
-
-
-# ---- SET UP --------
-AnnoAttualeShort = AnnoAttuale[2:]
 
 input_file = customize_input
 output_filename = customize_output_filename if customize_output_filename else f'{MeseAttuale} {AnnoAttualeShort} - Processed.xlsx'
