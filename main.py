@@ -69,8 +69,8 @@ df_spese.rename(columns={
 
 
 # Formattazione data
-df_spese['Data'] = pd.to_datetime(df_spese['Data'], errors='coerce')
-df_spese['Data'] = df_spese['Data'].dt.strftime('%d/%m/%Y')
+df_spese['Data'] = pd.to_datetime(df_spese['Data'], errors='coerce', dayfirst=True)
+df_spese['Data'] = df_spese['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else '')
 
 # ---- LETTURA RIGHE AGGIUNTIVE DA CSV ----
 
@@ -124,8 +124,8 @@ df_entrate.rename(columns={
 
 
 # Formattazione data
-df_entrate['Data'] = pd.to_datetime(df_entrate['Data'], errors='coerce')
-df_entrate['Data'] = df_entrate['Data'].dt.strftime('%d/%m/%Y')
+df_entrate['Data'] = pd.to_datetime(df_entrate['Data'], errors='coerce', dayfirst=True)
+df_entrate['Data'] = df_entrate['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else '')
 
 
 # ---- UNIONE E PULIZIA ----
