@@ -19,29 +19,30 @@ DizMesi = {
 
 
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Agosto'
+MeseAttuale = 'Ottobre'
 AnnoAttuale = '2025'
 
-# Base path for all your files
-base_folder_path = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati'
+PC = 0  #0 per Santa, 1 per Rimini
 
+
+#-------------------------------- SET UP --------------------------------
+AnnoAttualeShort = AnnoAttuale[2:]
+# Base path for all your files
+
+if (PC == 0):
+    base_folder_path = r'ExcelProcesserSpeseEntrate\Excel\Dati' 
+elif (PC == 1):
+    base_folder_path = r'C:\Users\stefa\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati'
+    
 # Define the output directory based on your base path
 output_directory = base_folder_path
 
 
 # Opzionali input/output personalizzati
-customize_input = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\Excel\Dati\app_Agosto25.xlsx'
-customize_output_filename = f'p_{MeseAttuale}{AnnoAttuale}.xlsx'
+customize_input = os.path.join(base_folder_path, f'app_{MeseAttuale}{AnnoAttualeShort}.xlsx')
 
-#--------------------------------^ MODIFICABILE ^---------------------------------
+customize_output_filename = f'p_{MeseAttuale}{AnnoAttualeShort}.xlsx'
 
-
-
-# ---- SET UP --------
-AnnoAttualeShort = AnnoAttuale[2:]
-
-default_input = fr'{base_folder_path}\{AnnoAttuale}\{MeseAttuale} {AnnoAttualeShort} - App.xlsx'
-default_output = fr'{base_folder_path}\{AnnoAttuale}\{MeseAttuale} {AnnoAttualeShort} - Processed.xlsx'
 
 input_file = customize_input
 output_filename = customize_output_filename if customize_output_filename else f'{MeseAttuale} {AnnoAttualeShort} - Processed.xlsx'
@@ -52,7 +53,7 @@ output_file = os.path.join(output_directory, output_filename)
 
 # ---- LETTURA FILE PRINCIPALE ----
 
-df_spese = pd.read_excel(input_file, sheet_name='Expenses', skiprows=1, header=0)
+df_spese = pd.read_excel(input_file, sheet_name='Spese', skiprows=1, header=0)
 
 # Rimuovo colonne inutili
 colonne_da_rimuovere = [2, 3, 4, 6, 7, 8, 9]
@@ -68,8 +69,8 @@ df_spese.rename(columns={
 
 
 # Formattazione data
-df_spese['Data'] = pd.to_datetime(df_spese['Data'], errors='coerce')
-df_spese['Data'] = df_spese['Data'].dt.strftime('%d/%m/%Y')
+df_spese['Data'] = pd.to_datetime(df_spese['Data'], errors='coerce', dayfirst=True)
+df_spese['Data'] = df_spese['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else '')
 
 # ---- LETTURA RIGHE AGGIUNTIVE DA CSV ----
 
@@ -107,7 +108,7 @@ if duplicati:
 
 # ---- LETTURA FILE PRINCIPALE ----
 
-df_entrate = pd.read_excel(input_file, sheet_name='Income', skiprows=1, header=0)
+df_entrate = pd.read_excel(input_file, sheet_name='Entrate', skiprows=1, header=0)
 
 # Rimuovo colonne inutili
 colonne_da_rimuovere = [2, 3, 4, 6, 7, 8, 9] #prima colonna -> indice 0
@@ -123,8 +124,8 @@ df_entrate.rename(columns={
 
 
 # Formattazione data
-df_entrate['Data'] = pd.to_datetime(df_entrate['Data'], errors='coerce')
-df_entrate['Data'] = df_entrate['Data'].dt.strftime('%d/%m/%Y')
+df_entrate['Data'] = pd.to_datetime(df_entrate['Data'], errors='coerce', dayfirst=True)
+df_entrate['Data'] = df_entrate['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else '')
 
 
 # ---- UNIONE E PULIZIA ----
