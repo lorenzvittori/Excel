@@ -19,10 +19,10 @@ DizMesi = {
 
 
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Ottobre'
+MeseAttuale = 'Dicembre'
 AnnoAttuale = '2025'
 
-PC = 0  #0 per Santa, 1 per Rimini
+PC = 1  #0 per Santa, 1 per Rimini
 
 
 #-------------------------------- SET UP --------------------------------
@@ -32,7 +32,7 @@ AnnoAttualeShort = AnnoAttuale[2:]
 if (PC == 0):
     base_folder_path = r'ExcelProcesserSpeseEntrate\Excel\Dati' 
 elif (PC == 1):
-    base_folder_path = r'C:\Users\stefa\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati'
+    base_folder_path = r'C:\Users\stefa\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati\TabelleApp'
     
 # Define the output directory based on your base path
 output_directory = base_folder_path
@@ -77,7 +77,7 @@ df_spese['Data'] = df_spese['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd
 def DAY_TO_DATA(giorno) -> str:
     try:
         giorno_str = str(int(giorno)).zfill(2)
-        return f"{giorno_str}/{DizMesi[MeseAttuale]}/{AnnoAttuale}"
+        return f"{giorno_str}/{DizMesi[MeseAttuale]}/{AnnoAttualeShort}"
     except (ValueError, TypeError):
         return 'INVALID_DATE'
 
