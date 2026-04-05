@@ -1,65 +1,52 @@
 import pandas as pd
-import os 
+import os
 
 # ------------------------------ CONFIGURAZIONE ------------------------------
 DizMesi = {
-    "Gennaio": "01", 
-    "Febbraio": "02", 
-    "Marzo": "03", 
+    "Gennaio": "01",
+    "Febbraio": "02",
+    "Marzo": "03",
     "Aprile": "04",
-    "Maggio": "05", 
-    "Giugno": "06", 
-    "Luglio": "07", 
+    "Maggio": "05",
+    "Giugno": "06",
+    "Luglio": "07",
     "Agosto": "08",
-    "Settembre": "09", 
-    "Ottobre": "10", 
-    "Novembre": "11", 
+    "Settembre": "09",
+    "Ottobre": "10",
+    "Novembre": "11",
     "Dicembre": "12"
 }
 
-
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Gennaio'
+MeseAttuale = 'Marzo'
 AnnoAttuale = '2026'
 
-PC = 1  #0 per Santa, 1 per Rimini
-
+PC = 1  # 0 per Santa, 1 per Rimini
 
 #-------------------------------- SET UP --------------------------------
 AnnoAttualeShort = AnnoAttuale[2:]
-# Base path for all your files
 
-if (PC == 0):
-    base_folder_path = r'ExcelProcesserSpeseEntrate\Excel\Dati' 
-elif (PC == 1):
+if PC == 0:
+    base_folder_path = r'ExcelProcesserSpeseEntrate\Excel\Dati'
+elif PC == 1:
     base_folder_path = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\FLUSSO_SpeseEntrate\Dati\TabelleApp'
-    
-# Define the output directory based on your base path
+
 output_directory = base_folder_path
 
-
-# Opzionali input/output personalizzati
 customize_input = os.path.join(base_folder_path, f'app_{MeseAttuale}{AnnoAttualeShort}.xlsx')
-
 customize_output_filename = f'p_{MeseAttuale}{AnnoAttualeShort}.xlsx'
-
 
 input_file = customize_input
 output_filename = customize_output_filename if customize_output_filename else f'{MeseAttuale} {AnnoAttualeShort} - Processed.xlsx'
 output_file = os.path.join(output_directory, output_filename)
 
-
 #-------------------------------------------------- SPESE --------------------------------------------------
-
-# ---- LETTURA FILE PRINCIPALE ----
 
 df_spese = pd.read_excel(input_file, sheet_name='Spese', skiprows=1, header=0)
 
-# Rimuovo colonne inutili
 colonne_da_rimuovere = [2, 4, 5, 6, 7]
 df_spese.drop(df_spese.columns[colonne_da_rimuovere], axis=1, inplace=True)
 
-# Rinomino intestazioni
 df_spese.rename(columns={
     df_spese.columns[0]: 'Data',
     df_spese.columns[1]: 'Categoria',
@@ -67,12 +54,8 @@ df_spese.rename(columns={
     df_spese.columns[3]: 'Commento'
 }, inplace=True)
 
-
-# Formattazione data
 df_spese['Data'] = pd.to_datetime(df_spese['Data'], errors='coerce', dayfirst=True)
 df_spese['Data'] = df_spese['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else '')
-
-# ---- LETTURA RIGHE AGGIUNTIVE DA CSV ----
 
 def DAY_TO_DATA(giorno) -> str:
     try:
@@ -82,39 +65,26 @@ def DAY_TO_DATA(giorno) -> str:
         return 'INVALID_DATE'
 
 df_spese_nuove_righe_raw = pd.read_csv('added_rows.csv')
-
-# Genera la colonna "Data" formattata da "GiornoData"
 df_spese_nuove_righe_raw['Data'] = df_spese_nuove_righe_raw['GiornoData'].apply(DAY_TO_DATA)
 
-# Preparo il DataFrame nello stesso formato
-nuove_righe = df_spese_nuove_righe_raw[['Data','Categoria', 'Importo']].copy()
+nuove_righe = df_spese_nuove_righe_raw[['Data','Categoria','Importo']].copy()
 nuove_righe['Commento'] = ''
 
-# ---- UNIONE E PULIZIA ----
-
 df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
-df_spese.insert(1, 'Gruppo', '')               # Aggiunge colonna "Gruppo" vuota
-df_spese.sort_values(by='Data', inplace=True)  # Ordina per Data
-
+df_spese.insert(1, 'Gruppo', '')
+df_spese.sort_values(by='Data', inplace=True)
 
 duplicati = df_spese.duplicated().any()
-
-#Allert duplicati
 if duplicati:
-    print("!!! Ci sono duplicati nelle SPESE !!!" )
-
+    print("!!! Ci sono duplicati nelle SPESE !!!")
 
 #-------------------------------------------------- ENTRATE --------------------------------------------------
 
-# ---- LETTURA FILE PRINCIPALE ----
-
 df_entrate = pd.read_excel(input_file, sheet_name='Entrate', skiprows=1, header=0)
 
-# Rimuovo colonne inutili
-colonne_da_rimuovere = [2, 4, 5, 6, 7] #prima colonna -> indice 0
+colonne_da_rimuovere = [2, 4, 5, 6, 7]
 df_entrate.drop(df_entrate.columns[colonne_da_rimuovere], axis=1, inplace=True)
 
-# Rinomino intestazioni
 df_entrate.rename(columns={
     df_entrate.columns[0]: 'Data',
     df_entrate.columns[1]: 'Categoria',
@@ -122,25 +92,21 @@ df_entrate.rename(columns={
     df_entrate.columns[3]: 'Note'
 }, inplace=True)
 
-
-# Formattazione data
 df_entrate['Data'] = pd.to_datetime(df_entrate['Data'], errors='coerce', dayfirst=True)
 df_entrate['Data'] = df_entrate['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else '')
 
-
-# ---- UNIONE E PULIZIA ----
-
 df_entrate.insert(0, 'Mese', f'{int(DizMesi[MeseAttuale])}')
-df_entrate.sort_values(by='Data', inplace=True)  # Ordina per Data
-
-
+df_entrate.sort_values(by='Data', inplace=True)
 
 duplicati = df_entrate.duplicated().any()
-
-# Se ci sono duplicati, restituisce una stringa
 if duplicati:
-    print("Ci sono duplicati nelle ENTRATE" )
+    print("Ci sono duplicati nelle ENTRATE")
 
+#-------------------------------------------------- CONVERSIONE IMPORTO --------------------------------------------------
+
+# Trasforma la colonna Importo in stringa con virgola
+df_spese['Importo'] = df_spese['Importo'].apply(lambda x: f"{x:.2f}".replace('.', ',') if pd.notnull(x) else '')
+df_entrate['Importo'] = df_entrate['Importo'].apply(lambda x: f"{x:.2f}".replace('.', ',') if pd.notnull(x) else '')
 
 # ------------------------------ ESPORTAZIONE ------------------------------
 
