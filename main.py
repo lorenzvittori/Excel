@@ -19,8 +19,8 @@ DizMesi = {
 
 
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Dicembre'
-AnnoAttuale = '2025'
+MeseAttuale = 'Gennaio'
+AnnoAttuale = '2026'
 
 PC = 1  #0 per Santa, 1 per Rimini
 
@@ -32,7 +32,7 @@ AnnoAttualeShort = AnnoAttuale[2:]
 if (PC == 0):
     base_folder_path = r'ExcelProcesserSpeseEntrate\Excel\Dati' 
 elif (PC == 1):
-    base_folder_path = r'C:\Users\stefa\Documents\GitHubRepository\ExcelProcesserSpeseEntrate\Excel\Dati\TabelleApp'
+    base_folder_path = r'C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\FLUSSO_SpeseEntrate\Dati\TabelleApp'
     
 # Define the output directory based on your base path
 output_directory = base_folder_path
@@ -56,7 +56,7 @@ output_file = os.path.join(output_directory, output_filename)
 df_spese = pd.read_excel(input_file, sheet_name='Spese', skiprows=1, header=0)
 
 # Rimuovo colonne inutili
-colonne_da_rimuovere = [2, 3, 4, 6, 7, 8, 9]
+colonne_da_rimuovere = [2, 4, 5, 6, 7]
 df_spese.drop(df_spese.columns[colonne_da_rimuovere], axis=1, inplace=True)
 
 # Rinomino intestazioni
@@ -77,7 +77,7 @@ df_spese['Data'] = df_spese['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if pd
 def DAY_TO_DATA(giorno) -> str:
     try:
         giorno_str = str(int(giorno)).zfill(2)
-        return f"{giorno_str}/{DizMesi[MeseAttuale]}/{AnnoAttualeShort}"
+        return f"{giorno_str}/{DizMesi[MeseAttuale]}/{AnnoAttuale}"
     except (ValueError, TypeError):
         return 'INVALID_DATE'
 
@@ -111,7 +111,7 @@ if duplicati:
 df_entrate = pd.read_excel(input_file, sheet_name='Entrate', skiprows=1, header=0)
 
 # Rimuovo colonne inutili
-colonne_da_rimuovere = [2, 3, 4, 6, 7, 8, 9] #prima colonna -> indice 0
+colonne_da_rimuovere = [2, 4, 5, 6, 7] #prima colonna -> indice 0
 df_entrate.drop(df_entrate.columns[colonne_da_rimuovere], axis=1, inplace=True)
 
 # Rinomino intestazioni
