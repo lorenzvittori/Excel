@@ -18,7 +18,7 @@ DizMesi = {
 }
 
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Marzo'
+MeseAttuale = 'Aprile'
 AnnoAttuale = '2026'
 
 PC = 1  # 0 per Santa, 1 per Rimini
@@ -71,7 +71,6 @@ nuove_righe = df_spese_nuove_righe_raw[['Data','Categoria','Importo']].copy()
 nuove_righe['Commento'] = ''
 
 df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
-df_spese.insert(1, 'Gruppo', '')
 df_spese.sort_values(by='Data', inplace=True)
 
 duplicati = df_spese.duplicated().any()
@@ -98,9 +97,11 @@ df_entrate['Data'] = df_entrate['Data'].apply(lambda x: x.strftime('%d/%m/%Y') i
 df_entrate.insert(0, 'Mese', f'{int(DizMesi[MeseAttuale])}')
 df_entrate.sort_values(by='Data', inplace=True)
 
-duplicati = df_entrate.duplicated().any()
-if duplicati:
-    print("Ci sono duplicati nelle ENTRATE")
+duplicati_spese = df_spese[df_spese.duplicated(keep=False)]
+
+if not duplicati_spese.empty:
+    print("\n!!! DUPLICATI TROVATI NELLE SPESE !!!")
+    print(duplicati_spese.sort_values(by=df_spese.columns.tolist()))
 
 #-------------------------------------------------- CONVERSIONE IMPORTO --------------------------------------------------
 
