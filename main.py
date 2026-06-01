@@ -18,10 +18,10 @@ DizMesi = {
 }
 
 #-------------------------------- v MODIFICABILE  v---------------------------------
-MeseAttuale = 'Aprile'
+MeseAttuale = 'Maggio'
 AnnoAttuale = '2026'
 
-PC = 1  # 0 per Santa, 1 per Rimini
+PC = 0  # 0 per Santa, 1 per Rimini
 
 #-------------------------------- SET UP --------------------------------
 AnnoAttualeShort = AnnoAttuale[2:]
