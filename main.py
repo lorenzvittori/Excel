@@ -1,9 +1,30 @@
 import pandas as pd
 from pathlib import Path
 
+
 # ------------------------------ CONFIGURAZIONE ------------------------------
 
-DIZ_MESI = {
+SOVRASCRIVI_OUTPUT = 0
+# 0 = blocca se il file di output esiste già
+# 1 = ignora il controllo e sovrascrive il file
+
+
+mesi_da_processare = [ ("2026", "05") ]
+
+
+PROCESSA_TUTTI_I_MESI = 0
+# 0 = processa solo ANNO / MESE_NUMB
+# 1 = processa tutti i mesi in TUTTI_I_MESI
+
+
+# ------------------------------ COSTANTI ------------------------------
+TUTTI_I_MESI = [
+    (str(anno), str(mese).zfill(2))
+    for anno in range(2024, 2030)
+    for mese in range(1, 13)
+]
+
+DIZ_MESE_TO_NUMB = {
     "Gennaio": "01",
     "Febbraio": "02",
     "Marzo": "03",
@@ -18,54 +39,100 @@ DIZ_MESI = {
     "Dicembre": "12",
 }
 
-# ------------------------------ MODIFICABILE ------------------------------
+DIZ_NUMB_TO_MESE = {v: k for k, v in DIZ_MESE_TO_NUMB.items()}
 
-MESE_ATTUALE = "Maggio"
-ANNO_ATTUALE = "2026"
+COLONNE_SPESE = {
+    "Data e ora": "Data",
+    "Categoria": "Categoria",
+    "Importo in valuta del conto": "Importo",
+    "Commento": "Note",
+}
 
-# ------------------------------ SETUP PERCORSI ------------------------------
+COLONNE_ENTRATE = {
+    "Data e ora": "Data",
+    "Categoria": "Categoria",
+    "Importo in valuta del conto": "Importo",
+    "Commento": "Note",
+}
 
-ROOT_DIR = Path(__file__).resolve().parent
 
-DATI_DIR = ROOT_DIR / "Dati"
-INPUT_DIR = DATI_DIR / "TabelleApp"
-OUTPUT_DIR = DATI_DIR / "TabelleProcessed"
+COL_SPESE_DATA = COLONNE_SPESE["Data e ora"]
+COL_SPESE_CATEGORIA = COLONNE_SPESE["Categoria"]
+COL_SPESE_IMPORTO = COLONNE_SPESE["Importo in valuta del conto"]
+COL_SPESE_NOTE = COLONNE_SPESE["Commento"]
 
-ANNO_SHORT = ANNO_ATTUALE[-2:]
+COL_ENTRATE_DATA = COLONNE_ENTRATE["Data e ora"]
+COL_ENTRATE_CATEGORIA = COLONNE_ENTRATE["Categoria"]
+COL_ENTRATE_IMPORTO = COLONNE_ENTRATE["Importo in valuta del conto"]
+COL_ENTRATE_NOTE = COLONNE_ENTRATE["Commento"]
 
-input_file = INPUT_DIR / f"app_{MESE_ATTUALE}{ANNO_SHORT}.xlsx"
-output_file = OUTPUT_DIR / f"p_{MESE_ATTUALE}{ANNO_SHORT}.xlsx"
-added_rows_file = ROOT_DIR / "added_rows.csv"
+COL_MESE = "Mese"
 
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False ) -> dict | None:
+    root_dir = Path(__file__).resolve().parent
+    dati_dir = root_dir / "Dati"
+    input_dir = dati_dir / "TabelleApp"
+    output_dir = dati_dir / "TabelleProcessed"
 
-if not input_file.exists():
-    raise FileNotFoundError(
-        f"File Excel non trovato:\n{input_file}\n\n"
-        f"Controlla che esista questo file:\n"
-        f"app_{MESE_ATTUALE}{ANNO_SHORT}.xlsx\n\n"
-        f"Dentro la cartella:\n{INPUT_DIR}"
+    input_file = input_dir / f"app_{anno}_{mese_numb}.xlsx"
+    output_file = output_dir / f"p_{anno}_{mese_numb}.xlsx"
+    added_rows_file = root_dir / "added_rows.csv"
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not input_file.exists():
+        print("\n!!! FILE EXCEL NON TROVATO !!!")
+        print(input_file)
+
+        if blocca_se_input_manca:
+            raise SystemExit
+
+        print(f"Mese {anno}-{mese_numb} saltato.")
+        return None
+
+    if not added_rows_file.exists():
+        print("\n!!! FILE CSV NON TROVATO !!!")
+        print(added_rows_file)
+        raise SystemExit
+
+    if output_file.exists() and not sovrascrivi_output:
+        print("\n!!! FILE DI OUTPUT GIA' ESISTENTE !!!")
+        print(output_file)
+        print("\nPer evitare sovrascritture, elimina o rinomina il file esistente prima di rieseguire lo script.")
+        print("Oppure imposta SOVRASCRIVI_OUTPUT = 1.")
+
+        raise SystemExit
+
+    return {
+        "root_dir": root_dir,
+        "input_file": input_file,
+        "output_file": output_file,
+        "added_rows_file": added_rows_file,
+    }
+
+def seleziona_e_rinomina_colonne(df: pd.DataFrame, mappa_colonne: dict, nome_foglio: str) -> pd.DataFrame:
+    colonne_mancanti = [
+        col for col in mappa_colonne
+        if col not in df.columns
+    ]
+
+    if colonne_mancanti:
+        raise ValueError(
+            f"Colonne mancanti nel foglio {nome_foglio}: {colonne_mancanti}"
+        )
+
+    return df[list(mappa_colonne.keys())].rename(columns=mappa_colonne)
+
+def converti_colonna_data(df: pd.DataFrame, colonna: str = "Data") -> pd.DataFrame:
+    df = df.copy()
+
+    df[colonna] = pd.to_datetime(
+        df[colonna],
+        errors="coerce",
+        dayfirst=True
     )
 
-if not added_rows_file.exists():
-    raise FileNotFoundError(
-        f"File CSV non trovato:\n{added_rows_file}\n\n"
-        f"Controlla che added_rows.csv sia dentro:\n{ROOT_DIR}"
-    )
-
-print(f"Input Excel: {input_file}")
-print(f"Input CSV:   {added_rows_file}")
-print(f"Output:      {output_file}")
-
-# ------------------------------ FUNZIONI ------------------------------
-
-def day_to_data(giorno) -> str:
-    try:
-        giorno_str = str(int(giorno)).zfill(2)
-        return f"{giorno_str}/{DIZ_MESI[MESE_ATTUALE]}/{ANNO_ATTUALE}"
-    except (ValueError, TypeError):
-        return "INVALID_DATE"
-
+    return df
 
 def format_importo(value):
     if pd.isnull(value):
@@ -76,115 +143,214 @@ def format_importo(value):
     except (ValueError, TypeError):
         return value
 
+def formatta_dataframe_output(
+    df: pd.DataFrame,
+    colonna_data: str,
+    colonna_importo: str
+) -> pd.DataFrame:
+    df = df.copy()
 
-# ===================================================== LETTURA FILE EXCEL =====================
+    df[colonna_data] = df[colonna_data].apply(
+        lambda x: x.strftime("%d/%m/%Y") if pd.notnull(x) else ""
+    )
 
-# -------------------------------------------------- SPESE --------------------------------------------------
+    df[colonna_importo] = df[colonna_importo].apply(format_importo)
 
-df_spese = pd.read_excel(
-    input_file,
-    sheet_name="Spese",
-    skiprows=1,
-    header=0
-)
+    return df
 
-colonne_da_rimuovere = [2, 4, 5, 6, 7]
-df_spese.drop(df_spese.columns[colonne_da_rimuovere], axis=1, inplace=True)
+def esporta_excel(
+    df_spese: pd.DataFrame,
+    df_entrate: pd.DataFrame,
+    output_file: Path
+):
+    with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+        df_spese.to_excel(writer, sheet_name="Spese", index=False)
+        df_entrate.to_excel(writer, sheet_name="Entrate", index=False)
 
-df_spese.rename(columns={
-    df_spese.columns[0]: "Data",
-    df_spese.columns[1]: "Categoria",
-    df_spese.columns[2]: "Importo",
-    df_spese.columns[3]: "Commento"
-}, inplace=True)
+    print(f"\nFile salvato correttamente in:\n{output_file}")
+    
 
-df_spese["Data"] = pd.to_datetime(
-    df_spese["Data"],
-    errors="coerce",
-    dayfirst=True
-)
+    
+def leggi_spese(input_file: Path) -> pd.DataFrame:
+    df_spese = pd.read_excel(
+        input_file,
+        sheet_name="Spese",
+        skiprows=1,
+        header=0
+    )
 
-df_spese_nuove_righe_raw = pd.read_csv(added_rows_file)
+    df_spese = seleziona_e_rinomina_colonne(
+        df=df_spese,
+        mappa_colonne=COLONNE_SPESE,
+        nome_foglio="Spese"
+    )
 
-df_spese_nuove_righe_raw["Data"] = df_spese_nuove_righe_raw["GiornoData"].apply(day_to_data)
+    df_spese = converti_colonna_data(df_spese, COL_SPESE_DATA)
 
-df_spese_nuove_righe_raw["Data"] = pd.to_datetime(
-    df_spese_nuove_righe_raw["Data"],
-    errors="coerce",
-    dayfirst=True
-)
+    return df_spese
 
-nuove_righe = df_spese_nuove_righe_raw[["Data", "Categoria", "Importo"]].copy()
-nuove_righe["Commento"] = ""
+def day_to_data(giorno, anno: str, mese_numb: str) -> str:
+    try:
+        giorno_str = str(int(giorno)).zfill(2)
+        return f"{giorno_str}/{mese_numb}/{anno}"
+    except (ValueError, TypeError):
+        return "INVALID_DATE"
 
-df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
+def aggiungi_righe_spese(
+    df_spese: pd.DataFrame,
+    added_rows_file: Path,
+    anno: str,
+    mese_numb: str
+) -> pd.DataFrame:
+    df_nuove_righe_raw = pd.read_csv(added_rows_file)
 
-df_spese.sort_values(by="Data", inplace=True)
+    df_nuove_righe_raw[COL_SPESE_DATA] = df_nuove_righe_raw["GiornoData"].apply(
+        lambda giorno: day_to_data(giorno, anno, mese_numb)
+    )
 
-duplicati_spese = df_spese[df_spese.duplicated(keep=False)]
+    df_nuove_righe_raw = converti_colonna_data(df_nuove_righe_raw, COL_SPESE_DATA)
 
-if not duplicati_spese.empty:
-    print("\n!!! DUPLICATI TROVATI NELLE SPESE !!!")
-    print(duplicati_spese.sort_values(by=df_spese.columns.tolist()))
+    nuove_righe = df_nuove_righe_raw[
+        [COL_SPESE_DATA, COL_SPESE_CATEGORIA, COL_SPESE_IMPORTO]
+    ].copy()
 
+    nuove_righe[COL_SPESE_NOTE] = ""
 
-# -------------------------------------------------- ENTRATE --------------------------------------------------
+    df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
 
-df_entrate = pd.read_excel(
-    input_file,
-    sheet_name="Entrate",
-    skiprows=1,
-    header=0
-)
+    df_spese.sort_values(by=COL_SPESE_DATA, inplace=True)
 
-colonne_da_rimuovere = [2, 4, 5, 6, 7]
-df_entrate.drop(df_entrate.columns[colonne_da_rimuovere], axis=1, inplace=True)
-
-df_entrate.rename(columns={
-    df_entrate.columns[0]: "Data",
-    df_entrate.columns[1]: "Categoria",
-    df_entrate.columns[2]: "Importo",
-    df_entrate.columns[3]: "Note"
-}, inplace=True)
-
-df_entrate["Data"] = pd.to_datetime(
-    df_entrate["Data"],
-    errors="coerce",
-    dayfirst=True
-)
-
-df_entrate.insert(0, "Mese", int(DIZ_MESI[MESE_ATTUALE]))
-
-df_entrate.sort_values(by="Data", inplace=True)
-
-duplicati_entrate = df_entrate[df_entrate.duplicated(keep=False)]
-
-if not duplicati_entrate.empty:
-    print("\n!!! DUPLICATI TROVATI NELLE ENTRATE !!!")
-    print(duplicati_entrate.sort_values(by=df_entrate.columns.tolist()))
+    return df_spese
 
 
-# -------------------------------------------------- FORMAT DATA --------------------------------------------------
+# ENTRATE
+def leggi_entrate(input_file: Path) -> pd.DataFrame:
+    df_entrate = pd.read_excel(
+        input_file,
+        sheet_name="Entrate",
+        skiprows=1,
+        header=0
+    )
 
-df_spese["Data"] = df_spese["Data"].apply(
-    lambda x: x.strftime("%d/%m/%Y") if pd.notnull(x) else ""
-)
+    df_entrate = seleziona_e_rinomina_colonne(
+        df=df_entrate,
+        mappa_colonne=COLONNE_ENTRATE,
+        nome_foglio="Entrate"
+    )
 
-df_entrate["Data"] = df_entrate["Data"].apply(
-    lambda x: x.strftime("%d/%m/%Y") if pd.notnull(x) else ""
-)
+    df_entrate = converti_colonna_data(df_entrate, COL_ENTRATE_DATA)
+
+    return df_entrate
+
+def prepara_entrate(input_file: Path, mese_numb: str) -> pd.DataFrame:
+    df_entrate = leggi_entrate(input_file)
+
+    df_entrate.insert(0, COL_MESE, int(mese_numb))
+
+    df_entrate.sort_values(by=COL_ENTRATE_DATA, inplace=True)
+
+    return df_entrate
 
 
-# -------------------------------------------------- CONVERSIONE IMPORTO --------------------------------------------------
+#CONTROLLI
+def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
+    duplicati = df[df.duplicated(keep=False)]
 
-df_spese["Importo"] = df_spese["Importo"].apply(format_importo)
-df_entrate["Importo"] = df_entrate["Importo"].apply(format_importo)
+    if not duplicati.empty:
+        print(f"\n!!! DUPLICATI TROVATI NELLE {nome_tabella.upper()} !!!")
+        print(duplicati.sort_values(by=df.columns.tolist()))
+
+def stampa_spese_altro(df_spese: pd.DataFrame):
+    spese_altro = df_spese[
+        df_spese[COL_SPESE_CATEGORIA].astype(str).str.strip().str.lower() == "altro"
+    ]
+
+    if not spese_altro.empty:
+        print('\n!!! SPESE CON CATEGORIA "ALTRO" !!!')
+        print(spese_altro.sort_values(by=COL_SPESE_DATA))
+    else:
+        print('\nNessuna spesa con categoria "Altro".')
+
+# ------------------------------ FUNZIONE PRINCIPALE ------------------------------
+
+def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False):
+    percorsi = prepara_percorsi(
+        anno=anno,
+        mese_numb=mese_numb,
+        blocca_se_input_manca=blocca_se_input_manca,
+        sovrascrivi_output=sovrascrivi_output
+    )
+
+    if percorsi is None:
+        return
+
+    print(f"Input Excel: {percorsi['input_file']}")
+    print(f"Input CSV:   {percorsi['added_rows_file']}")
+    print(f"Output:      {percorsi['output_file']}")
+
+    df_spese = leggi_spese(percorsi["input_file"])
+
+    df_spese = aggiungi_righe_spese(
+        df_spese=df_spese,
+        added_rows_file=percorsi["added_rows_file"],
+        anno=anno,
+        mese_numb=mese_numb
+    )
+
+    df_entrate = prepara_entrate(
+        input_file=percorsi["input_file"],
+        mese_numb=mese_numb
+    )
+
+    stampa_duplicati(df_spese, "Spese")
+    stampa_spese_altro(df_spese)
+
+    stampa_duplicati(df_entrate, "Entrate")
+
+    df_spese = formatta_dataframe_output(
+        df_spese,
+        colonna_data=COL_SPESE_DATA,
+        colonna_importo=COL_SPESE_IMPORTO
+    )
+
+    df_entrate = formatta_dataframe_output(
+        df_entrate,
+        colonna_data=COL_ENTRATE_DATA,
+        colonna_importo=COL_ENTRATE_IMPORTO
+    )
+
+    esporta_excel(
+        df_spese=df_spese,
+        df_entrate=df_entrate,
+        output_file=percorsi["output_file"]
+    )
 
 
-# ------------------------------ ESPORTAZIONE ------------------------------
+# ------------------------------ AVVIO SCRIPT ------------------------------
 
-with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
-    df_spese.to_excel(writer, sheet_name="Spese", index=False)
-    df_entrate.to_excel(writer, sheet_name="Entrate", index=False)
+if __name__ == "__main__":
+    if PROCESSA_TUTTI_I_MESI == 1:
+        for anno, mese_numb in TUTTI_I_MESI:
+            print("\n" + "=" * 80)
+            print(f"PROCESSO {anno}-{mese_numb}")
+            print("=" * 80)
 
-print(f"\nFile salvato correttamente in:\n{output_file}")
+            processa_mese(
+                anno=anno,
+                mese_numb=mese_numb,
+                blocca_se_input_manca=False,
+                sovrascrivi_output=True
+            )
+
+    else:
+        for anno, mese_numb in mesi_da_processare:
+            print("\n" + "=" * 80)
+            print(f"PROCESSO {anno}-{mese_numb}")
+            print("=" * 80)
+
+            processa_mese(
+                anno=anno,
+                mese_numb=mese_numb,
+                blocca_se_input_manca=True,
+                sovrascrivi_output=bool(SOVRASCRIVI_OUTPUT)
+            )
