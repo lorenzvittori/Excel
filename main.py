@@ -1,4 +1,3 @@
-from altair import value
 import pandas as pd
 from pathlib import Path
 
