@@ -6,7 +6,7 @@ from pathlib import Path
 
 STAMPA_DUPLICATI    = 1
 STAMPA_SPESE_ALTRO  = 1
-STAMPA_PERCORSI     = 1
+STAMPA_PERCORSI     = 0
 
 SOVRASCRIVI_OUTPUT = 1
 # 0 = blocca se il file di output esiste già
@@ -16,7 +16,7 @@ SOVRASCRIVI_OUTPUT = 1
 mesi_da_processare = {"2026": ["05"]}
 
 
-PROCESSA_TUTTI_I_MESI = 1       #ignora SOVRASCRIVI_OUTPUT e sovrascrive sempre
+PROCESSA_TUTTI_I_MESI = 1                       #ignora SOVRASCRIVI_OUTPUT e sovrascrive sempre
 # 0 = processa solo ANNO / MESE_NUMB
 # 1 = processa tutti i mesi in TUTTI_I_MESI
 
@@ -270,7 +270,7 @@ def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True,
     if percorsi is None:
         return
     
-    if STAMPA_PERCORSI:
+    if STAMPA_PERCORSI and not PROCESSA_TUTTI_I_MESI:
         print("\nPercorsi dei file:")
         print(f"\tInput:\t{percorsi['input_file']}")
         print(f"\tOutput:\t{percorsi['output_file']}")
