@@ -6,7 +6,7 @@ from pathlib import Path
 # ----- Mesi da processare -----
 mesi_da_processare = {"2026": ["04", "05", "06", "07", "08", "09", "10", "11", "12"]}
 
-PROCESSA_TUTTI_I_MESI = 1
+PROCESSA_TUTTI_I_MESI = 0
 # 0 = processa solo ANNO / MESE_NUMB
 # 1 = processa tutti i mesi in TUTTI_I_MESI
 
