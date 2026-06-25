@@ -3,12 +3,11 @@ from pathlib import Path
 
 
 # ------------------------------ CONFIGURAZIONE ------------------------------
-
 STAMPA_DUPLICATI    = 1
 STAMPA_SPESE_ALTRO  = 1
 STAMPA_PERCORSI     = 0
 
-SOVRASCRIVI_OUTPUT = 0
+SOVRASCRIVI_OUTPUT = 1
 # 0 = blocca se il file di output esiste già
 # 1 = ignora il controllo e sovrascrive il file
 
@@ -22,7 +21,7 @@ PROCESSA_TUTTI_I_MESI = 0
 # 1 = processa tutti i mesi in TUTTI_I_MESI
 
 
-# ------------------------------ COSTANTI ------------------------------
+# ------------------------------ DESIGN ------------------------------
 COL_DATA = "Data"
 COL_CATEGORIA = "Categoria"
 COL_IMPORTO = "Importo"
@@ -30,7 +29,18 @@ COL_SPESE_NOTE = "Note"
 COL_ENTRATE_NOTE = "Note"
 COL_ENTRATE_MESE = "Mese"
 
+MAIN_FOLDER = "Dati"
+FILEAPP_FOLDER = "TabelleApp"
+PROCESSED_FOLDER = "TabelleProcessed"
 
+CSV_ADDED_ROWS = "added_rows.csv"
+
+#FOORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
+def NOME_INPUT(YYYY, MM): return f"app_{YYYY}_{MM}.xlsx"
+def NOME_OUTPUT(YYYY, MM): return f"p_{YYYY}_{MM}.xlsx"
+
+
+# ------------------------------ COSTANTI ------------------------------
 TUTTI_I_MESI = [
     (str(anno), str(mese).zfill(2))
     for anno in range(2024, 2030)
@@ -68,21 +78,17 @@ COLONNE_ENTRATE = {
     "Commento": COL_ENTRATE_NOTE,
 }
 
-#FOORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
-def NOME_INPUT(anno, mese): return f"app_{anno}_{mese}.xlsx"
-def NOME_OUTPUT(anno, mese): return f"p_{anno}_{mese}.xlsx"
-
 # ------------------------------ FUNZIONI ------------------------------
 # STRUTTURALI
 def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False ) -> dict | None:
     root_dir = Path(__file__).resolve().parent
-    dati_dir = root_dir / "Dati"
-    input_dir = dati_dir / "TabelleApp"
-    output_dir = dati_dir / "TabelleProcessed"
+    dati_dir = root_dir / MAIN_FOLDER
+    input_dir = dati_dir / FILEAPP_FOLDER
+    output_dir = dati_dir / PROCESSED_FOLDER
 
     input_file = input_dir / NOME_INPUT(anno, mese_numb)
     output_file = output_dir / NOME_OUTPUT(anno, mese_numb)
-    added_rows_file = root_dir / "added_rows.csv"
+    added_rows_file = root_dir / CSV_ADDED_ROWS
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -113,7 +119,6 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
             print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> file sovrascritto")
             
     return {
-        "root_dir": root_dir,
         "input_file": input_file,
         "output_file": output_file,
         "added_rows_file": added_rows_file,
@@ -241,6 +246,8 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     if not duplicati.empty:
         print(f"\n\t-!- DUPLICATI TROVATI NELLE {nome_tabella.upper()}:")
         print("\t" +duplicati.to_string(index=False).replace("\n", "\n\t"))
+    else:
+        print(f"\n\t- {nome_tabella.upper()} senza duplicati")
 
 def stampa_spese_altro(df_spese: pd.DataFrame):
     spese_altro = df_spese[
@@ -254,8 +261,6 @@ def stampa_spese_altro(df_spese: pd.DataFrame):
         print('Nessuna spesa con categoria "Altro".')
 
 # ------------------------------ FUNZIONE PRINCIPALE ------------------------------
-
-
 def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False):
     percorsi = prepara_percorsi(
         anno=anno,
@@ -293,9 +298,10 @@ def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True,
         stampa_spese_altro(df_spese)
 
     # Formattazione finale per output Excel
+    
     df_spese = formatta_dataframe_output(df_spese, colonna_data=COL_DATA, colonna_importo=COL_IMPORTO)
     df_entrate = formatta_dataframe_output(df_entrate, colonna_data=COL_DATA, colonna_importo=COL_IMPORTO)
-
+    
     # Esportazione
     esporta_excel(
         df_spese=df_spese,
