@@ -2,26 +2,24 @@ import pandas as pd
 from pathlib import Path
 
 
-# ------------------------------ CONFIGURAZIONE ------------------------------
-STAMPA_DUPLICATI    = 1
-STAMPA_SPESE_ALTRO  = 1
-STAMPA_PERCORSI     = 0
+# ------------------------------------- CONFIGURAZIONE -------------------------------------
+# ----- Mesi da processare
+mesi_da_processare = {"2026": ["05"]}
 
+PROCESSA_TUTTI_I_MESI = 0
+# 0 = processa solo ANNO / MESE_NUMB
+# 1 = processa tutti i mesi in TUTTI_I_MESI
+
+# ----- Opzioni -----
 SOVRASCRIVI_OUTPUT = 1
 # 0 = blocca se il file di output esiste già
 # 1 = ignora il controllo e sovrascrive il file
 
+STAMPA_DUPLICATI    = 1
+STAMPA_SPESE_ALTRO  = 1
+STAMPA_PERCORSI     = 0
 
-mesi_da_processare = {"2026": ["05"]}
-
-
-PROCESSA_TUTTI_I_MESI = 0                    
-#ignora SOVRASCRIVI_OUTPUT e sovrascrive sempre
-# 0 = processa solo ANNO / MESE_NUMB
-# 1 = processa tutti i mesi in TUTTI_I_MESI
-
-
-# ------------------------------ DESIGN ------------------------------
+# ----------------------------------------- DESIGN -----------------------------------------
 COL_DATA = "Data"
 COL_CATEGORIA = "Categoria"
 COL_IMPORTO = "Importo"
@@ -33,7 +31,7 @@ MAIN_FOLDER = "Dati"
 FILEAPP_FOLDER = "TabelleApp"
 PROCESSED_FOLDER = "TabelleProcessed"
 
-CSV_ADDED_ROWS = "added_rows.csv"
+CSV_ADD_ROWS = "additional_rows.csv"
 
 #FOORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
 def NOME_INPUT(YYYY, MM): return f"app_{YYYY}_{MM}.xlsx"
@@ -88,7 +86,7 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
 
     input_file = input_dir / NOME_INPUT(anno, mese_numb)
     output_file = output_dir / NOME_OUTPUT(anno, mese_numb)
-    added_rows_file = root_dir / CSV_ADDED_ROWS
+    additional_rows_csv = root_dir / CSV_ADD_ROWS
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -104,9 +102,9 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
             print(f"\t - FILE {NOME_INPUT(anno, mese_numb)} SALTATO.")
             return None
 
-    if not added_rows_file.exists():
-        print("\t-!- FILE CSV NON TROVATO")
-        print(added_rows_file)
+    if not additional_rows_csv.exists():
+        print("\t-!- FILE CSV NON TROVATO", end="\t")
+        print(f"...\{CSV_ADD_ROWS}")
         raise SystemExit
 
     if output_file.exists():
@@ -121,7 +119,7 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
     return {
         "input_file": input_file,
         "output_file": output_file,
-        "added_rows_file": added_rows_file,
+        "additional_rows_csv": additional_rows_csv,
     }
 
 def esporta_excel(df_spese: pd.DataFrame, df_entrate: pd.DataFrame, output_file: Path):
@@ -157,8 +155,8 @@ def formatta_dataframe_output(df: pd.DataFrame, colonna_data: str, colonna_impor
     return df
 
 # SPESE
-def aggiungi_righe_spese(df_spese: pd.DataFrame, added_rows_file: Path, anno: str, mese_numb: str) -> pd.DataFrame:
-    df_nuove_righe_raw = pd.read_csv(added_rows_file)
+def aggiungi_righe_spese(df_spese: pd.DataFrame, additional_rows_csv: Path, anno: str, mese_numb: str) -> pd.DataFrame:
+    df_nuove_righe_raw = pd.read_csv(additional_rows_csv)
 
     df_nuove_righe_raw[COL_DATA] = df_nuove_righe_raw["GiornoData"].apply(
         lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_numb}/{anno}"
@@ -180,7 +178,7 @@ def aggiungi_righe_spese(df_spese: pd.DataFrame, added_rows_file: Path, anno: st
 
     return df_spese
 
-def prepara_spese(input_file: Path, added_rows_file: Path, anno: str, mese_numb: str) -> pd.DataFrame:
+def prepara_spese(input_file: Path, additional_rows_csv: Path, anno: str, mese_numb: str) -> pd.DataFrame:
     #Lettura
     df_spese = pd.read_excel(
         input_file,
@@ -199,7 +197,7 @@ def prepara_spese(input_file: Path, added_rows_file: Path, anno: str, mese_numb:
     #Aggiunta di nuove righe
     df_spese = aggiungi_righe_spese(
         df_spese=df_spese,
-        added_rows_file=added_rows_file,
+        additional_rows_csv=additional_rows_csv,
         anno=anno,
         mese_numb=mese_numb
     )
@@ -280,7 +278,7 @@ def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True,
 
     df_spese = prepara_spese(
         input_file=percorsi["input_file"],
-        added_rows_file=percorsi["added_rows_file"],
+        additional_rows_csv=percorsi["additional_rows_csv"],
         anno=anno,
         mese_numb=mese_numb
     )
