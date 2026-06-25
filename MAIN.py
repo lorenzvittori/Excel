@@ -3,10 +3,10 @@ from pathlib import Path
 
 
 # ------------------------------------- CONFIGURAZIONE -------------------------------------
-# ----- Mesi da processare
-mesi_da_processare = {"2026": ["05"]}
+# ----- Mesi da processare -----
+mesi_da_processare = {"2026": ["04", "05", "06", "07", "08", "09", "10", "11", "12"]}
 
-PROCESSA_TUTTI_I_MESI = 0
+PROCESSA_TUTTI_I_MESI = 1
 # 0 = processa solo ANNO / MESE_NUMB
 # 1 = processa tutti i mesi in TUTTI_I_MESI
 
@@ -14,6 +14,10 @@ PROCESSA_TUTTI_I_MESI = 0
 SOVRASCRIVI_OUTPUT = 1
 # 0 = blocca se il file di output esiste già
 # 1 = ignora il controllo e sovrascrive il file
+
+SALTA_SE_INPUT_MANCANTE = 0
+# 0 = blocca se il file di input non esiste
+# 1 = salta il file se non esiste
 
 STAMPA_DUPLICATI    = 1
 STAMPA_SPESE_ALTRO  = 1
@@ -27,18 +31,17 @@ COL_SPESE_NOTE = "Note"
 COL_ENTRATE_NOTE = "Note"
 COL_ENTRATE_MESE = "Mese"
 
-MAIN_FOLDER = "Dati"
-FILEAPP_FOLDER = "TabelleApp"
-PROCESSED_FOLDER = "TabelleProcessed"
-
-CSV_ADD_ROWS = "additional_rows.csv"
 
 #FOORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
 def NOME_INPUT(YYYY, MM): return f"app_{YYYY}_{MM}.xlsx"
 def NOME_OUTPUT(YYYY, MM): return f"p_{YYYY}_{MM}.xlsx"
 
+# ---------------------------------------- COSTANTI ----------------------------------------
+MAIN_FOLDER = "Dati"
+FILEAPP_FOLDER = "TabelleApp"
+PROCESSED_FOLDER = "TabelleProcessed"
+CSV_ADD_ROWS = "additional_rows.csv"
 
-# ------------------------------ COSTANTI ------------------------------
 TUTTI_I_MESI = [
     (str(anno), str(mese).zfill(2))
     for anno in range(2024, 2030)
@@ -76,7 +79,7 @@ COLONNE_ENTRATE = {
     "Commento": COL_ENTRATE_NOTE,
 }
 
-# ------------------------------ FUNZIONI ------------------------------
+# ---------------------------------------- FUNZIONI ----------------------------------------
 # STRUTTURALI
 def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False ) -> dict | None:
     root_dir = Path(__file__).resolve().parent
@@ -91,15 +94,15 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not input_file.exists():
-        print(f"\t-!- FILE {NOME_INPUT(anno, mese_numb)} NON ESISTENTE")
+        print(f"\t-!- FILE {NOME_INPUT(anno, mese_numb)} MANCANTE", end="")
 
         if blocca_se_input_manca:
-            print("=" * 80)
+            print("\n=" * 80)
             print("\nP R O C E S S O   T E R M I N A T O")
             raise SystemExit
 
         else:
-            print(f"\t - FILE {NOME_INPUT(anno, mese_numb)} SALTATO.")
+            print(f" -> SALTATO")
             return None
 
     if not additional_rows_csv.exists():
@@ -109,12 +112,12 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
 
     if output_file.exists():
         if not sovrascrivi_output:
-            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> il processo si blocca")
+            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> IL PROCESSO SI INTERROMPE", end="\t")
             print("=" * 80)
             print("\nP R O C E S S O   T E R M I N A T O")
             raise SystemExit
         else:
-            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> file sovrascritto")
+            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> SOVRASCRITTO")
             
     return {
         "input_file": input_file,
@@ -258,7 +261,7 @@ def stampa_spese_altro(df_spese: pd.DataFrame):
     else:
         print('Nessuna spesa con categoria "Altro".')
 
-# ------------------------------ FUNZIONE PRINCIPALE ------------------------------
+# ------------------------------------- FUNZIONE PRINCIPALE -------------------------------------
 def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False):
     percorsi = prepara_percorsi(
         anno=anno,
@@ -308,8 +311,7 @@ def processa_mese(anno: str, mese_numb: str, blocca_se_input_manca: bool = True,
     )
 
 
-# ------------------------------ AVVIO SCRIPT ------------------------------
-
+# ------------------------------------- AVVIO SCRIPT -------------------------------------
 if __name__ == "__main__":
     if PROCESSA_TUTTI_I_MESI == 1:
         for anno, mese_numb in TUTTI_I_MESI:
@@ -334,8 +336,9 @@ if __name__ == "__main__":
                 processa_mese(
                     anno=anno,
                     mese_numb=mese_numb,
-                    blocca_se_input_manca=True,
+                    blocca_se_input_manca=bool(SALTA_SE_INPUT_MANCANTE),
                     sovrascrivi_output=bool(SOVRASCRIVI_OUTPUT)
                 )
                 
                 print("=" * 80)
+    print("\nP R O C E S S O   T E R M I N A T O")
