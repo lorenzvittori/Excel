@@ -8,7 +8,7 @@ STAMPA_DUPLICATI    = 1
 STAMPA_SPESE_ALTRO  = 1
 STAMPA_PERCORSI     = 0
 
-SOVRASCRIVI_OUTPUT = 1
+SOVRASCRIVI_OUTPUT = 0
 # 0 = blocca se il file di output esiste già
 # 1 = ignora il controllo e sovrascrive il file
 
@@ -16,7 +16,8 @@ SOVRASCRIVI_OUTPUT = 1
 mesi_da_processare = {"2026": ["05"]}
 
 
-PROCESSA_TUTTI_I_MESI = 1                       #ignora SOVRASCRIVI_OUTPUT e sovrascrive sempre
+PROCESSA_TUTTI_I_MESI = 0                    
+#ignora SOVRASCRIVI_OUTPUT e sovrascrive sempre
 # 0 = processa solo ANNO / MESE_NUMB
 # 1 = processa tutti i mesi in TUTTI_I_MESI
 
@@ -67,6 +68,10 @@ COLONNE_ENTRATE = {
     "Commento": COL_ENTRATE_NOTE,
 }
 
+#FOORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
+def NOME_INPUT(anno, mese): return f"app_{anno}_{mese}.xlsx"
+def NOME_OUTPUT(anno, mese): return f"p_{anno}_{mese}.xlsx"
+
 # ------------------------------ FUNZIONI ------------------------------
 # STRUTTURALI
 def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False ) -> dict | None:
@@ -75,35 +80,37 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
     input_dir = dati_dir / "TabelleApp"
     output_dir = dati_dir / "TabelleProcessed"
 
-    input_file = input_dir / f"app_{anno}_{mese_numb}.xlsx"
-    output_file = output_dir / f"p_{anno}_{mese_numb}.xlsx"
+    input_file = input_dir / NOME_INPUT(anno, mese_numb)
+    output_file = output_dir / NOME_OUTPUT(anno, mese_numb)
     added_rows_file = root_dir / "added_rows.csv"
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not input_file.exists():
-        print("\n\t! - FILE EXCEL NON TROVATO", end=" - ")
+        print(f"\t-!- FILE {NOME_INPUT(anno, mese_numb)} NON ESISTENTE")
 
         if blocca_se_input_manca:
+            print("=" * 80)
+            print("\nP R O C E S S O   T E R M I N A T O")
             raise SystemExit
 
-        print(f"file {anno}-{mese_numb} SALTATO.")
-        return None
+        else:
+            print(f"\t - FILE {NOME_INPUT(anno, mese_numb)} SALTATO.")
+            return None
 
     if not added_rows_file.exists():
-        print("\t!!! FILE CSV NON TROVATO !!!")
+        print("\t-!- FILE CSV NON TROVATO")
         print(added_rows_file)
         raise SystemExit
 
     if output_file.exists():
         if not sovrascrivi_output:
-            print(f"\t! FILE DI OUTPUT GIA' ESISTENTE - {output_file}")
-            print("\n\tPer evitare sovrascritture, elimina o rinomina il file esistente prima di rieseguire lo script, oppure imposta SOVRASCRIVI_OUTPUT = 1.")
+            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> il processo si blocca")
             print("=" * 80)
-            print("\n|- PROCESSO TERMINATO -|")
+            print("\nP R O C E S S O   T E R M I N A T O")
             raise SystemExit
         else:
-            print("! - FILE DI OUTPUT GIA' ESISTENTE - SOVRASCRITTO")
+            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> file sovrascritto")
             
     return {
         "root_dir": root_dir,
@@ -112,11 +119,7 @@ def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = Tr
         "added_rows_file": added_rows_file,
     }
 
-def esporta_excel(
-    df_spese: pd.DataFrame,
-    df_entrate: pd.DataFrame,
-    output_file: Path
-):
+def esporta_excel(df_spese: pd.DataFrame, df_entrate: pd.DataFrame, output_file: Path):
     with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
         df_spese.to_excel(writer, sheet_name="Spese", index=False)
         df_entrate.to_excel(writer, sheet_name="Entrate", index=False)
@@ -149,12 +152,7 @@ def formatta_dataframe_output(df: pd.DataFrame, colonna_data: str, colonna_impor
     return df
 
 # SPESE
-def aggiungi_righe_spese(
-    df_spese: pd.DataFrame,
-    added_rows_file: Path,
-    anno: str,
-    mese_numb: str
-) -> pd.DataFrame:
+def aggiungi_righe_spese(df_spese: pd.DataFrame, added_rows_file: Path, anno: str, mese_numb: str) -> pd.DataFrame:
     df_nuove_righe_raw = pd.read_csv(added_rows_file)
 
     df_nuove_righe_raw[COL_DATA] = df_nuove_righe_raw["GiornoData"].apply(
@@ -241,8 +239,8 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     duplicati = df[df.duplicated(keep=False)]
 
     if not duplicati.empty:
-        print(f"\n! - DUPLICATI TROVATI NELLE {nome_tabella.upper()}:")
-        print(duplicati.to_string(index=False))
+        print(f"\n\t-!- DUPLICATI TROVATI NELLE {nome_tabella.upper()}:")
+        print("\t" +duplicati.to_string(index=False).replace("\n", "\n\t"))
 
 def stampa_spese_altro(df_spese: pd.DataFrame):
     spese_altro = df_spese[
@@ -250,8 +248,8 @@ def stampa_spese_altro(df_spese: pd.DataFrame):
     ]
 
     if not spese_altro.empty:
-        print('\n! - SPESSE CON CATEGORIA "ALTRO":')
-        print(spese_altro.sort_values(by=COL_DATA).to_string(index=False))
+        print('\n\t- SPESSE CON CATEGORIA "ALTRO":')
+        print("\t" + spese_altro.sort_values(by=COL_DATA).to_string(index=False).replace("\n","\n\t"))
     else:
         print('Nessuna spesa con categoria "Altro".')
 
