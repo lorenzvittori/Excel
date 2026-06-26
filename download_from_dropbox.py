@@ -1,30 +1,53 @@
 import dropbox
 from pathlib import Path
 
-from MAIN import FILEAPP_FOLDER
-
 #Constanti
-TOKEN_FILE = "token_dropbox.txt"
-MAIN_FOLDER = "Dati"
-FILE_APP_FOLDER = "TabelleApp"
+def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_esistente: bool = True):
+    TOKEN_FILE = "token_dropbox.txt"
+    DROPBOX_FOLDER = "/TabelleApp"
 
-FILE_NAME = "app_2026_06.xlsx"
+    # ---- TOKEN -----
+    BASE_DIR = Path(__file__).resolve().parent
+    TOKEN_FILE_DIR = BASE_DIR / TOKEN_FILE
+    TOKEN = TOKEN_FILE_DIR.read_text().strip()
+    dbx = dropbox.Dropbox(TOKEN)
+    
+    # ---- DIRECTORY -----
+    OUTPUT_DIR = download_folder / file_name
+    DROPBOX_DIR = f"{DROPBOX_FOLDER}/{file_name}"
 
 
-BASE_DIR = Path(__file__).resolve().parent
-TOKEN_FILE_DIR = BASE_DIR / TOKEN_FILE
+    # ---- CHECK -----
+    try:
+        dbx.files_get_metadata(DROPBOX_DIR)
+    except dropbox.exceptions.ApiError:
+        print("-!- FILE NON PRESENTE SU DROPBOX: ...", end="")
+        print(DROPBOX_DIR)
+        print("Processo terminato, sono presenti i seguenti file:")
+        for f in dbx.files_list_folder(DROPBOX_FOLDER).entries:
+            print(f"  - {f.name}")
+        raise SystemExit
+    
+    
+    if not download_folder.exists():
+        print("Cartella di destinazione non esistente")
+        raise SystemExit
 
+    if Path(OUTPUT_DIR).exists():
+        print("-!- File già esistente nella cartella di destinazione", end ="")
+        if blocca_se_esistente:
+            print(" -> Download interrotto")
+            raise SystemExit
+        else:
+            print(" -> File sovrascritto")
 
-# Token
-TOKEN = TOKEN_FILE_DIR.read_text().strip()
-dbx = dropbox.Dropbox(TOKEN)
+    # ---- DOWNLOAD -----
+    dbx.files_download_to_file(str(OUTPUT_DIR), str(DROPBOX_DIR))
 
-
-# file target
-DROPBOX_PATH = f"/{FILE_APP_FOLDER}/{FILE_NAME}"
-LOCAL_PATH = BASE_DIR / MAIN_FOLDER / FILE_APP_FOLDER / FILE_NAME
-
-# download
-dbx.files_download_to_file(str(LOCAL_PATH), DROPBOX_PATH)
-
-print("Download completato:", LOCAL_PATH)
+    print("Download completato:", OUTPUT_DIR)
+    
+    
+    
+    
+download_file_from_dropbox(Path("C:/Users/lvitt/OneDrive/Documenti/GiuHub Local Repository/FLUSSO_SpeseEntrate/Dati/TabelleApp"), "app_2027_09.xlsx", blocca_se_esistente=True)
+    

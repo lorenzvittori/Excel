@@ -38,7 +38,7 @@ def NOME_OUTPUT(YYYY, MM): return f"p_{YYYY}_{MM}.xlsx"
 
 # ---------------------------------------- COSTANTI ----------------------------------------
 MAIN_FOLDER = "Dati"
-FILEAPP_FOLDER = "TabelleApp"
+APP_FILE_FOLDER = "TabelleApp"
 PROCESSED_FOLDER = "TabelleProcessed"
 CSV_ADD_ROWS = "additional_rows.csv"
 
@@ -84,7 +84,7 @@ COLONNE_ENTRATE = {
 def prepara_percorsi( anno: str,mese_numb: str, blocca_se_input_manca: bool = True, sovrascrivi_output: bool = False ) -> dict | None:
     root_dir = Path(__file__).resolve().parent
     dati_dir = root_dir / MAIN_FOLDER
-    input_dir = dati_dir / FILEAPP_FOLDER
+    input_dir = dati_dir / APP_FILE_FOLDER
     output_dir = dati_dir / PROCESSED_FOLDER
 
     input_file = input_dir / NOME_INPUT(anno, mese_numb)
