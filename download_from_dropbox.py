@@ -1,4 +1,5 @@
 import dropbox
+from dropbox.exceptions import ApiError
 from pathlib import Path
 
 #Constanti
@@ -20,13 +21,19 @@ def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_
     # ---- CHECK -----
     try:
         dbx.files_get_metadata(DROPBOX_DIR)
-    except dropbox.exceptions.ApiError: 
-        print("-!- FILE NON PRESENTE SU DROPBOX: ...", end="")
-        print(DROPBOX_DIR)
-        print("Processo terminato, sono presenti i seguenti file:")
-        for f in dbx.files_list_folder(DROPBOX_FOLDER).entries:
-            print(f"  - {f.name}")
-        raise SystemExit
+    except ApiError as e:
+        if e.error.is_path() and e.error.get_path().is_not_found():
+            print("-!- FILE NON PRESENTE SU DROPBOX: ...", end="")
+            print(DROPBOX_DIR)
+            print("Processo terminato, sono presenti i seguenti file:")
+
+            result = dbx.files_list_folder(DROPBOX_FOLDER)
+            for f in getattr(result, "entries", []):
+                print(f"  - {f.name}")
+
+            raise SystemExit
+        else:
+            raise
     
     
     if not download_folder.exists():
