@@ -20,7 +20,7 @@ def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_
     # ---- CHECK -----
     try:
         dbx.files_get_metadata(DROPBOX_DIR)
-    except dropbox.exceptions.ApiError:
+    except dropbox.exceptions.ApiError: 
         print("-!- FILE NON PRESENTE SU DROPBOX: ...", end="")
         print(DROPBOX_DIR)
         print("Processo terminato, sono presenti i seguenti file:")
@@ -48,6 +48,8 @@ def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_
     
     
     
-    
-download_file_from_dropbox(Path("C:/Users/lvitt/OneDrive/Documenti/GiuHub Local Repository/FLUSSO_SpeseEntrate/Dati/TabelleApp"), "app_2027_09.xlsx", blocca_se_esistente=True)
+
+
+output_folder = Path(__file__).resolve().parent / "Dati" / "TabelleApp"
+download_file_from_dropbox(output_folder, "app_2026_06.xlsx", blocca_se_esistente=True)
     
