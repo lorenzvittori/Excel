@@ -78,7 +78,7 @@ def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_
 
 if __name__ == "__main__":
     download_file_from_dropbox(
-        Path("C:/Users/lvitt/OneDrive/Documenti/GiuHub Local Repository/FLUSSO_SpeseEntrate/Dati/TabelleApp"),
+        Path("Dati/TabelleApp"),
         "app_2026_06.xlsx",
         blocca_se_esistente=True
     )
