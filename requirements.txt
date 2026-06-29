@@ -1,1 +1,1 @@
-pip install gspread google-auth-oauthlib google-auth pandas dropbox 
+pip install dropbox 
