@@ -74,6 +74,10 @@ def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_
     # ---- DOWNLOAD -----
     dbx.files_download_to_file(str(OUTPUT_DIR), DROPBOX_DIR)
     print(f"Download completato: {OUTPUT_DIR}")
+    
+        
+    print("File creato in:", OUTPUT_DIR)
+    print("Esiste davvero:", OUTPUT_DIR.exists())
 
 
 if __name__ == "__main__":
