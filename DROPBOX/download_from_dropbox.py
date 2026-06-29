@@ -7,12 +7,14 @@ import os
 
 
 def get_dropbox_client() -> dropbox.Dropbox:
-    print("APP_KEY presente:", APP_KEY is not None)
-    print("APP_SECRET presente:", APP_SECRET is not None)
-    print("REFRESH_TOKEN presente:", REFRESH_TOKEN is not None)
+
     APP_KEY = os.environ.get("DROPBOX_APP_KEY")
     APP_SECRET = os.environ.get("DROPBOX_APP_SECRET")
     REFRESH_TOKEN = os.environ.get("DROPBOX_REFRESH_TOKEN")
+    
+    print("APP_KEY presente:", APP_KEY is not None)
+    print("APP_SECRET presente:", APP_SECRET is not None)
+    print("REFRESH_TOKEN presente:", REFRESH_TOKEN is not None)
 
     # Fallback locale: legge da file
     if not all([APP_KEY, APP_SECRET, REFRESH_TOKEN]):
