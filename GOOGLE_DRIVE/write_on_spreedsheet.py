@@ -1,7 +1,5 @@
 import gspread
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
-import os
+from google.oauth2.service_account import Credentials
 import pandas as pd
 from pathlib import Path
 
@@ -42,8 +40,6 @@ def sync_month_local(client, anno: str, mese: str, base_path: str):
     # -------------------------
     # 4. WRITE DATA
     # -------------------------
-    df = pd.read_excel(file_path, sheet_name="Spese")
-    
     df = df.fillna("")
 
     ws.update(
@@ -53,38 +49,24 @@ def sync_month_local(client, anno: str, mese: str, base_path: str):
 
     print(f"SYNC COMPLETATO {anno}-{mese}")
 
+
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly"
 ]
 
-TOKEN_FILE = "token.json"
+BASE_DIR = Path(__file__).resolve().parent
+SERVICE_ACCOUNT_FILE = BASE_DIR / "google_service_account.json"
 
-creds = None
-
-if os.path.exists(TOKEN_FILE):
-    creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-
-if not creds or not creds.valid:
-    flow = InstalledAppFlow.from_client_secrets_file(
-        "credentials.json",
-        SCOPES
-    )
-    creds = flow.run_local_server(port=0)
-
-    with open(TOKEN_FILE, "w") as f:
-        f.write(creds.to_json())
-
-# 👇 QUESTA È LA RIGA CHE TI MANCAVA
+creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 client = gspread.authorize(creds)
 
-from pathlib import Path
+root_dir = BASE_DIR / "Dati" / "TabelleProcessed"
 
-root_dir = Path(__file__).resolve().parent / "Dati" / "TabelleProcessed"
-
-sync_month_local(
-    client,
-    "2026",
-    "06",
-    str(root_dir)
-)
+if __name__ == "__main__":
+    sync_month_local(
+        client,
+        "2026",
+        "06",
+        str(root_dir)
+    )
