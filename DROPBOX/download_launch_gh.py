@@ -6,7 +6,7 @@ MESE = "06"
 
 if __name__ == "__main__":
     file_name = f"app_{ANNO}_{MESE}.xlsx"
-    root_dir = Path("Dati/TabelleProcessed")
+    root_dir = Path("Dati/TabelleApp")
     
     db_module.download_file_from_dropbox(
         root_dir,
