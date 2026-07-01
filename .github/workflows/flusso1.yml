@@ -1,10 +1,10 @@
-name: Test Dropbox
+name: Flusso Spese
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  flusso:
     runs-on: ubuntu-latest
 
     permissions:
@@ -14,6 +14,7 @@ jobs:
       DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
       DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
       DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +26,7 @@ jobs:
       - name: Installa dipendenze
         run: pip install -r requirements.txt
 
-      - name: Esegui script
+      - name: Scarica da Dropbox
         run: python DROPBOX/download_launch_gh.py
 
       - name: Commit file scaricato
@@ -33,5 +34,8 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add Dati/TabelleApp/
-          git commit -m "Update files from Dropbox" || echo "No changes"
+          git commit -m "Download file da Dropbox" || echo "No changes"
           git push
+
+      - name: Scrivi su Google Sheet
+        run: python GOOGLE_DRIVE/write_launch_gh.py

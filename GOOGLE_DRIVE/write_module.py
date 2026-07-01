@@ -2,6 +2,30 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 from pathlib import Path
+import json
+import os
+
+
+def get_google_client():
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive.readonly"
+    ]
+
+    service_account_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT")
+
+    if service_account_json:
+        # GitHub Actions: legge dalla variabile d'ambiente
+        service_account_info = json.loads(service_account_json)
+        creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+    else:
+        # Fallback locale: legge da file
+        SERVICE_ACCOUNT_FILE = Path(__file__).resolve().parent / "google_service_account.json"
+        if not SERVICE_ACCOUNT_FILE.exists():
+            raise FileNotFoundError(f"File service account non trovato: {SERVICE_ACCOUNT_FILE}")
+        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
+    return gspread.authorize(creds)
 
 
 def sync_month_local(client, anno: str, mese: str, base_path: str):
@@ -50,20 +74,10 @@ def sync_month_local(client, anno: str, mese: str, base_path: str):
     print(f"SYNC COMPLETATO {anno}-{mese}")
 
 
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive.readonly"
-]
-
-BASE_DIR = Path(__file__).resolve().parent
-SERVICE_ACCOUNT_FILE = BASE_DIR / "google_service_account.json"
-
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-client = gspread.authorize(creds)
-
-root_dir = BASE_DIR / "Dati" / "TabelleProcessed"
-
 if __name__ == "__main__":
+    client = get_google_client()
+    root_dir = Path(__file__).resolve().parent / "Dati" / "TabelleProcessed"
+
     sync_month_local(
         client,
         "2026",
