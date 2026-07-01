@@ -6,7 +6,7 @@ MESE = "06"
 
 if __name__ == "__main__":
     client = gd_module.get_google_client()
-    root_dir = Path(__file__).resolve().parent / "Dati" / "TabelleProcessed"
+    root_dir = Path("Dati/TabelleProcessed")
 
     gd_module.sync_month_local(
         client,
