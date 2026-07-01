@@ -7,6 +7,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     env:
       DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
       DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
@@ -23,12 +26,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Esegui script
-        run: python DROPBOX/download_from_dropbox.py
+        run: python DROPBOX/download_launch_gh.py
 
       - name: Commit file scaricato
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add Dati/TabelleApp/app_2026_06.xlsx
-          git commit -m "Update file da Dropbox" || echo "No changes"
+          git add Dati/TabelleApp/
+          git commit -m "Update files from Dropbox" || echo "No changes"
           git push

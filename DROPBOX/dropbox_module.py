@@ -1,13 +1,11 @@
 import dropbox
 from dropbox.exceptions import ApiError, AuthError
-from dropbox import DropboxOAuth2FlowNoRedirect
 from pathlib import Path
 import json
 import os
 
 
 def get_dropbox_client() -> dropbox.Dropbox:
-
     APP_KEY = os.environ.get("DROPBOX_APP_KEY")
     APP_SECRET = os.environ.get("DROPBOX_APP_SECRET")
     REFRESH_TOKEN = os.environ.get("DROPBOX_REFRESH_TOKEN")
@@ -80,9 +78,3 @@ def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_
     print("Esiste davvero:", OUTPUT_DIR.exists())
 
 
-if __name__ == "__main__":
-    download_file_from_dropbox(
-        Path("Dati/TabelleApp"),
-        "app_2026_06.xlsx",
-        blocca_se_esistente=True
-    )
