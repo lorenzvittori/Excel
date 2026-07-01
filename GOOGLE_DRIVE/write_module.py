@@ -73,14 +73,3 @@ def sync_month_local(client, anno: str, mese: str, base_path: str):
 
     print(f"SYNC COMPLETATO {anno}-{mese}")
 
-
-if __name__ == "__main__":
-    client = get_google_client()
-    root_dir = Path(__file__).resolve().parent / "Dati" / "TabelleProcessed"
-
-    sync_month_local(
-        client,
-        "2026",
-        "06",
-        str(root_dir)
-    )

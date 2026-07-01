@@ -2,6 +2,7 @@ import dropbox
 from dropbox.exceptions import ApiError, AuthError
 from pathlib import Path
 import json
+import pandas as pd
 import os
 
 
@@ -39,7 +40,12 @@ def get_dropbox_client() -> dropbox.Dropbox:
         raise ValueError("Credenziali Dropbox non valide.")
 
 
-def download_file_from_dropbox(download_folder: Path, file_name: str, blocca_se_esistente: bool = True):
+def download_file_from_dropbox(
+        download_folder: Path, 
+        file_name: str, 
+        blocca_se_esistente: bool = True):
+    
+    
     DROPBOX_FOLDER = "/TabelleApp"
 
     dbx = get_dropbox_client()
