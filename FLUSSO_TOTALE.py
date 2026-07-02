@@ -7,10 +7,10 @@ import main_module as m_module
 import configuration as config  
 from pathlib import Path
 import pandas as pd
+import os
 
-
-ANNO = "2026"
-MESE = "06"
+ANNO = os.environ["ANNO"]
+MESE = os.environ["MESE"]
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN

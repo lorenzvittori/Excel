@@ -2,6 +2,15 @@ name: Flusso Spese
 
 on:
   workflow_dispatch:
+    inputs:
+      anno:
+        description: "Anno (es. 2026)"
+        required: true
+        type: string
+      mese:
+        description: "Mese (es. 06)"
+        required: true
+        type: string
 
 jobs:
   flusso:
@@ -11,31 +20,36 @@ jobs:
       contents: write
 
     env:
+      ANNO: ${{ inputs.anno }}
+      MESE: ${{ inputs.mese }}
       DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
       DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
       DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Installa dipendenze
         run: pip install -r requirements.txt
 
-      - name: Scarica da Dropbox
-        run: python DROPBOX/download_launch_gh.py
+      - name: Esegui flusso
+        run: python FLUSSO_TOTALE.py
 
-      - name: Commit file scaricato
+      - name: Enable git auth
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Commit e push risultati
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add Dati/TabelleApp/
-          git commit -m "Download file da Dropbox" || echo "No changes"
+          git add Dati/TabelleApp/ Dati/TabelleProcessed/
+          git commit -m "Update flusso spese ${ANNO}-${MESE}" || echo "No changes"
           git push
-
-      - name: Scrivi su Google Sheet
-        run: python GOOGLE_DRIVE/write_launch_gh.py
