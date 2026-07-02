@@ -1,5 +1,4 @@
 ## NOME FILE: dropbox_module.py
-
 import dropbox
 from dropbox.exceptions import ApiError, AuthError
 import configuration as config

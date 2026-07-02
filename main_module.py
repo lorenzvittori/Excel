@@ -1,5 +1,4 @@
 ## NOME FILE: main_module.py
-
 import pandas as pd
 from pathlib import Path
 import configuration as config

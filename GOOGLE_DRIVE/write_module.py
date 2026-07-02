@@ -1,5 +1,4 @@
 ## NOME FILE: write_module.py
-
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -30,8 +29,7 @@ def get_google_client(struttura_repo: dict) -> gspread.Client:
     return gspread.authorize(creds)
 
 
-def sync_month_local(
-        client: gspread.Client, 
+def sync_month_local( 
         anno: str, 
         mese_str: str, 
         struttura_repo: dict):
@@ -56,7 +54,9 @@ def sync_month_local(
     # -------------------------
     # 2. OPEN GOOGLE SHEET
     # -------------------------
+    client = get_google_client(struttura_repo)
     id_google_sheet = config.ID_GOOGLE_SHEET[anno]
+    
     sheet = client.open_by_key(id_google_sheet)
     ws = sheet.worksheet(sheet_name)
 

@@ -1,5 +1,4 @@
-### NOME FILE: configuration.py
-
+## NOME FILE: configuration.py
 #FORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
 from pathlib import Path
 

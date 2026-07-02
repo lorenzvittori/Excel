@@ -1,5 +1,4 @@
 ## NOME FILE: FLUSSO_TOTALE.py
-
 from DROPBOX import dropbox_module as db_module
 from GOOGLE_DRIVE import write_module as gd_module
 import main_module as m_module
@@ -17,10 +16,7 @@ NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
 
 
 if __name__ == "__main__":
-    # ---- DROPBOX -----
-    #file_name = f"app_{ANNO}_{MESE}.xlsx"
-    #root_dir = Path("Dati/TabelleApp")
-    
+    #DOWNLOAD FILE DAL DROPBOX
     db_module.download_file_from_dropbox(
         anno = ANNO,
         mese_str = MESE,
@@ -29,6 +25,7 @@ if __name__ == "__main__":
         blocca_se_esistente=False
     )
     
+    #PROCESSA MESE
     m_module.processa_mese(
         anno=ANNO,
         mese_str=MESE,
@@ -42,11 +39,8 @@ if __name__ == "__main__":
         flag_processa_tutti_i_mesi = False,
         flag_stampa_spese_altro = False)
     
-    
-    client = gd_module.get_google_client(STRUTTURA_REPOSITORY)
-
+    #SCRITTURA SU GOOGLE DRIVE
     gd_module.sync_month_local(
-        client =client,
         anno = ANNO,
         mese_str = MESE,
         struttura_repo = STRUTTURA_REPOSITORY)
