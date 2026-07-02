@@ -29,55 +29,53 @@ def get_google_client(struttura_repo: dict) -> gspread.Client:
     return gspread.authorize(creds)
 
 
-def sync_month_local( 
-        anno: str, 
-        mese_str: str, 
-        struttura_repo: dict):
-    
+def sync_month_local(
+        client: gspread.Client,
+        anno: str,
+        struttura_repo: dict,
+        mese_str: str,
+        flag_sovrascrivi_celle: bool = False):
+
     file_name = config.get_processed_name(anno=anno, mese_str=mese_str)
     file_path = struttura_repo["FOLD_PRC_TBT"] / file_name
 
     sheet_name = config.MESI[mese_str]["nome_foglio_associato"]
 
-    # -------------------------
-    # 1. CHECK FILE LOCALE
-    # -------------------------
-    try:
-        df = pd.read_excel(file_path, sheet_name="Spese")
-    except FileNotFoundError:
-        print(f"ERRORE: file non trovato -> {file_path}")
-        raise SystemExit
-    except Exception as e:
-        print(f"ERRORE lettura Excel: {e}")
-        raise SystemExit
+    # 1. FILE LOCALE
+    if not file_path.exists():
+        raise FileNotFoundError(f"[ERROR] \t File locale mancante: {file_path}")
 
-    # -------------------------
-    # 2. OPEN GOOGLE SHEET
-    # -------------------------
-    client = get_google_client(struttura_repo)
-    id_google_sheet = config.ID_GOOGLE_SHEET[anno]
-    
-    sheet = client.open_by_key(id_google_sheet)
-    ws = sheet.worksheet(sheet_name)
-
-    # -------------------------
-    # 3. CHECK CELLE B2:D2
-    # -------------------------
-    check = ws.get("B2:D2")[0]
-
-    if any(str(cell).strip() != "" for cell in check):
-        print("ERRORE: B2:D2 non vuote, stop esecuzione")
-        raise SystemExit
-
-    # -------------------------
-    # 4. WRITE DATA
-    # -------------------------
+    df = pd.read_excel(file_path, sheet_name="Spese")
     df = df.fillna("")
 
+    # 2. GOOGLE SHEET
+    id_google_sheet = config.ID_GOOGLE_SHEET[anno]
+
+    try:
+        sheet = client.open_by_key(id_google_sheet)
+    except gspread.exceptions.SpreadsheetNotFound:
+        raise FileNotFoundError(f"[ERROR] \t Google Sheet non trovato: {id_google_sheet}")
+    except gspread.exceptions.APIError as e:
+        raise RuntimeError(f"[ERROR] \t API Google Sheets: {e}")
+
+    try:
+        ws = sheet.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        raise FileNotFoundError(f"[ERROR] \t Worksheet non trovato: {sheet_name}")
+
+    # 3. CHECK CELLE
+    check = ws.get("B2:D2")
+    row = check[0] if check else ["", "", ""]
+
+    if any(str(cell).strip() != "" for cell in row):
+        if not flag_sovrascrivi_celle:
+            raise RuntimeError(f"[ERROR] \t Foglio non vuoto: {sheet_name}")
+        else:
+            print(f"[INFO] \t Foglio non vuoto - > SOVRASCRIVO CELLE")
+
+    # 4. WRITE
     ws.update(
         [df.columns.tolist()] + df.values.tolist(),
         "B1"
     )
-
-    print(f"SYNC COMPLETATO {anno}-{mese_str}")
 

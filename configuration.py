@@ -37,7 +37,7 @@ STRUTTURA_REPOSITORY = {
 }
 
 STRUTTURA_DROPBOX = {
-    "FOLD_RAW_TBT":         Path("/TabelleApp"),
+    "FOLD_RAW_TBT":     "/TabelleApp",
 }
 
 ID_GOOGLE_SHEET = {

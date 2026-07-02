@@ -1,3 +1,5 @@
 token_dropbox.txt
 dropbox_credentials.json
 google_service_account.json
+__pycache__/
+*.py[cod]

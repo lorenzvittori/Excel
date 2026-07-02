@@ -3,24 +3,6 @@ import pandas as pd
 from pathlib import Path
 import configuration as config
 
-
-DIZ_MESE_TO_NUMB = {
-    "Gennaio": "01",
-    "Febbraio": "02",
-    "Marzo": "03",
-    "Aprile": "04",
-    "Maggio": "05",
-    "Giugno": "06",
-    "Luglio": "07",
-    "Agosto": "08",
-    "Settembre": "09",
-    "Ottobre": "10",
-    "Novembre": "11",
-    "Dicembre": "12"
-}
-
-DIZ_NUMB_TO_MESE = {v: k for k, v in DIZ_MESE_TO_NUMB.items()}
-
 # ---------------------------------------- FUNZIONI ----------------------------------------
 # STRUTTURALI
 def prepara_percorsi(
@@ -243,31 +225,32 @@ def processa_mese(
         flag_stampa_duplicati: bool = False,
         flag_processa_tutti_i_mesi: bool = False,
         flag_stampa_spese_altro: bool = False):
+     
     
-    percorsi = prepara_percorsi(
-        anno=anno,
-        mese_str=mese_str,
-        struttura_repo=struttura_repo,
-        flag_blocca_se_input_manca=flag_blocca_se_input_manca,
-        flag_sovrascrivi_output=flag_sovrascrivi_output
-    )
-    
-    
-    NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
+    NOME_FILE_RAW = config.get_raw_name(anno = anno, mese_str = mese_str)
+    NOME_FILE_PRC = config.get_processed_name(anno = anno, mese_str = mese_str)
+    NOME_FOGLIO_SPESE   = design["NOME_FOGLIO_SPESE"]
     NOME_FOGLIO_ENTRATE = design["NOME_FOGLIO_ENTRATE"]
+    DIRECTORY_FILE_RAW      = struttura_repo["FOLD_RAW_TBT"] / NOME_FILE_RAW
+    DIRECTORY_FILE_PRC      = struttura_repo["FOLD_PRC_TBT"] / NOME_FILE_PRC
+    DIRECTORY_FILE_ADD_ROWS = struttura_repo["FILE_ADD_ROWS"]
 
+    if not DIRECTORY_FILE_RAW.exists():
+        print(f"\t-!- FILE {NOME_FILE_RAW} MANCANTE", end="")
+        raise SystemExit
     
-    if percorsi is None:
-        return
+    if not DIRECTORY_FILE_ADD_ROWS.exists():
+        print(f"\t-!- FILE {DIRECTORY_FILE_ADD_ROWS} MANCANTE", end="")
+        raise SystemExit
     
     if flag_stampa_percorsi and not flag_processa_tutti_i_mesi:
         print("\nPercorsi dei file:")
-        print(f"\tInput:\t{percorsi['input_file']}")
-        print(f"\tOutput:\t{percorsi['output_file']}")
+        print(f"\tInput:\t{DIRECTORY_FILE_RAW}")
+        print(f"\tOutput:\t{DIRECTORY_FILE_PRC}")
 
     df_spese = prepara_spese(
-        input_file=percorsi["input_file"],
-        additional_rows_csv=percorsi["additional_rows_csv"],
+        input_file=DIRECTORY_FILE_RAW,
+        additional_rows_csv=DIRECTORY_FILE_ADD_ROWS,
         anno=anno,
         mese_str=mese_str,
         design=design,
@@ -275,7 +258,7 @@ def processa_mese(
     )
 
     df_entrate = prepara_entrate(
-        input_file=percorsi["input_file"],
+        input_file=DIRECTORY_FILE_RAW,
         mese_str=mese_str,
         design=design,
         colonne_app_entrate=colonne_app["COLONNE_ENTRATE"]
@@ -295,6 +278,6 @@ def processa_mese(
     
     
     # Esportazione    
-    with pd.ExcelWriter(percorsi["output_file"], engine="openpyxl") as writer:
+    with pd.ExcelWriter(DIRECTORY_FILE_PRC, engine="openpyxl") as writer:
         df_spese.to_excel(writer, sheet_name=NOME_FOGLIO_SPESE, index=False)
         df_entrate.to_excel(writer, sheet_name=NOME_FOGLIO_ENTRATE, index=False)

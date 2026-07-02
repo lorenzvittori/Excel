@@ -2,7 +2,6 @@
 import dropbox
 from dropbox.exceptions import ApiError, AuthError
 import configuration as config
-from pathlib import Path
 import json
 import os
 
@@ -42,21 +41,20 @@ def get_dropbox_client(struttura_repo: dict) -> dropbox.Dropbox:
 
 
 def download_file_from_dropbox(
+        dbx: dropbox.Dropbox,
         anno: str,
         mese_str: str,
         struttura_repo: dict,
         struttura_dbox: dict,
         blocca_se_esistente: bool = True):
     
-    
-    dbx = get_dropbox_client(struttura_repo = struttura_repo)
 
     # ---- DIRECTORY -----
     DROPBOX_FOLDER = struttura_dbox["FOLD_RAW_TBT"]
     file_name = config.get_raw_name(anno = anno, mese_str = mese_str)
     DOWNLOAD_FOLDER = struttura_repo["FOLD_RAW_TBT"]
     OUTPUT_DIR  = DOWNLOAD_FOLDER / file_name
-    DROPBOX_DIR = DROPBOX_FOLDER / file_name
+    DROPBOX_DIR = f"{DROPBOX_FOLDER}/{file_name}"
 
     # ---- CHECK DROPBOX -----
     try:
@@ -74,10 +72,10 @@ def download_file_from_dropbox(
 
     if OUTPUT_DIR.exists():
         if blocca_se_esistente:
-            print(f"-!- File già esistente -> Download interrotto: {OUTPUT_DIR}")
+            print(f"-!- File gia' esistente -> Download interrotto: {OUTPUT_DIR}")
             return
         else:
-            print(f"-!- File già esistente -> Verrà sovrascritto: {OUTPUT_DIR}")
+            print(f"-!- File gia' esistente -> Verra' sovrascritto: {OUTPUT_DIR}")
 
     # ---- DOWNLOAD -----
     dbx.files_download_to_file(str(OUTPUT_DIR), DROPBOX_DIR)
