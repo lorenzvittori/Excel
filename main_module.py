@@ -1,10 +1,8 @@
+## NOME FILE: main_module.py
+
 import pandas as pd
 from pathlib import Path
-
-
-#FORMATO DEI NOMI DEI FILE DI INPUT E OUTPUT
-def NOME_INPUT(YYYY, MM): return f"app_{YYYY}_{MM}.xlsx"
-def NOME_OUTPUT(YYYY, MM): return f"p_{YYYY}_{MM}.xlsx"
+import configuration as config
 
 
 DIZ_MESE_TO_NUMB = {
@@ -28,24 +26,24 @@ DIZ_NUMB_TO_MESE = {v: k for k, v in DIZ_MESE_TO_NUMB.items()}
 # STRUTTURALI
 def prepara_percorsi(
         anno: str,
-        mese_numb: str,
-        structure: dict,
+        mese_str: str,
+        struttura_repo: dict,
         flag_blocca_se_input_manca: bool = True, 
         flag_sovrascrivi_output: bool = False) -> dict | None:
     
     root_dir = Path(__file__).resolve().parent
-    dati_dir = root_dir / structure["MAIN_FOLDER"]
-    input_dir = dati_dir / structure["APP_FILE_FOLDER"]
-    output_dir = dati_dir / structure["PROCESSED_FOLDER"]
+    dati_dir = root_dir / struttura_repo["MAIN_FOLDER"]
+    input_dir = dati_dir / struttura_repo["APP_FILE_FOLDER"]
+    output_dir = dati_dir / struttura_repo["PROCESSED_FOLDER"]
 
-    input_file = input_dir / NOME_INPUT(anno, mese_numb)
-    output_file = output_dir / NOME_OUTPUT(anno, mese_numb)
-    additional_rows_csv = root_dir / structure["CSV_ADD_ROWS"]
+    input_file = input_dir / config.get_raw_name(anno = anno, mese_str = mese_str)
+    output_file = output_dir / config.get_processed_name(anno = anno, mese_str = mese_str)
+    additional_rows_csv = root_dir / struttura_repo["CSV_ADD_ROWS"]
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not input_file.exists():
-        print(f"\t-!- FILE {NOME_INPUT(anno, mese_numb)} MANCANTE", end="")
+        print(f"\t-!- FILE {config.get_raw_name(anno = anno, mese_str = mese_str)} MANCANTE", end="")
 
         if flag_blocca_se_input_manca:
             print("\n=" * 80)
@@ -63,12 +61,12 @@ def prepara_percorsi(
 
     if output_file.exists():
         if not flag_sovrascrivi_output:
-            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> IL PROCESSO SI INTERROMPE", end="\t")
+            print(f"\t-!- FILE {config.get_processed_name(anno = anno, mese_str = mese_str)} GIA' ESISTENTE -> IL PROCESSO SI INTERROMPE", end="\t")
             print("=" * 80)
             print("\nP R O C E S S O   T E R M I N A T O")
             raise SystemExit
         else:
-            print(f"\t-!- FILE {NOME_OUTPUT(anno, mese_numb)} GIA' ESISTENTE -> SOVRASCRITTO")
+            print(f"\t-!- FILE {config.get_processed_name(anno = anno, mese_str = mese_str)} GIA' ESISTENTE -> SOVRASCRITTO")
             
     return {
         "input_file": input_file,
@@ -76,10 +74,6 @@ def prepara_percorsi(
         "additional_rows_csv": additional_rows_csv,
     }
 
-def esporta_excel(df_spese: pd.DataFrame, df_entrate: pd.DataFrame, output_file: Path):
-    with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
-        df_spese.to_excel(writer, sheet_name="Spese", index=False)
-        df_entrate.to_excel(writer, sheet_name="Entrate", index=False)
     
 # FORMATTAZIONE E PULIZIA
 def seleziona_e_rinomina_colonne(df: pd.DataFrame, mappa_colonne: dict, nome_foglio: str) -> pd.DataFrame:
@@ -113,12 +107,12 @@ def aggiungi_righe_spese(
         df_spese: pd.DataFrame, 
         additional_rows_csv: Path, 
         anno: str, 
-        mese_numb: str,
+        mese_str: str,
         design: dict) -> pd.DataFrame:
     df_nuove_righe_raw = pd.read_csv(additional_rows_csv)
 
     df_nuove_righe_raw[design["COL_SPESE_DATA"]] = df_nuove_righe_raw["GiornoData"].apply(
-        lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_numb}/{anno}"
+        lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_str}/{anno}"
     )
     
     df_nuove_righe_raw[design["COL_SPESE_DATA"]] = pd.to_datetime(
@@ -141,14 +135,17 @@ def prepara_spese(
         input_file: Path, 
         additional_rows_csv: Path, 
         anno: str, 
-        mese_numb: str,
+        mese_str: str,
         design: dict,
         colonne_app_spese: dict) -> pd.DataFrame:
+    
+    NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
+    NOME_FOGLIO_ENTRATE = design["NOME_FOGLIO_ENTRATE"]
     
     #Lettura
     df_spese = pd.read_excel(
         input_file,
-        sheet_name="Spese",
+        sheet_name=NOME_FOGLIO_SPESE,
         skiprows=1,
         header=0
     )
@@ -159,7 +156,7 @@ def prepara_spese(
     df_spese = seleziona_e_rinomina_colonne(
         df=df_spese,
         mappa_colonne=mappa_colonne_spese,
-        nome_foglio="Spese"
+        nome_foglio=NOME_FOGLIO_SPESE
     )
 
     #Aggiunta di nuove righe
@@ -167,7 +164,7 @@ def prepara_spese(
         df_spese=df_spese,
         additional_rows_csv=additional_rows_csv,
         anno=anno,
-        mese_numb=mese_numb,
+        mese_str=mese_str,
         design=design
     )
     
@@ -182,7 +179,7 @@ def prepara_spese(
 # ENTRATE
 def prepara_entrate(
     input_file: Path, 
-    mese_numb: str, 
+    mese_str: str, 
     design: dict,
     colonne_app_entrate: dict) -> pd.DataFrame:
     
@@ -206,7 +203,7 @@ def prepara_entrate(
     # FORMATTAZIONE DATA
     df_entrate[design["COL_ENTRATE_DATA"]] = pd.to_datetime(df_entrate[design["COL_ENTRATE_DATA"]],errors="coerce",dayfirst=True)
 
-    df_entrate.insert(0, design["COL_ENTRATE_MESE"], int(mese_numb))
+    df_entrate.insert(0, design["COL_ENTRATE_MESE"], int(mese_str))
 
     df_entrate.sort_values(by=design["COL_ENTRATE_DATA"], inplace=True)
 
@@ -237,9 +234,9 @@ def stampa_spese_altro(df_spese: pd.DataFrame, design: dict):
 # ------------------------------------- FUNZIONE PRINCIPALE -------------------------------------
 def processa_mese(
         anno: str, 
-        mese_numb: str,
+        mese_str: str,
         design: dict,
-        structure: dict,
+        struttura_repo: dict,
         colonne_app: dict,
         flag_blocca_se_input_manca: bool = True, 
         flag_sovrascrivi_output: bool = False,
@@ -250,11 +247,15 @@ def processa_mese(
     
     percorsi = prepara_percorsi(
         anno=anno,
-        mese_numb=mese_numb,
-        structure=structure,
+        mese_str=mese_str,
+        struttura_repo=struttura_repo,
         flag_blocca_se_input_manca=flag_blocca_se_input_manca,
         flag_sovrascrivi_output=flag_sovrascrivi_output
     )
+    
+    
+    NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
+    NOME_FOGLIO_ENTRATE = design["NOME_FOGLIO_ENTRATE"]
 
     
     if percorsi is None:
@@ -269,21 +270,21 @@ def processa_mese(
         input_file=percorsi["input_file"],
         additional_rows_csv=percorsi["additional_rows_csv"],
         anno=anno,
-        mese_numb=mese_numb,
+        mese_str=mese_str,
         design=design,
         colonne_app_spese=colonne_app["COLONNE_SPESE"]
     )
 
     df_entrate = prepara_entrate(
         input_file=percorsi["input_file"],
-        mese_numb=mese_numb,
+        mese_str=mese_str,
         design=design,
         colonne_app_entrate=colonne_app["COLONNE_ENTRATE"]
     )
 
     if flag_stampa_duplicati and not flag_processa_tutti_i_mesi:
-        stampa_duplicati(df_spese, "Spese")
-        stampa_duplicati(df_entrate, "Entrate")
+        stampa_duplicati(df_spese, NOME_FOGLIO_SPESE)
+        stampa_duplicati(df_entrate, NOME_FOGLIO_ENTRATE)
     
     if flag_stampa_spese_altro and not flag_processa_tutti_i_mesi: 
         stampa_spese_altro(df_spese, design)
@@ -294,9 +295,7 @@ def processa_mese(
     df_entrate = formatta_dataframe_output(df_entrate, colonna_data=design["COL_ENTRATE_DATA"], colonna_importo=design["COL_ENTRATE_IMPORTO"])
     
     
-    # Esportazione
-    esporta_excel(
-        df_spese=df_spese,
-        df_entrate=df_entrate,
-        output_file=percorsi["output_file"]
-    )
+    # Esportazione    
+    with pd.ExcelWriter(percorsi["output_file"], engine="openpyxl") as writer:
+        df_spese.to_excel(writer, sheet_name=NOME_FOGLIO_SPESE, index=False)
+        df_entrate.to_excel(writer, sheet_name=NOME_FOGLIO_ENTRATE, index=False)

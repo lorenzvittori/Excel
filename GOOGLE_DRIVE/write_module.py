@@ -1,12 +1,14 @@
+## NOME FILE: write_module.py
+
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
-from pathlib import Path
 import json
+import configuration as config
 import os
 
 
-def get_google_client():
+def get_google_client(struttura_repo: dict) -> gspread.Client:
     SCOPES = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive.readonly"
@@ -20,7 +22,7 @@ def get_google_client():
         creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     else:
         # Fallback locale: legge da file
-        SERVICE_ACCOUNT_FILE = Path(__file__).resolve().parent / "google_service_account.json"
+        SERVICE_ACCOUNT_FILE = struttura_repo["FILE_GOOGLE_ACCOUNT"]
         if not SERVICE_ACCOUNT_FILE.exists():
             raise FileNotFoundError(f"File service account non trovato: {SERVICE_ACCOUNT_FILE}")
         creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
@@ -28,11 +30,16 @@ def get_google_client():
     return gspread.authorize(creds)
 
 
-def sync_month_local(client, anno: str, mese: str, base_path: str):
-    file_name = f"p_{anno}_{mese}.xlsx"
-    file_path = Path(base_path) / file_name
+def sync_month_local(
+        client: gspread.Client, 
+        anno: str, 
+        mese_str: str, 
+        struttura_repo: dict):
+    
+    file_name = config.get_processed_name(anno=anno, mese_str=mese_str)
+    file_path = struttura_repo["FOLD_PRC_TBT"] / file_name
 
-    sheet_name = mese
+    sheet_name = config.MESI[mese_str]["nome_foglio_associato"]
 
     # -------------------------
     # 1. CHECK FILE LOCALE
@@ -49,7 +56,8 @@ def sync_month_local(client, anno: str, mese: str, base_path: str):
     # -------------------------
     # 2. OPEN GOOGLE SHEET
     # -------------------------
-    sheet = client.open_by_key("18E_u3WGZUrUJIcHfoC9ylt_uJiE3XxJ7XQyQkJC85kI")
+    id_google_sheet = config.ID_GOOGLE_SHEET[anno]
+    sheet = client.open_by_key(id_google_sheet)
     ws = sheet.worksheet(sheet_name)
 
     # -------------------------
@@ -71,5 +79,5 @@ def sync_month_local(client, anno: str, mese: str, base_path: str):
         "B1"
     )
 
-    print(f"SYNC COMPLETATO {anno}-{mese}")
+    print(f"SYNC COMPLETATO {anno}-{mese_str}")
 
