@@ -196,10 +196,10 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     duplicati = df[df.duplicated(keep=False)]
 
     if not duplicati.empty:
-        print(f"\n\t-!- DUPLICATI TROVATI NELLE {nome_tabella.upper()}:")
+        print(f"\n\t[WARNING] \t DUPLICATI TROVATI NELLE {nome_tabella.upper()}:")
         print("\t" +duplicati.to_string(index=False).replace("\n", "\n\t"))
     else:
-        print(f"\n\t- {nome_tabella.upper()} senza duplicati")
+        print(f"\n\t[INFO] \t {nome_tabella.upper()} senza duplicati")
 
 def stampa_spese_altro(df_spese: pd.DataFrame, design: dict):
     spese_altro = df_spese[
@@ -207,10 +207,10 @@ def stampa_spese_altro(df_spese: pd.DataFrame, design: dict):
     ]
 
     if not spese_altro.empty:
-        print('\n\t- SPESSE CON CATEGORIA "ALTRO":')
+        print(f"\n[INFO] \t SPESSE CON CATEGORIA \"ALTRO\":")
         print("\t" + spese_altro.sort_values(by=design["COL_SPESE_DATA"]).to_string(index=False).replace("\n","\n\t"))
     else:
-        print('Nessuna spesa con categoria "Altro".')
+        print(f"[INFO] \t Nessuna spesa con categoria \"Altro\".")
 
 # ------------------------------------- FUNZIONE PRINCIPALE -------------------------------------
 def processa_mese(
@@ -236,11 +236,11 @@ def processa_mese(
     DIRECTORY_FILE_ADD_ROWS = struttura_repo["FILE_ADD_ROWS"]
 
     if not DIRECTORY_FILE_RAW.exists():
-        print(f"\t-!- FILE {NOME_FILE_RAW} MANCANTE", end="")
+        print(f"\t[ERROR] \t {NOME_FILE_RAW} MANCANTE", end="")
         raise SystemExit
     
     if not DIRECTORY_FILE_ADD_ROWS.exists():
-        print(f"\t-!- FILE {DIRECTORY_FILE_ADD_ROWS} MANCANTE", end="")
+        print(f"\t[ERROR] \t {DIRECTORY_FILE_ADD_ROWS} MANCANTE", end="")
         raise SystemExit
     
     if flag_stampa_percorsi and not flag_processa_tutti_i_mesi:

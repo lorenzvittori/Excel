@@ -60,29 +60,27 @@ def download_file_from_dropbox(
     try:
         dbx.files_get_metadata(DROPBOX_DIR)
     except ApiError:
-        print(f"-!- File non trovato su Dropbox: {DROPBOX_DIR}")
-        print("File disponibili nella cartella remota:")
+        print(f"[ERROR] \t File non trovato su Dropbox: {DROPBOX_DIR}")
+        print("[INFO] \t File disponibili nella cartella remota:")
         for f in dbx.files_list_folder(DROPBOX_FOLDER).entries: # type: ignore
             print(f"  - {f.name}")
         raise FileNotFoundError(f"File non presente su Dropbox: {DROPBOX_DIR}")
 
     # ---- CHECK LOCALE -----
     if not DOWNLOAD_FOLDER.exists():
+        print(f"[ERROR] \t Cartella di destinazione non esistente: {DOWNLOAD_FOLDER}")
         raise FileNotFoundError(f"Cartella di destinazione non esistente: {DOWNLOAD_FOLDER}")
 
     if OUTPUT_DIR.exists():
         if blocca_se_esistente:
-            print(f"-!- File gia' esistente -> Download interrotto: {OUTPUT_DIR}")
+            print(f"[ERROR] \t File gia' esistente -> Download interrotto: {OUTPUT_DIR}")
             return
         else:
-            print(f"-!- File gia' esistente -> Verra' sovrascritto: {OUTPUT_DIR}")
+            print(f"[WARNING] \t File gia' esistente -> sovrascritto: {OUTPUT_DIR}")
 
     # ---- DOWNLOAD -----
     dbx.files_download_to_file(str(OUTPUT_DIR), DROPBOX_DIR)
-    print(f"Download completato: {OUTPUT_DIR}")
-    
-        
-    print("File creato in:", OUTPUT_DIR)
-    print("Esiste davvero:", OUTPUT_DIR.exists())
+    print(f"[OK] \t Download completato: {OUTPUT_DIR}")    
+    print(f"[INFO] \t File creato in: {OUTPUT_DIR}")
 
 
