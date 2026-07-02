@@ -9,8 +9,8 @@ from pathlib import Path
 import pandas as pd
 import os
 
-ANNO = os.environ["ANNO"]
-MESE = os.environ["MESE"]
+ANNO = os.getenv("ANNO", "2026")
+MESE = os.getenv("MESE", "06")
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN
