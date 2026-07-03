@@ -67,7 +67,7 @@ def get_dataframe_from_dropbox(
     _, response = dbx.files_download(DROPBOX_DIR)           # type: ignore
     print(f"[OK] \t File letto da Dropbox: {DROPBOX_DIR}")
 
-    return pd.read_excel(response.content, sheet_name=sheet_name)
+    return pd.read_excel(io.BytesIO(response.content), sheet_name=sheet_name)
 
 
 def download_file_from_dropbox(
