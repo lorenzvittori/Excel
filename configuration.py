@@ -31,7 +31,7 @@ STRUTTURA_REPOSITORY = {
     "FILE_ADD_ROWS":        Path("Dati/additional_rows.csv"),
     "FOLD_DROPBOX":         Path("DROPBOX"),
     "FILE_DROPBOX_CRED":    Path("DROPBOX/dropbox_credentials.json"),
-    "FILE_DROPBOX_TOKEN":   Path("DROPBOX/token_dropbox.json"),
+    "FILE_DROPBOX_TOKEN":   Path("DROPBOX/dropbox_token.json"),
     "FOLD_GOOGLE":          Path("GOOGLE_DRIVE"),
     "FILE_GOOGLE_ACCOUNT":  Path("GOOGLE_DRIVE/google_service_account.json")
 }
