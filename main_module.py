@@ -72,7 +72,9 @@ def prepara_spese(
     
 
     #Pulizia
+ print(df.iloc[0])
 df_spese_raw.iloc[1:].reset_index(drop=True)
+ print(df.iloc[0])
 
     mappa_colonne_spese = {colonne_app_spese[k]: design[k] for k in colonne_app_spese}
 
