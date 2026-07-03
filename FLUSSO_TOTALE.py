@@ -92,6 +92,14 @@ if __name__ == "__main__":
         flag_sovrascrivi_celle=True
     )
     
+    db_module.upload_dataframe_to_dropbox(
+        dbx = dbx,
+        dropbox_folder = DROPBOX_PRC_FOLDER,
+        file_name = NAME_PROCESSED_FILE,
+        df = PRC_DATAFRAME,
+        flag_sovrascrivi = True
+    )
+    
     
     print("[INFO] \t Scrittura su Google Drive completata")
     print("[INFO] \t Flusso completo terminato")
