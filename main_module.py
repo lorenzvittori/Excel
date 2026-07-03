@@ -122,7 +122,6 @@ def prepara_entrate(
 
     return df_entrate
 
-
 # CONTROLLI
 def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     duplicati = df[df.duplicated(keep=False)]
