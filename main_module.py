@@ -1,4 +1,3 @@
-## NOME FILE: main_module.py
 import pandas as pd
 from pathlib import Path
 import configuration as config
@@ -69,12 +68,15 @@ def prepara_spese(
         colonne_app_spese: dict) -> pd.DataFrame:
     
     NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
-    
 
-    #Pulizia
- print(df.iloc[0])
-df_spese_raw.iloc[1:].reset_index(drop=True)
- print(df.iloc[0])
+    # --- DEBUG TEMPORANEO: rimuovi una volta capita la causa ---
+    print(f"[DEBUG] Colonne trovate nel foglio '{NOME_FOGLIO_SPESE}': {df_spese_raw.columns.tolist()}")
+    print(f"[DEBUG] Prime righe del foglio '{NOME_FOGLIO_SPESE}':")
+    print(df_spese_raw.head(3))
+    # -------------------------------------------------------------
+
+    # Pulizia: rimuove la prima riga (es. intestazione duplicata / riga vuota)
+    df_spese_raw = df_spese_raw.iloc[1:].reset_index(drop=True)
 
     mappa_colonne_spese = {colonne_app_spese[k]: design[k] for k in colonne_app_spese}
 
