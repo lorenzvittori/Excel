@@ -1,13 +1,13 @@
 ## NOME FILE: FLUSSO_TOTALE.py
-from time import time
-
 from DROPBOX import dropbox_module as db_module
 from GOOGLE_DRIVE import write_module as gd_module
+from pathlib import Path
+from typing import cast
 import main_module as m_module
 import configuration as config  
-from pathlib import Path
 import pandas as pd
 import os
+
 
 ANNO = os.getenv("ANNO", "2026")
 MESE = os.getenv("MESE", "06")
@@ -19,28 +19,46 @@ NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
 
 if __name__ == "__main__":
     #DOWNLOAD FILE DAL DROPBOX
+    #fase 0
+    
+    DROPBOX_CRED = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
+    DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
+    
+    DROPBOX_RAW_FOLDER = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
+    DROPBOX_PRC_FOLDER = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
+    
+    LOCAL_RAW_FOLDER = STRUTTURA_REPOSITORY["FOLD_RAW_TBT"]
+    LOCAL_PRC_FOLDER = STRUTTURA_REPOSITORY["FOLD_PRC_TBT"]
+    
+    NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
+    NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
+    
+    dbx = db_module.get_dropbox_client(
+        dropbox_credential = DROPBOX_CRED,
+        dropbox_token = DROPBOX_TOKEN
+    )
+    
     print("="*80)
     print(f"INIZIO FLUSSO COMPLETO: ANNO {ANNO} - MESE {MESE}")
     print(f"@ Fase 1 -- Download file dal Dropbox e salvataggio della tabella raw --")
     
-    dbx = db_module.get_dropbox_client(struttura_repo=STRUTTURA_REPOSITORY)
+    
     print("[INFO] \t Connesso al Dropbox")
     
-    db_module.download_file_from_dropbox(
+    RAW_DATAFRAME = db_module.get_dataframe_from_dropbox(
         dbx = dbx,
-        anno = ANNO,
-        mese_str = MESE,
-        struttura_repo=STRUTTURA_REPOSITORY,
-        struttura_dbox=STRUTTURA_DROPBOX,
-        blocca_se_esistente=False
+        dropbox_folder = DROPBOX_RAW_FOLDER,
+        file_name = NAME_RAW_FILE
     )
-    print("[INFO] \t Download completato")
+    
+    RAW_DATAFRAME = cast(dict[str, pd.DataFrame], RAW_DATAFRAME)
     
     print("")
     
     print(f"@ Fase 2 -- Pulizia e formattazione della tabella --")
     #PROCESSA MESE
-    m_module.processa_mese(
+    PRC_DATAFRAME = m_module.processa_dataframe(
+        df_raw=RAW_DATAFRAME,
         anno=ANNO,
         mese_str=MESE,
         design = DESIGN,
@@ -53,23 +71,28 @@ if __name__ == "__main__":
         flag_processa_tutti_i_mesi = False,
         flag_stampa_spese_altro = False)
     
+    
     print("[INFO] \t Pulizia e formattazione completata")
           
     print("")
     
     print(f"@ Fase 3 -- Scrittura su Google Drive --")
     
-    client = gd_module.get_google_client(struttura_repo=STRUTTURA_REPOSITORY)
+    GOOGLE_SERVICE_ACCOUNT = STRUTTURA_REPOSITORY["FILE_GOOGLE_ACCOUNT"]
+    client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
+    
     print("[INFO] \t Connesso a Google Drive")
     #SCRITTURA SU GOOGLE DRIVE
 
     gd_module.sync_month_local(
-        client = client,
-        anno = ANNO,
-        mese_str = MESE,
-        struttura_repo = STRUTTURA_REPOSITORY,
-        flag_sovrascrivi_celle = True
-        )
+        client=client,
+        anno=ANNO,
+        mese_str=MESE,
+        df_prc=PRC_DATAFRAME,
+        flag_sovrascrivi_celle=True
+    )
+    
+    
     print("[INFO] \t Scrittura su Google Drive completata")
     print("[INFO] \t Flusso completo terminato")
     print("="*80)

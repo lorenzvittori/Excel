@@ -1,20 +1,24 @@
 ## NOME FILE: dropbox_module.py
+from pathlib import Path
 import dropbox
 from dropbox.exceptions import ApiError, AuthError
-import configuration as config
 import json
 import os
+import pandas as pd
+import io
 
 
-def get_dropbox_client(struttura_repo: dict) -> dropbox.Dropbox:
+def get_dropbox_client(
+        dropbox_credential: Path, 
+        dropbox_token: Path) -> dropbox.Dropbox:
     APP_KEY = os.environ.get("DROPBOX_APP_KEY")
     APP_SECRET = os.environ.get("DROPBOX_APP_SECRET")
     REFRESH_TOKEN = os.environ.get("DROPBOX_REFRESH_TOKEN")
 
     # Fallback locale: legge da file
     if not all([APP_KEY, APP_SECRET, REFRESH_TOKEN]):
-        DROPBOX_CRED    = struttura_repo["FILE_DROPBOX_CRED"]
-        DROPBOX_TOKEN   = struttura_repo["FILE_DROPBOX_TOKEN"]
+        DROPBOX_CRED    = dropbox_credential
+        DROPBOX_TOKEN   = dropbox_token
 
         if not DROPBOX_CRED.exists():
             raise FileNotFoundError(f"File credenziali non trovato: {DROPBOX_CRED}")
@@ -40,19 +44,43 @@ def get_dropbox_client(struttura_repo: dict) -> dropbox.Dropbox:
         raise ValueError("Credenziali Dropbox non valide.")
 
 
+def get_dataframe_from_dropbox(
+        dbx: dropbox.Dropbox,
+        dropbox_folder: str,
+        file_name: str,
+        sheet_name=None) -> dict[str, pd.DataFrame] | pd.DataFrame:
+
+    DROPBOX_FOLDER = dropbox_folder
+    DROPBOX_DIR = f"{DROPBOX_FOLDER}/{file_name}"
+
+    # ---- CHECK DROPBOX -----
+    try:
+        dbx.files_get_metadata(DROPBOX_DIR)
+    except ApiError:
+        print(f"[ERROR] \t File non trovato su Dropbox: {DROPBOX_DIR}")
+        print("[INFO] \t File disponibili nella cartella remota:")
+        for f in dbx.files_list_folder(str(DROPBOX_FOLDER)).entries:  # type: ignore
+            print(f"  - {f.name}")
+        raise FileNotFoundError(f"File non presente su Dropbox: {DROPBOX_DIR}")
+
+    # ---- DOWNLOAD IN MEMORIA -----
+    _, response = dbx.files_download(DROPBOX_DIR)           # type: ignore
+    print(f"[OK] \t File letto da Dropbox: {DROPBOX_DIR}")
+
+    return pd.read_excel(response.content, sheet_name=sheet_name)
+
+
 def download_file_from_dropbox(
         dbx: dropbox.Dropbox,
-        anno: str,
-        mese_str: str,
-        struttura_repo: dict,
-        struttura_dbox: dict,
+        dropbox_folder: str,
+        file_name: str,
+        local_folder: Path,
         blocca_se_esistente: bool = True):
     
 
     # ---- DIRECTORY -----
-    DROPBOX_FOLDER = struttura_dbox["FOLD_RAW_TBT"]
-    file_name = config.get_raw_name(anno = anno, mese_str = mese_str)
-    DOWNLOAD_FOLDER = struttura_repo["FOLD_RAW_TBT"]
+    DROPBOX_FOLDER = dropbox_folder
+    DOWNLOAD_FOLDER = local_folder
     OUTPUT_DIR  = DOWNLOAD_FOLDER / file_name
     DROPBOX_DIR = f"{DROPBOX_FOLDER}/{file_name}"
 
@@ -84,3 +112,26 @@ def download_file_from_dropbox(
     print(f"[INFO] \t File creato in: {OUTPUT_DIR}")
 
 
+def upload_dataframe_to_dropbox(
+        dbx: dropbox.Dropbox,
+        dropbox_folder: str,
+        file_name: str,
+        df: pd.DataFrame | dict[str, pd.DataFrame],
+        flag_sovrascrivi: bool = True):
+
+    # ---- DATAFRAME -> BYTES IN MEMORIA -----
+    buffer = io.BytesIO()
+    
+    if isinstance(df, dict):
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            for sheet_name, sheet_df in df.items():
+                sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
+    else:
+        df.to_excel(buffer, index=False)
+    
+    # ---- UPLOAD -----
+    DROPBOX_DIR = f"{dropbox_folder}/{file_name}"
+    mode = dropbox.files.WriteMode.overwrite if flag_sovrascrivi else dropbox.files.WriteMode.add # type: ignore
+
+    dbx.files_upload(buffer.getvalue(), DROPBOX_DIR, mode=mode)
+    print(f"[OK] \t Upload completato: {DROPBOX_DIR}")

@@ -5,9 +5,10 @@ import pandas as pd
 import json
 import configuration as config
 import os
+from pathlib import Path
 
 
-def get_google_client(struttura_repo: dict) -> gspread.Client:
+def get_google_client(google_service_account: Path) -> gspread.Client:
     SCOPES = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive.readonly"
@@ -21,10 +22,9 @@ def get_google_client(struttura_repo: dict) -> gspread.Client:
         creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     else:
         # Fallback locale: legge da file
-        SERVICE_ACCOUNT_FILE = struttura_repo["FILE_GOOGLE_ACCOUNT"]
-        if not SERVICE_ACCOUNT_FILE.exists():
-            raise FileNotFoundError(f"File service account non trovato: {SERVICE_ACCOUNT_FILE}")
-        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        if not google_service_account.exists():
+            raise FileNotFoundError(f"File service account non trovato: {google_service_account}")
+        creds = Credentials.from_service_account_file(google_service_account, scopes=SCOPES)
 
     return gspread.authorize(creds)
 
@@ -32,23 +32,12 @@ def get_google_client(struttura_repo: dict) -> gspread.Client:
 def sync_month_local(
         client: gspread.Client,
         anno: str,
-        struttura_repo: dict,
         mese_str: str,
+        df_prc: dict[str, pd.DataFrame],
         flag_sovrascrivi_celle: bool = False):
 
-    file_name = config.get_processed_name(anno=anno, mese_str=mese_str)
-    file_path = struttura_repo["FOLD_PRC_TBT"] / file_name
-
+    # 1. GOOGLE SHEET
     sheet_name = config.MESI[mese_str]["nome_foglio_associato"]
-
-    # 1. FILE LOCALE
-    if not file_path.exists():
-        raise FileNotFoundError(f"[ERROR] \t File locale mancante: {file_path}")
-
-    df = pd.read_excel(file_path, sheet_name="Spese")
-    df = df.fillna("")
-
-    # 2. GOOGLE SHEET
     id_google_sheet = config.ID_GOOGLE_SHEET[anno]
 
     try:
@@ -63,7 +52,7 @@ def sync_month_local(
     except gspread.exceptions.WorksheetNotFound:
         raise FileNotFoundError(f"[ERROR] \t Worksheet non trovato: {sheet_name}")
 
-    # 3. CHECK CELLE
+    # 2. CHECK CELLE
     check = ws.get("B2:D2")
     row = check[0] if check else ["", "", ""]
 
@@ -73,9 +62,16 @@ def sync_month_local(
         else:
             print(f"[INFO] \t Foglio non vuoto - > SOVRASCRIVO CELLE")
 
-    # 4. WRITE
+    # 3. WRITE
+    NOME_FOGLIO_SPESE   = config.DESIGN["NOME_FOGLIO_SPESE"]
+    NOME_FOGLIO_ENTRATE = config.DESIGN["NOME_FOGLIO_ENTRATE"]
+    df_spese_raw = pd.DataFrame(df_prc[NOME_FOGLIO_SPESE])
+    #df_entrate_raw = pd.DataFrame(df_prc[NOME_FOGLIO_ENTRATE])
+    
+    # 3.1 WRITE SPESA
+    ws = sheet.worksheet(NOME_FOGLIO_SPESE)
     ws.update(
-        [df.columns.tolist()] + df.values.tolist(),
+        [df_spese_raw.columns.tolist()] + df_spese_raw.values.tolist(),
         "B1"
     )
 

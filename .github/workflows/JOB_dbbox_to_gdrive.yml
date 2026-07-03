@@ -16,9 +16,6 @@ jobs:
   flusso:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     env:
       ANNO: ${{ inputs.anno }}
       MESE: ${{ inputs.mese }}
@@ -41,15 +38,3 @@ jobs:
 
       - name: Esegui flusso
         run: python FLUSSO_TOTALE.py
-
-      - name: Enable git auth
-        run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-
-      - name: Commit e push risultati
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add Dati/TabelleApp/ Dati/TabelleProcessed/
-          git commit -m "Update flusso spese ${ANNO}-${MESE}" || echo "No changes"
-          git push

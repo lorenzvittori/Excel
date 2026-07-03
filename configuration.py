@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def get_raw_name(anno: str, mese_str: str): return f"app_{anno}_{mese_str}.xlsx"
-def get_processed_name(anno: str, mese_str: str): return f"p_{anno}_{mese_str}.xlsx"
+def get_prc_name(anno: str, mese_str: str): return f"p_{anno}_{mese_str}.xlsx"
 
 
 MESI = {
@@ -37,7 +37,8 @@ STRUTTURA_REPOSITORY = {
 }
 
 STRUTTURA_DROPBOX = {
-    "FOLD_RAW_TBT":     "/TabelleApp",
+    "FOLD_RAW_TBT":     "/sheets_RAW",
+    "FOLD_PRC_TBT":     "/sheets_PROCESSED"
 }
 
 ID_GOOGLE_SHEET = {
