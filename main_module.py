@@ -69,14 +69,13 @@ def prepara_spese(
     
     NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
 
-    # --- DEBUG TEMPORANEO: rimuovi una volta capita la causa ---
-    print(f"[DEBUG] Colonne trovate nel foglio '{NOME_FOGLIO_SPESE}': {df_spese_raw.columns.tolist()}")
-    print(f"[DEBUG] Prime righe del foglio '{NOME_FOGLIO_SPESE}':")
-    print(df_spese_raw.head(3))
-    # -------------------------------------------------------------
-
-    # Pulizia: rimuove la prima riga (es. intestazione duplicata / riga vuota)
+    # Il foglio ha una riga di titolo extra in cima (es. "elenco spese per il
+    # periodo..."): pandas la interpreta come header, mentre i veri nomi
+    # colonna (Data e ora, Categoria, ecc.) si trovano nella prima riga di
+    # dati. Li promuoviamo a header.
+    df_spese_raw.columns = df_spese_raw.iloc[0]
     df_spese_raw = df_spese_raw.iloc[1:].reset_index(drop=True)
+    df_spese_raw.columns.name = None
 
     mappa_colonne_spese = {colonne_app_spese[k]: design[k] for k in colonne_app_spese}
 
