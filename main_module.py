@@ -109,6 +109,13 @@ def prepara_entrate(
     design: dict,
     colonne_app_entrate: dict) -> pd.DataFrame:
 
+    # Il foglio ha una riga di titolo extra in cima: pandas la interpreta
+    # come header, mentre i veri nomi colonna si trovano nella prima riga
+    # di dati. Li promuoviamo a header.
+    df_entrate_raw.columns = df_entrate_raw.iloc[0]
+    df_entrate_raw = df_entrate_raw.iloc[1:].reset_index(drop=True)
+    df_entrate_raw.columns.name = None
+
     #Pulizia
     mappa_colonne_entrate = {colonne_app_entrate[k]: design[k] for k in colonne_app_entrate}
 
