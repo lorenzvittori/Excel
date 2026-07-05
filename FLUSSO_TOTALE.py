@@ -107,7 +107,9 @@ if __name__ == "__main__":
     colonne_spse_attese = sorted(config.NOMI_COLONNE_APP["COLONNE_SPESE"].values())
 
     if colonne_spese_attuali != colonne_spse_attese:
-        print(f"[ERROR]\t- Colonne nel foglio spese: {colonne_spese_attuali}")
+        print(f"[ERROR]\t- Colonne nel foglio spese:")
+        print("\t\t colonne attuali : {colonne_spese_attuali}")
+        print("\t\t colonne attese : {colonne_spese_attese}")
         raise ValueError 
 
     gd_module.sync_month_local(
