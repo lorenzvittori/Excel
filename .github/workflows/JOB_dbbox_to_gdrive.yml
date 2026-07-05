@@ -3,13 +3,17 @@ name: Flusso Spese
 on:
   workflow_dispatch:
     inputs:
+      automatico:
+          description: "1 se determina automaticamente i file da processare"
+          required: true
+          type: boolean
       anno:
         description: "Anno (es. 2026)"
-        required: true
+        required: false
         type: string
       mese:
         description: "Mese (es. 06)"
-        required: true
+        required: false
         type: string
 
 jobs:
@@ -17,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      FLAG_AUTO_ANNO_MESE: ${{ inputs.automatico }}
       ANNO: ${{ inputs.anno }}
       MESE: ${{ inputs.mese }}
       DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}

@@ -9,10 +9,15 @@ import pandas as pd
 import os
 
 
-FLAG_AUTO_ANNO_MESE = True
-
+FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", "true").lower() == "true"
 ANNO = os.getenv("ANNO", "2026")
 MESE = os.getenv("MESE", "07")
+
+if not FLAG_AUTO_ANNO_MESE and (not ANNO or not MESE):
+    print("[ERROR]\t Modalità manuale (automatico=false) richiede ANNO e MESE specificati")
+    raise SystemExit
+
+
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN
