@@ -104,7 +104,7 @@ if __name__ == "__main__":
     PRC_SPESE_DATAFRAME = PRC_DATAFRAME[FOGLIO_SPESE]
 
     colonne_spese_attuali = sorted(PRC_SPESE_DATAFRAME.columns)
-    colonne_spese_attese = sorted(config.NOMI_COLONNE_APP["COLONNE_SPESE"].values())
+    colonne_spese_attese = sorted([DESIGN[x] for x in NOMI_COLONNE_APP["COLONNE_SPESE"].keys()])
 
     if colonne_spese_attuali != colonne_spese_attese:
         print(f"[ERROR]\t- Colonne nel foglio spese:")
