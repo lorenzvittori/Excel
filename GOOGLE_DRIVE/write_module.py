@@ -43,14 +43,14 @@ def sync_month_local(
     try:
         sheet = client.open_by_key(id_google_sheet)
     except gspread.exceptions.SpreadsheetNotFound:
-        raise FileNotFoundError(f"[ERROR] \t Google Sheet non trovato: {id_google_sheet}")
+        raise FileNotFoundError(f"[ERROR]\t Google Sheet non trovato: {id_google_sheet}")
     except gspread.exceptions.APIError as e:
-        raise RuntimeError(f"[ERROR] \t API Google Sheets: {e}")
+        raise RuntimeError(f"[ERROR]\t API Google Sheets: {e}")
 
     try:
         ws = sheet.worksheet(NOME_SHEET_MESE)
     except gspread.exceptions.WorksheetNotFound:
-        raise FileNotFoundError(f"[ERROR] \t Worksheet non trovato: {NOME_SHEET_MESE}")
+        raise FileNotFoundError(f"[ERROR]\t Worksheet non trovato: {NOME_SHEET_MESE}")
     
     
     NOME_FOGLIO_SPESE   = config.DESIGN["NOME_FOGLIO_SPESE"]
@@ -63,10 +63,10 @@ def sync_month_local(
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
-            print(f"[ERROR] \t Foglio non vuoto: {NOME_SHEET_MESE}")
-            raise ValueError
+            print(f"[ERROR]\t Foglio non vuoto: {NOME_SHEET_MESE}")
+            raise SystemExit
         else:
-            print(f"[INFO] \t Foglio non vuoto - > SOVRASCRIVO CELLE")
+            print(f"[INFO]\t Foglio non vuoto - > SOVRASCRIVO CELLE")
             
     # 2.2 CONTROLLO CHE NON HO PIU DI 500 RIGHE DA SCRIVERE:
     count_rows = len(df_spese_raw.index)
@@ -83,7 +83,7 @@ def sync_month_local(
     # 3. WRITE
     # 3.1 ELIMINO TUTTI I VALORI DELLE CELLE B2:D550
     ws.batch_clear(["B2:D550"])
-    print(f"[INFO] \t Celle B2:D550 svuotate prima della scrittura")
+    print(f"[INFO]\t Celle B2:D550 svuotate prima della scrittura")
     
     
     

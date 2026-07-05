@@ -10,13 +10,13 @@ import os
 
 
 ANNO = os.getenv("ANNO", "2026")
-MESE = os.getenv("MESE", "05")
+MESE = os.getenv("MESE", "07")
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN
 NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
 
-FLAG_SOVRASCRIVI_SHEET = False
+FLAG_SOVRASCRIVI_SHEET = True
 
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print(f"@ Fase 1 -- Download file dal Dropbox e salvataggio della tabella raw --")
     
     
-    print("[INFO] \t Connesso al Dropbox")
+    print("[INFO]\t Connesso al Dropbox")
     
     RAW_DATAFRAME = db_module.get_dataframe_from_dropbox(
         dbx = dbx,
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         flag_stampa_spese_altro = False)
     
     
-    print("[INFO] \t Pulizia e formattazione completata")
+    print("[INFO]\t Pulizia e formattazione completata")
           
     print("")
     
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     GOOGLE_SERVICE_ACCOUNT = STRUTTURA_REPOSITORY["FILE_GOOGLE_ACCOUNT"]
     client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
     
-    print("[INFO] \t Connesso a Google Drive")
+    print("[INFO]\t Connesso a Google Drive")
     #SCRITTURA SU GOOGLE DRIVE
     
     #Controlla che il file spese abbia le giuste colonne:
@@ -131,6 +131,6 @@ if __name__ == "__main__":
     )
     
     
-    print("[INFO] \t Scrittura su Google Drive completata")
-    print("[INFO] \t Flusso completo terminato")
+    print("[INFO]\t Scrittura su Google Drive completata")
+    print("[INFO]\t Flusso completo terminato")
     print("="*80)
