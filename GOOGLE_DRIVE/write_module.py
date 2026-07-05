@@ -90,8 +90,9 @@ def sync_month_local(
     #df_entrate_raw = pd.DataFrame(df_prc[NOME_FOGLIO_ENTRATE])
     
     # 3.2 WRITE SPESA
+    df_spese_raw_clean = df_spese_raw.fillna("")
     ws.update(
-        [df_spese_raw.columns.tolist()] + df_spese_raw.values.tolist(),
+        [df_spese_raw_clean.columns.tolist()] + df_spese_raw_clean.values.tolist(),
         "B1"
     )
 
