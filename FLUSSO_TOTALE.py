@@ -10,7 +10,7 @@ import os
 
 
 ANNO = os.getenv("ANNO", "2026")
-MESE = os.getenv("MESE", "06")
+MESE = os.getenv("MESE", "07")
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN
