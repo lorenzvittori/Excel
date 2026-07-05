@@ -30,6 +30,9 @@ if __name__ == "__main__":
     LOCAL_RAW_FOLDER = STRUTTURA_REPOSITORY["FOLD_RAW_TBT"]
     LOCAL_PRC_FOLDER = STRUTTURA_REPOSITORY["FOLD_PRC_TBT"]
     
+    FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
+    FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
+    
     NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
     NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
     
@@ -51,7 +54,20 @@ if __name__ == "__main__":
         file_name = NAME_RAW_FILE
     )
     
+    if isinstance(RAW_DATAFRAME, pd.DataFrame):
+        print("[ERROR]\t- Non ci sono i fogli SPESE ed ENTRATE")
+        raise SystemExit
+    
     RAW_DATAFRAME = cast(dict[str, pd.DataFrame], RAW_DATAFRAME)
+    
+    if FOGLIO_SPESE not in RAW_DATAFRAME.keys():
+        print(f"[ERROR]\t- Non è presente il foglio {FOGLIO_SPESE} nell'excel ")
+        raise SystemExit
+    
+    if FOGLIO_ENTRATE not in RAW_DATAFRAME.keys():
+        print(f"[ERROR]\t- Non è presente il foglio {FOGLIO_ENTRATE} nell'excel ")
+        raise SystemExit 
+    
     
     print("")
     
@@ -83,6 +99,16 @@ if __name__ == "__main__":
     
     print("[INFO] \t Connesso a Google Drive")
     #SCRITTURA SU GOOGLE DRIVE
+    
+    #Controlla che il file spese abbia le giuste colonne:
+    PRC_SPESE_DATAFRAME = PRC_DATAFRAME[FOGLIO_SPESE]
+
+    colonne_spese_attuali = sorted(PRC_SPESE_DATAFRAME.columns)
+    colonne_spse_attese = sorted(config.NOMI_COLONNE_APP["COLONNE_SPESE"].values())
+
+    if colonne_spese_attuali != colonne_spse_attese:
+        print(f"[ERROR]\t- Colonne nel foglio spese: {colonne_spese_attuali}")
+        raise ValueError 
 
     gd_module.sync_month_local(
         client=client,

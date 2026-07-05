@@ -7,22 +7,15 @@ from pathlib import Path
 DROPBOX_CRED = config.STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
 DROPBOX_TOKEN = config.STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
 DROPBOX_FOLDER = config.STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
-FILE_NAME = "p_2026_06.xlsx"
-FILE_PATH = Path("Dati/TabelleProcessed") / FILE_NAME
+FILE_NAME = "app_2026_06.xlsx"
+FILE_PATH = Path("Dati/TabelleApp") / FILE_NAME
 dbx = db_module.get_dropbox_client(DROPBOX_CRED, DROPBOX_TOKEN)
 
-DF = pd.read_excel(
-    FILE_PATH,
-    sheet_name="Spese",
-    skiprows=1,
-    header=0
-)
+DF = pd.read_excel(FILE_PATH, header=None)
 
-db_module.upload_dataframe_to_dropbox(
-    dbx=dbx,
-    dropbox_folder=DROPBOX_FOLDER,
-    file_name=FILE_NAME,
-    df=DF,
-    flag_sovrascrivi=True
-)
-    
+
+DF.columns = DF.iloc[1] 
+DF.columns.name = None     
+print(DF.head(3))              
+DF = DF.iloc[2:].reset_index(drop=True)         
+print(DF.head(3))

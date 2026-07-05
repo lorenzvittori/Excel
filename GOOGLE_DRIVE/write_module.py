@@ -37,7 +37,7 @@ def sync_month_local(
         flag_sovrascrivi_celle: bool = False):
 
     # 1. GOOGLE SHEET
-    sheet_name = config.MESI[mese_str]["nome_foglio_associato"]
+    NOME_SHEET_MESE = config.MESI[mese_str]["nome_foglio_associato"]
     id_google_sheet = config.ID_GOOGLE_SHEET[anno]
 
     try:
@@ -48,28 +48,48 @@ def sync_month_local(
         raise RuntimeError(f"[ERROR] \t API Google Sheets: {e}")
 
     try:
-        ws = sheet.worksheet(sheet_name)
+        ws = sheet.worksheet(NOME_SHEET_MESE)
     except gspread.exceptions.WorksheetNotFound:
-        raise FileNotFoundError(f"[ERROR] \t Worksheet non trovato: {sheet_name}")
+        raise FileNotFoundError(f"[ERROR] \t Worksheet non trovato: {NOME_SHEET_MESE}")
+    
+    
+    NOME_FOGLIO_SPESE   = config.DESIGN["NOME_FOGLIO_SPESE"]
+    df_spese_raw = pd.DataFrame(df_prc[NOME_FOGLIO_SPESE])
 
-    # 2. CHECK CELLE
+    # 2. CHECK
+    # 2.1 CONTROLLO SE CI SONO VALORI PRESENTI SUL FOLGIO
     check = ws.get("B2:D2")
     row = check[0] if check else ["", "", ""]
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
-            raise RuntimeError(f"[ERROR] \t Foglio non vuoto: {sheet_name}")
+            raise RuntimeError(f"[ERROR] \t Foglio non vuoto: {NOME_SHEET_MESE}")
         else:
             print(f"[INFO] \t Foglio non vuoto - > SOVRASCRIVO CELLE")
-
+            
+    # 2.2 CONTROLLO CHE NON HO PIU DI 500 RIGHE DA SCRIVERE:
+    count_rows = len(df_spese_raw.index)
+    if count_rows > 500:
+        print("[WARN]\t - Stai scrivendo più di 500 righe")
+        
+    # 2.3 CONTROLLO CHE STO SCRIVENDO IL NUMERO DIUGSTO DI COLONNE
+    count_colums = len(df_spese_raw.columns)
+    if count_colums > config.NUMERO_COLONNE_SHEET_SPESE:
+        print(f"[ERROR]\t- Stai scrivendo più di {config.NUMERO_COLONNE_SHEET_SPESE} colonne")
+        raise ValueError
+    
+    
     # 3. WRITE
-    NOME_FOGLIO_SPESE   = config.DESIGN["NOME_FOGLIO_SPESE"]
-    NOME_FOGLIO_ENTRATE = config.DESIGN["NOME_FOGLIO_ENTRATE"]
-    df_spese_raw = pd.DataFrame(df_prc[NOME_FOGLIO_SPESE])
+    # 3.1 ELIMINO TUTTI I VALORI DELLE CELLE B2:D550
+    ws.batch_clear(["B2:D550"])
+    print(f"[INFO] \t Celle B2:D550 svuotate prima della scrittura")
+    
+    
+    
+    #NOME_FOGLIO_ENTRATE = config.DESIGN["NOME_FOGLIO_ENTRATE"]
     #df_entrate_raw = pd.DataFrame(df_prc[NOME_FOGLIO_ENTRATE])
     
-    # 3.1 WRITE SPESA
-    ws = sheet.worksheet(NOME_FOGLIO_SPESE)
+    # 3.2 WRITE SPESA
     ws.update(
         [df_spese_raw.columns.tolist()] + df_spese_raw.values.tolist(),
         "B1"

@@ -66,6 +66,9 @@ DESIGN = {
     "NOME_FOGLIO_ENTRATE":      "Entrate"
 }
 
+NUMERO_COLONNE_SHEET_SPESE = 4
+NUMERO_COLONNE_SHEET_ENTRATE = 5
+
 NOMI_COLONNE_APP = {
     "COLONNE_SPESE": {
         "COL_SPESE_DATA":           "Data e ora",

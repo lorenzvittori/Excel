@@ -12,7 +12,7 @@ def seleziona_e_rinomina_colonne(df: pd.DataFrame, mappa_colonne: dict, nome_fog
 
     if colonne_mancanti:
         raise ValueError(
-            f"Colonne mancanti nel foglio {nome_foglio}: {colonne_mancanti}"
+            f"[ERROR]\t- Colonne mancanti nel foglio {nome_foglio}: {colonne_mancanti}"
         )
 
     return df[list(mappa_colonne.keys())].rename(columns=mappa_colonne)
@@ -60,7 +60,7 @@ def aggiungi_righe_spese(
     return df_spese
 
 def prepara_spese(
-        df_spese_raw: pd.DataFrame, 
+        df_spese_raw: pd.DataFrame, #senza header
         additional_rows_csv: Path, 
         anno: str, 
         mese_str: str,
@@ -69,13 +69,10 @@ def prepara_spese(
     
     NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
 
-    # Il foglio ha una riga di titolo extra in cima (es. "elenco spese per il
-    # periodo..."): pandas la interpreta come header, mentre i veri nomi
-    # colonna (Data e ora, Categoria, ecc.) si trovano nella prima riga di
-    # dati. Li promuoviamo a header.
-    df_spese_raw.columns = df_spese_raw.iloc[0]
-    df_spese_raw = df_spese_raw.iloc[1:].reset_index(drop=True)
-    df_spese_raw.columns.name = None
+    #ELIMINAZIONE DELLA PRIMA RIGA E DICHIARAZIONE DELL'INTESTAZIONE
+    df_spese_raw.columns = df_spese_raw.iloc[1]                 #dichiara intestazione
+    df_spese_raw.columns.name = None                            #pulisce l'intestazione
+    df_spese_raw = df_spese_raw.iloc[2:].reset_index(drop=True) #ignora le prime due righe per i dati
 
     mappa_colonne_spese = {colonne_app_spese[k]: design[k] for k in colonne_app_spese}
 
@@ -109,12 +106,9 @@ def prepara_entrate(
     design: dict,
     colonne_app_entrate: dict) -> pd.DataFrame:
 
-    # Il foglio ha una riga di titolo extra in cima: pandas la interpreta
-    # come header, mentre i veri nomi colonna si trovano nella prima riga
-    # di dati. Li promuoviamo a header.
-    df_entrate_raw.columns = df_entrate_raw.iloc[0]
-    df_entrate_raw = df_entrate_raw.iloc[1:].reset_index(drop=True)
-    df_entrate_raw.columns.name = None
+    df_entrate_raw.columns = df_entrate_raw.iloc[1]                 #dichiara intestazione
+    df_entrate_raw.columns.name = None                              #pulisce l'intestazione
+    df_entrate_raw = df_entrate_raw.iloc[2:].reset_index(drop=True) #ignora le prime due righe per i dati
 
     #Pulizia
     mappa_colonne_entrate = {colonne_app_entrate[k]: design[k] for k in colonne_app_entrate}
@@ -192,7 +186,7 @@ def processa_dataframe(
         print(f"\tInput:\t{DIRECTORY_FILE_RAW}")
         print(f"\tOutput:\t{DIRECTORY_FILE_PRC}")
         
-    df_spese_raw = pd.DataFrame(df_raw[NOME_FOGLIO_SPESE])
+    df_spese_raw = pd.DataFrame(df_raw[NOME_FOGLIO_SPESE])  # Salta la prima riga che contiene il titolo del foglio
     df_entrate_raw = pd.DataFrame(df_raw[NOME_FOGLIO_ENTRATE])
 
     df_spese_wip = prepara_spese(
