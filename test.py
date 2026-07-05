@@ -15,7 +15,5 @@ DF = pd.read_excel(FILE_PATH, header=None)
 
 
 DF.columns = DF.iloc[1] 
-DF.columns.name = None     
-print(DF.head(3))              
+DF.columns.name = None               
 DF = DF.iloc[2:].reset_index(drop=True)         
-print(DF.head(3))

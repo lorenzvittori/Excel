@@ -9,7 +9,7 @@
 6. Gestire i mesi non completati e quelli completati
 7. Nel job io farei prima cerca di autentificarsi a dropbox e google drive e verifica che funzionano poi tutto il resto.
 8. Pensare di non tenere sul repo i dati, questo ti evita anche i commit
-9. 
+9. Quando controllo o setto l'ordine delle colonne?
 
 ## Download dal dropbox
 1. Fare una funzione che automaticamente capisce anno e mese del file
