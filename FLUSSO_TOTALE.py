@@ -10,11 +10,13 @@ import os
 
 
 ANNO = os.getenv("ANNO", "2026")
-MESE = os.getenv("MESE", "07")
+MESE = os.getenv("MESE", "05")
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN
 NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
+
+FLAG_SOVRASCRIVI_SHEET = False
 
 
 if __name__ == "__main__":
@@ -117,7 +119,7 @@ if __name__ == "__main__":
         anno=ANNO,
         mese_str=MESE,
         df_prc=PRC_DATAFRAME,
-        flag_sovrascrivi_celle=True
+        flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
     )
     
     db_module.upload_dataframe_to_dropbox(

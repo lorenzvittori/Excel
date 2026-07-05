@@ -63,7 +63,8 @@ def sync_month_local(
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
-            raise RuntimeError(f"[ERROR] \t Foglio non vuoto: {NOME_SHEET_MESE}")
+            print(f"[ERROR] \t Foglio non vuoto: {NOME_SHEET_MESE}")
+            raise ValueError
         else:
             print(f"[INFO] \t Foglio non vuoto - > SOVRASCRIVO CELLE")
             
