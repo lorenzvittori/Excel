@@ -9,6 +9,8 @@ import pandas as pd
 import os
 
 
+FLAG_AUTO_ANNO_MESE = True
+
 ANNO = os.getenv("ANNO", "2026")
 MESE = os.getenv("MESE", "07")
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
@@ -35,8 +37,6 @@ if __name__ == "__main__":
     FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
     FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
     
-    NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
-    NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
     
     dbx = db_module.get_dropbox_client(
         dropbox_credential = DROPBOX_CRED,
@@ -49,6 +49,25 @@ if __name__ == "__main__":
     
     
     print("[INFO]\t Connesso al Dropbox")
+    
+    if FLAG_AUTO_ANNO_MESE:
+        FILE_SMISTATI = db_module.smista_file_excel(
+            dbx=dbx,
+            dropbox_folder_destinazione=DROPBOX_RAW_FOLDER,
+            dropbox_folder_origine="",
+            get_raw_name=config.get_raw_name,
+            estesione_files=".xlsx",
+            target_broken_name="BROKEN",
+            nome_colonna_data=NOMI_COLONNE_APP["COLONNE_SPESE"]["COL_SPESE_DATA"],
+            righe_da_saltare=1,
+            flag_sovrascrivi=True,
+        )
+        print(FILE_SMISTATI)
+        ANNO = FILE_SMISTATI["SMISTATI"][0]["anno"]
+        MESE = FILE_SMISTATI["SMISTATI"][0]["mese_str"]
+    
+    NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
+    NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
     
     RAW_DATAFRAME = db_module.get_dataframe_from_dropbox(
         dbx = dbx,
