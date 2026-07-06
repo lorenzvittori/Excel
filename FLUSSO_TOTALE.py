@@ -7,7 +7,7 @@ import main_module as m_module
 import configuration as config  
 import pandas as pd
 import os
-import logger as log
+import logger
 
 
 FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", "false").lower() == "true"
@@ -30,6 +30,7 @@ FLAG_SOVRASCRIVI_SHEET = True
 if __name__ == "__main__":
     #DOWNLOAD FILE DAL DROPBOX
     #fase 0
+    logger.reset_fase()
     
     DROPBOX_CRED = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
     DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
@@ -43,13 +44,19 @@ if __name__ == "__main__":
     FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
     FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
     
+    logger.fase("DROPBOX")
+    logger.inizio_istanza("Connessione al DropBox")
     
     dbx = db_module.get_dropbox_client(
         dropbox_credential = DROPBOX_CRED,
         dropbox_token = DROPBOX_TOKEN
     )
     
+    logger.fine_istanza()
+    
     if FLAG_AUTO_ANNO_MESE:
+        
+        logger.inizio_istanza("Smistamento dei file sul DropBox")
         FILE_SMISTATI = db_module.smista_file_excel(
             dbx=dbx,
             dropbox_folder_destinazione=DROPBOX_RAW_FOLDER,
@@ -61,10 +68,11 @@ if __name__ == "__main__":
             righe_da_saltare=1,
             flag_sovrascrivi=True,
         )
+        logger.fine_istanza()
         LIST_ANNO_MESE = FILE_SMISTATI["SMISTATI"]
 
         if not LIST_ANNO_MESE:
-            print("[ERROR]\t Nessun file conforme trovato da smistare")
+            logger.tipo_messaggio("ERRORE", "Nessun file conforme trovato da smistare")
             raise SystemExit
     else:
         LIST_ANNO_MESE = [{
@@ -75,18 +83,16 @@ if __name__ == "__main__":
     ERRORI = []
 
     for x in LIST_ANNO_MESE:
+        
         ANNO = x["anno"]
         MESE = x["mese_str"]
-
+        
+        logger.reset_fase()
+        
         try:
-            log.block()
-            print(f"INIZIO FLUSSO COMPLETO: ANNO {ANNO} - MESE {MESE}")
-            print(f"@ Fase 1 -- Download file dal Dropbox e salvataggio della tabella raw --")
-
-
-            print("[INFO]\t Connesso al Dropbox")
-
-
+            logger.separatore()
+            logger.titolo(anno = ANNO, mese_str = MESE)
+            logger.fase("DROPBOX")
 
             NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
             NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
@@ -109,10 +115,10 @@ if __name__ == "__main__":
                 raise ValueError(f"Non è presente il foglio {FOGLIO_ENTRATE} nell'excel")
 
 
-            print("")
-
-            print(f"@ Fase 2 -- Pulizia e formattazione della tabella --")
             #PROCESSA MESE
+            logger.fase("Pulizia e formattazione della tabella")
+
+            logger.sottofase("Pulizia e formattazione")
             PRC_DATAFRAME = m_module.processa_dataframe(
                 df_raw=RAW_DATAFRAME,
                 anno=ANNO,
@@ -127,18 +133,16 @@ if __name__ == "__main__":
                 flag_processa_tutti_i_mesi = False,
                 flag_stampa_spese_altro = False)
 
-
-            print("[INFO]\t Pulizia e formattazione completata")
-
-            print("")
-
-            print(f"@ Fase 3 -- Scrittura su Google Drive --")
+            
+            #SCRITTURA SU GOOGLE DRIVE
+            logger.fase("GOOGLE DRIVE")
 
             GOOGLE_SERVICE_ACCOUNT = STRUTTURA_REPOSITORY["FILE_GOOGLE_ACCOUNT"]
+            
+            logger.inizio_istanza("Connessione a Google Drive")
             client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
-
-            print("[INFO]\t Connesso a Google Drive")
-            #SCRITTURA SU GOOGLE DRIVE
+            logger.fine_istanza()
+            
 
             #Controlla che il file spese abbia le giuste colonne:
             PRC_SPESE_DATAFRAME = PRC_DATAFRAME[FOGLIO_SPESE]
@@ -147,11 +151,15 @@ if __name__ == "__main__":
             colonne_spese_attese = sorted([DESIGN[c] for c in NOMI_COLONNE_APP["COLONNE_SPESE"].keys()])
 
             if colonne_spese_attuali != colonne_spese_attese:
-                print(f"[ERROR]\t- Colonne nel foglio spese:")
-                print(f"\t\t colonne attuali : {colonne_spese_attuali}")
-                print(f"\t\t colonne attese : {colonne_spese_attese}")
-                raise ValueError("Colonne nel foglio spese non corrispondenti a quelle attese")
+                logger.tipo_messaggio(
+                        tipo = "ERRORE", 
+                        corpo=  "Colonne nel foglio spese non corrispondenti a quelle attese",
+                        dettaglio=[ f"colonne attuali : {colonne_spese_attuali}",
+                                    f"colonne attese : {colonne_spese_attese}"])
+                raise ValueError()
 
+            
+            logger.inizio_istanza("Scrittura su sheet")
             gd_module.sync_month_local(
                 client=client,
                 anno=ANNO,
@@ -159,7 +167,9 @@ if __name__ == "__main__":
                 df_prc=PRC_DATAFRAME,
                 flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
             )
-
+            logger.fine_istanza()
+            
+            logger.inizio_istanza("Salvataggio della tabella processata")
             db_module.upload_dataframe_to_dropbox(
                 dbx = dbx,
                 dropbox_folder = DROPBOX_PRC_FOLDER,
@@ -167,11 +177,9 @@ if __name__ == "__main__":
                 df = PRC_DATAFRAME,
                 flag_sovrascrivi = True
             )
-
-
-            print("[INFO]\t Scrittura su Google Drive completata")
-            print(f"[INFO]\t Flusso completato per ANNO {ANNO} - MESE {MESE}")
-            log.block()
+            logger.fine_istanza()
+            logger.fine(anno = ANNO, mese_str=MESE)
+            logger.separatore()
 
         except Exception as e:
             print(f"[ERROR]\t Fallito il flusso per ANNO {ANNO} - MESE {MESE}: {e}")
@@ -179,13 +187,20 @@ if __name__ == "__main__":
             continue
 
 
-    log.block()
+    logger.separatore()
     if ERRORI:
-        print(f"[WARNING]\t {len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:")
+        log_errori = []
         for anno_err, mese_err, errore in ERRORI:
-            print(f"\t- ANNO {anno_err} MESE {mese_err}: {errore}")
-        log.block()
+            log_errori.append(f"ANNO {anno_err} MESE {mese_err}: {errore}")
+        
+        logger.tipo_messaggio(
+                tipo = "WARNING",
+                corpo = f"{len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:",
+                dettaglio=log_errori)
+        
+        logger.separatore()
         raise SystemExit
     else:
-        print(f"[INFO]\t Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
-        log.block()
+        logger.tipo_messaggio(tipo = "INFO", corpo = f"Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
+        logger.separatore()
+        
