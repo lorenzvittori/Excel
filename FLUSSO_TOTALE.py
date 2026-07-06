@@ -7,9 +7,10 @@ import main_module as m_module
 import configuration as config  
 import pandas as pd
 import os
+import logger as log
 
 
-FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", "true").lower() == "true"
+FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", "false").lower() == "true"
 ANNO = os.getenv("ANNO", "2026")
 MESE = os.getenv("MESE", "07")
 
@@ -78,7 +79,7 @@ if __name__ == "__main__":
         MESE = x["mese_str"]
 
         try:
-            print("="*80)
+            log.block()
             print(f"INIZIO FLUSSO COMPLETO: ANNO {ANNO} - MESE {MESE}")
             print(f"@ Fase 1 -- Download file dal Dropbox e salvataggio della tabella raw --")
 
@@ -170,7 +171,7 @@ if __name__ == "__main__":
 
             print("[INFO]\t Scrittura su Google Drive completata")
             print(f"[INFO]\t Flusso completato per ANNO {ANNO} - MESE {MESE}")
-            print("="*80)
+            log.block()
 
         except Exception as e:
             print(f"[ERROR]\t Fallito il flusso per ANNO {ANNO} - MESE {MESE}: {e}")
@@ -178,13 +179,13 @@ if __name__ == "__main__":
             continue
 
 
-    print("\n" + "="*80)
+    log.block()
     if ERRORI:
         print(f"[WARNING]\t {len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:")
         for anno_err, mese_err, errore in ERRORI:
             print(f"\t- ANNO {anno_err} MESE {mese_err}: {errore}")
-        print("="*80)
+        log.block()
         raise SystemExit
     else:
         print(f"[INFO]\t Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
-        print("="*80)
+        log.block()
