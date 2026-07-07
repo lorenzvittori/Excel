@@ -25,10 +25,8 @@ MESI = {
 
 # ------------------------------------- CONFIGURAZIONE -------------------------------------
 STRUTTURA_REPOSITORY = {
-    "FOLD_DATI":            Path("Dati"),
-    "FOLD_RAW_TBT":         Path("Dati/TabelleApp"),
-    "FOLD_PRC_TBT":         Path("Dati/TabelleProcessed"),
-    "FILE_ADD_ROWS":        Path("Dati/additional_rows.csv"),
+    "FOLD_DATI":            Path("ELABORATION"),
+    "FILE_ADD_ROWS":        Path("ELABORATION/additional_rows.csv"),
     "FOLD_DROPBOX":         Path("DROPBOX"),
     "FILE_DROPBOX_CRED":    Path("DROPBOX/dropbox_credentials.json"),
     "FILE_DROPBOX_TOKEN":   Path("DROPBOX/dropbox_token.json"),

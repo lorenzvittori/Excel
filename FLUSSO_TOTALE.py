@@ -1,18 +1,19 @@
 ## NOME FILE: FLUSSO_TOTALE.py
-from DROPBOX import dropbox_module as db_module
-from GOOGLE_DRIVE import write_module as gd_module
-from pathlib import Path
+from DROPBOX        import dropbox_module       as db_module
+from GOOGLE_DRIVE   import write_module         as gd_module
+from ELABORATION    import processing_module    as pr_module
 from typing import cast
-import processing_module as pr_module
 import configuration as config  
 import pandas as pd
 import os
 import logger
 
 
-FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", "false").lower() == "true"
-ANNO = os.getenv("ANNO", "2026")
-MESE = os.getenv("MESE", "07")
+FLAG_LOG_DUPLICATI  = os.getenv("FLAG_LOG_DUPLICATI", default="false").lower() == "true"
+FLAG_LOG_ALTRO      = os.getenv("FLAG_LOG_ALTRO", default="false").lower() == "true"
+FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", default="false").lower() == "true"
+ANNO = os.getenv("ANNO", default="2026")
+MESE = os.getenv("MESE", default="07")
 
 if not FLAG_AUTO_ANNO_MESE and (not ANNO or not MESE):
     logger.tipo_messaggio(
@@ -26,27 +27,25 @@ STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
 DESIGN                  = config.DESIGN
 NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
+PATH_CSV_ADD_ROWS       = STRUTTURA_REPOSITORY["FILE_ADD_ROWS"]
 
 FLAG_SOVRASCRIVI_SHEET = True
+
+DROPBOX_CRED = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
+DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
+
+DROPBOX_RAW_FOLDER = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
+DROPBOX_PRC_FOLDER = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
+
+FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
+FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
 
 
 if __name__ == "__main__":
     #DOWNLOAD FILE DAL DROPBOX
     #fase 0
     logger.reset_fase()
-    
-    DROPBOX_CRED = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
-    DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
-    
-    DROPBOX_RAW_FOLDER = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
-    DROPBOX_PRC_FOLDER = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
-    
-    LOCAL_RAW_FOLDER = STRUTTURA_REPOSITORY["FOLD_RAW_TBT"]
-    LOCAL_PRC_FOLDER = STRUTTURA_REPOSITORY["FOLD_PRC_TBT"]
-    
-    FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
-    FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
-    
+
     logger.fase("DROPBOX")
     logger.inizio_istanza("Connessione al DropBox")
     
@@ -61,15 +60,15 @@ if __name__ == "__main__":
         
         logger.inizio_istanza("Smistamento dei file sul DropBox")
         FILE_SMISTATI = db_module.smista_file_excel(
-            dbx=dbx,
-            dropbox_folder_destinazione=DROPBOX_RAW_FOLDER,
-            dropbox_folder_origine="",
-            get_raw_name=config.get_raw_name,
-            estesione_files=".xlsx",
-            target_broken_name="BROKEN",
-            nome_colonna_data=NOMI_COLONNE_APP["COLONNE_SPESE"]["COL_SPESE_DATA"],
-            righe_da_saltare=1,
-            flag_sovrascrivi=True,
+            dbx = dbx,
+            dropbox_folder_destinazione = DROPBOX_RAW_FOLDER,
+            dropbox_folder_origine = "",
+            get_raw_name = config.get_raw_name,
+            estesione_files = ".xlsx",
+            target_broken_name = "BROKEN",
+            nome_colonna_data = NOMI_COLONNE_APP["COLONNE_SPESE"]["COL_SPESE_DATA"],
+            righe_da_saltare = 1,
+            flag_sovrascrivi = True,
         )
         logger.fine_istanza()
         LIST_ANNO_MESE = FILE_SMISTATI["SMISTATI"]
@@ -127,14 +126,10 @@ if __name__ == "__main__":
                 anno=ANNO,
                 mese_str=MESE,
                 design = DESIGN,
-                struttura_repo = STRUTTURA_REPOSITORY,
+                path_csv_add_rows= PATH_CSV_ADD_ROWS,
                 colonne_app = NOMI_COLONNE_APP,
-                flag_blocca_se_input_manca = True, 
-                flag_sovrascrivi_output = False,
-                flag_stampa_percorsi = False,
-                flag_stampa_duplicati = False,
-                flag_processa_tutti_i_mesi = False,
-                flag_stampa_spese_altro = False)
+                flag_stampa_duplicati = FLAG_LOG_DUPLICATI,
+                flag_stampa_spese_altro = FLAG_LOG_ALTRO)
 
             
             #SCRITTURA SU GOOGLE DRIVE

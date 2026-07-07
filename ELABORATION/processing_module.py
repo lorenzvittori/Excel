@@ -155,43 +155,28 @@ def processa_dataframe(
         anno: str, 
         mese_str: str,
         design: dict,
-        struttura_repo: dict,
+        path_csv_add_rows: Path,
         colonne_app: dict,
-        flag_blocca_se_input_manca: bool = True, 
-        flag_sovrascrivi_output: bool = False,
-        flag_stampa_percorsi: bool = False,
         flag_stampa_duplicati: bool = False,
-        flag_processa_tutti_i_mesi: bool = False,
         flag_stampa_spese_altro: bool = False) -> dict[str, pd.DataFrame]:
      
     
-    NOME_FILE_RAW = config.get_raw_name(anno = anno, mese_str = mese_str)
-    NOME_FILE_PRC = config.get_prc_name(anno = anno, mese_str = mese_str)
     NOME_FOGLIO_SPESE   = design["NOME_FOGLIO_SPESE"]
     NOME_FOGLIO_ENTRATE = design["NOME_FOGLIO_ENTRATE"]
-    DIRECTORY_FILE_RAW      = struttura_repo["FOLD_RAW_TBT"] / NOME_FILE_RAW
-    DIRECTORY_FILE_PRC      = struttura_repo["FOLD_PRC_TBT"] / NOME_FILE_PRC
-    DIRECTORY_FILE_ADD_ROWS = struttura_repo["FILE_ADD_ROWS"]
+    PATH_CSV_ADD_ROWS = path_csv_add_rows
 
-    if not DIRECTORY_FILE_RAW.exists():
-        print(f"\t[ERROR]\t {NOME_FILE_RAW} MANCANTE", end="")
+    
+    if not PATH_CSV_ADD_ROWS.exists():
+        print(f"\t[ERROR]\t {PATH_CSV_ADD_ROWS} MANCANTE", end="")
         raise SystemExit
     
-    if not DIRECTORY_FILE_ADD_ROWS.exists():
-        print(f"\t[ERROR]\t {DIRECTORY_FILE_ADD_ROWS} MANCANTE", end="")
-        raise SystemExit
-    
-    if flag_stampa_percorsi and not flag_processa_tutti_i_mesi:
-        print("\nPercorsi dei file:")
-        print(f"\tInput:\t{DIRECTORY_FILE_RAW}")
-        print(f"\tOutput:\t{DIRECTORY_FILE_PRC}")
         
-    df_spese_raw = pd.DataFrame(df_raw[NOME_FOGLIO_SPESE])  # Salta la prima riga che contiene il titolo del foglio
+    df_spese_raw = pd.DataFrame(df_raw[NOME_FOGLIO_SPESE])  
     df_entrate_raw = pd.DataFrame(df_raw[NOME_FOGLIO_ENTRATE])
 
     df_spese_wip = prepara_spese(
         df_spese_raw=df_spese_raw,
-        additional_rows_csv=DIRECTORY_FILE_ADD_ROWS,
+        additional_rows_csv=PATH_CSV_ADD_ROWS,
         anno=anno,
         mese_str=mese_str,
         design=design,
@@ -205,11 +190,11 @@ def processa_dataframe(
         colonne_app_entrate=colonne_app["COLONNE_ENTRATE"]
     )
 
-    if flag_stampa_duplicati and not flag_processa_tutti_i_mesi:
+    if flag_stampa_duplicati:
         stampa_duplicati(df_spese_wip, NOME_FOGLIO_SPESE)
         stampa_duplicati(df_entrate_wip, NOME_FOGLIO_ENTRATE)
     
-    if flag_stampa_spese_altro and not flag_processa_tutti_i_mesi: 
+    if flag_stampa_spese_altro: 
         stampa_spese_altro(df_spese_wip, design)
 
     # Formattazione finale per output Excel
