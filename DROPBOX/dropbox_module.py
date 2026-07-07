@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import io
 import configuration as config
+import logger
 
 
 def get_dropbox_client(
@@ -22,9 +23,17 @@ def get_dropbox_client(
         DROPBOX_TOKEN   = dropbox_token
 
         if not DROPBOX_CRED.exists():
-            raise FileNotFoundError(f"File credenziali non trovato: {DROPBOX_CRED}")
+            logger.tipo_messaggio(
+                    tipo = "ERROR",
+                    corpo= "File credenziali DropBox non trovato:",
+                    dettaglio=f"{DROPBOX_CRED}")
+            raise FileNotFoundError
         if not DROPBOX_TOKEN.exists():
-            raise FileNotFoundError(f"File token non trovato: {DROPBOX_TOKEN}")
+            logger.tipo_messaggio(
+                    tipo = "ERROR",
+                    corpo= "File token DropBox non trovato:",
+                    dettaglio=f"{DROPBOX_TOKEN}")
+            raise FileNotFoundError
 
         creds = json.loads(DROPBOX_CRED.read_text())
         token_data = json.loads(DROPBOX_TOKEN.read_text())
@@ -42,7 +51,10 @@ def get_dropbox_client(
         dbx.users_get_current_account()
         return dbx
     except AuthError:
-        raise ValueError("Credenziali Dropbox non valide.")
+        logger.tipo_messaggio(
+            tipo = "ERROR",
+            corpo= "Credenziali non valide")
+        raise ValueError
 
 
 def get_dataframe_from_dropbox(

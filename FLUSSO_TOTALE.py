@@ -3,7 +3,7 @@ from DROPBOX import dropbox_module as db_module
 from GOOGLE_DRIVE import write_module as gd_module
 from pathlib import Path
 from typing import cast
-import main_module as m_module
+import processing_module as pr_module
 import configuration as config  
 import pandas as pd
 import os
@@ -15,7 +15,10 @@ ANNO = os.getenv("ANNO", "2026")
 MESE = os.getenv("MESE", "07")
 
 if not FLAG_AUTO_ANNO_MESE and (not ANNO or not MESE):
-    print("[ERROR]\t Modalità manuale (automatico=false) richiede ANNO e MESE specificati")
+    logger.tipo_messaggio(
+        tipo = "ERROR",
+        corpo= "Input non validi"
+    )
     raise SystemExit
 
 
@@ -119,7 +122,7 @@ if __name__ == "__main__":
             logger.fase("Pulizia e formattazione della tabella")
 
             logger.sottofase("Pulizia e formattazione")
-            PRC_DATAFRAME = m_module.processa_dataframe(
+            PRC_DATAFRAME = pr_module.processa_dataframe(
                 df_raw=RAW_DATAFRAME,
                 anno=ANNO,
                 mese_str=MESE,
