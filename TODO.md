@@ -20,3 +20,9 @@
 1. Fare la parte di scrittura delle Entrate
 
 
+
+# Input e scelte:
+* Cose fare se andando in automatico si trova un altro file raw con lo stesso anno e mese? potrei fare un controllo di ugualianza
+* Flag per sovrascrivere dal processed al drive
+* Flag per sovrascrivere da smistamento al raw
+* Flag 
