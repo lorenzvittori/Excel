@@ -16,8 +16,5 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Installa dipendenze
-        run: pip install -r requirements.txt
-
       - name: Esegui tester
         run: python TESTER.py
