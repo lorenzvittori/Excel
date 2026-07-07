@@ -16,7 +16,18 @@ def get_tab(n: int)
 return "\t" * n
 
 
+def tipe(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
+    tipo = tipo.strip()
+    corpo = corpo.strip()
+    print(f"{get_tab(_profonditá)}[{tipo}]\t- {corpo}")
 
+    if dettaglio is None:
+        return
 
+    if isinstance(dettaglio, str):
+        dettaglio = [dettaglio]
 
-def end
+    for mex in dettaglio:
+        mex = mex.strip()
+        if mex:  # salta eventuali stringhe vuote nella lista
+            print(f"{get_tab(_profonditá)}\t{mex}")
