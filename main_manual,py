@@ -8,12 +8,14 @@ import pandas as pd
 import os
 import logger
 
+FLAG_SCRITTURA_SUL_DRIVE = os.getenv("FLAG_SCRITTURA_SUL_DRIVE")
+FLAG_SOVRASCRIVO_SHEET   = os.getenv("FLAG_SOVRASCRIVO_SHEET")
+FLAG_SOVRASCRIVO_RAW_DBX = os.getenv("FLAG_SOVRASCRIVO_RAW_DBX")
+FLAG_LOG_DUPLICATI       = os.getenv("FLAG_LOG_DUPLICATI")
+FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO")
 
-FLAG_LOG_DUPLICATI  = os.getenv("FLAG_LOG_DUPLICATI", default="false").lower() == "true"
-FLAG_LOG_ALTRO      = os.getenv("FLAG_LOG_ALTRO", default="false").lower() == "true"
-FLAG_AUTO_ANNO_MESE = os.getenv("FLAG_AUTO_ANNO_MESE", default="false").lower() == "true"
-ANNO = os.getenv("ANNO", default="2026")
-MESE = os.getenv("MESE", default="07")
+ANNO = os.getenv("ANNO")
+MESE = os.getenv("MESE")
 
 if not FLAG_AUTO_ANNO_MESE and (not ANNO or not MESE):
     logger.tipo_messaggio(

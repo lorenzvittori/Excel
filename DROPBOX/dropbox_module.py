@@ -159,7 +159,8 @@ def smista_file_excel(
         target_broken_name: str = "BROKEN",
         nome_colonna_data: str = "Data e ora",
         righe_da_saltare: int = 1,
-        flag_sovrascrivi: bool = False) -> dict[str, list[dict]]:
+        flag_sovrascrivi_raw: bool = False #ciao
+        ) -> dict[str, list[dict]]:
     """
     Scansiona tutti i file con estensione estesione_files presenti in
     dropbox_folder_origine.
@@ -282,7 +283,7 @@ def smista_file_excel(
             esiste_destinazione = False
 
         if esiste_destinazione:
-            if not flag_sovrascrivi:
+            if not flag_sovrascrivi_raw:
                 print(f"[WARNING] \t {nuovo_path} esiste già -> SALTATO (usa flag_sovrascrivi=True per sovrascrivere)")
                 continue
             else:

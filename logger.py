@@ -7,8 +7,14 @@ _contatore_sottofase = 0
 def separatore() -> None:
     print("=" * BLOCK_LENGTH)
 
-
-def titolo(anno:str, mese_str:str) ->None:
+def start(corpo: str) -> None:
+    print("\n")
+    separatore()
+    print(corpo)
+    print("\n")
+    
+    
+def inizio_flusso_anno_mese(anno:str, mese_str:str) ->None:
     print(f"INIZIO FLUSSO: ANNO {anno} - MESE {mese_str}")
 
 

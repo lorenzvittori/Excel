@@ -61,7 +61,9 @@ DESIGN = {
     "COL_ENTRATE_NOTE":         "Note",
     
     "NOME_FOGLIO_SPESE":        "Spese",
-    "NOME_FOGLIO_ENTRATE":      "Entrate"
+    "NOME_FOGLIO_ENTRATE":      "Entrate",
+    
+    "NOME_FILE_ROTTO":          "BROKEN"        #Nome del file da smistare che non ha unici (anno, mese)
 }
 
 NUMERO_COLONNE_SHEET_SPESE = 4
@@ -81,24 +83,6 @@ NOMI_COLONNE_APP = {
         "COL_ENTRATE_NOTE":         "Commento",
     }
 }
-
-
-PROCESSA_TUTTI_I_MESI = 0
-# 0 = processa solo ANNO / MESE_NUMB
-# 1 = processa tutti i mesi in TUTTI_I_MESI
-
-# ----- Opzioni -----
-SOVRASCRIVI_OUTPUT = 1
-# 0 = blocca se il file di output esiste già
-# 1 = ignora il controllo e sovrascrive il file
-
-SALTA_SE_INPUT_MANCANTE = 0
-# 0 = blocca se il file di input non esiste
-# 1 = salta il file se non esiste
-
-STAMPA_DUPLICATI    = 1
-STAMPA_SPESE_ALTRO  = 1
-STAMPA_PERCORSI     = 0
 
 
 

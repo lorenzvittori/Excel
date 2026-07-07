@@ -1,0 +1,97 @@
+name: Flusso Spese-Entrate Manuale
+
+on:
+  workflow_dispatch:
+    inputs:
+      flag_scrittura_sul_drive:
+        description: "Se disattivato non scrive sullo Sheet"
+        required: true
+        default: true
+        type: boolean
+      flag_sovrascrivo_sheet:
+        description: "Se disattivato il flusso si blocca se lo sheet non è vuoto"
+        required: true
+        default: true
+        type: boolean
+      flag_sovrascrivo_raw_dbx:
+        description: "Se disattivato il flusso si blocca all'incontro di un duplicato 'raw'"
+        required: true
+        default: true
+        type: boolean
+      flag_sovrascrivo_prc_dbx:
+        description: "Se disattivato il flusso si blocca all'incontro di un duplicato 'processed'"
+        required: true
+        default: true
+        type: boolean
+      log_duplicati:
+        description: "Stampa i record duplici"
+        required: true
+        default: false
+        type: boolean
+      log_altro:
+        description: "Stampa i record che hanno Categoria = 'Altro'"
+        required: true
+        default: false
+        type: boolean
+      flag_tutti_raw:
+        description: "Esegue il codice su tutti i file raw presenti sul DropBox"
+        required: true
+        default: false
+        type: boolean
+      anno:
+        description: "Anno (es. 2026)"
+        required: false
+        default: "2026"
+        type: string
+      mese:
+        description: "Mese"
+        required: false
+        type: choice
+        options:
+          - Gennaio
+          - Febbraio
+          - Marzo
+          - Aprile
+          - Maggio
+          - Giugno
+          - Luglio
+          - Agosto
+          - Settembre
+          - Ottobre
+          - Novembre
+          - Dicembre
+
+jobs:
+  flusso:
+    runs-on: ubuntu-latest
+
+    env:
+      FLAG_AUTOMATIC: false
+      FLAG_TUTTI_RAW:               ${{ inputs.flag_tutti_raw }}
+      FLAG_SCRITTURA_SUL_DRIVE:     ${{ inputs.flag_scrittura_sul_drive }}
+      FLAG_SOVRASCRIVO_SHEET:       ${{ inputs.flag_sovrascrivo_sheet }}
+      FLAG_SOVRASCRIVO_RAW_DBX:     ${{ inputs.flag_sovrascrivo_raw_dbx }}
+      FLAG_SOVRASCRIVO_PRC_DBX:     ${{ inputs.flag_sovrascrivo_prc_dbx }}
+      FLAG_LOG_DUPLICATI:           ${{ inputs.log_duplicati }}
+      FLAG_LOG_ALTRO:               ${{ inputs.log_altro }}
+      ANNO: ${{ inputs.anno }}
+      MESE: ${{ inputs.mese }}
+      DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+      DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+      DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installa dipendenze
+        run: pip install -r requirements.txt
+
+      - name: Esegui flusso
+        run: python main.py
