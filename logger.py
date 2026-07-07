@@ -23,7 +23,7 @@ def inizio_istanza(corpo:str) -> None:
 
 
 def fine_istanza() -> None:
-    print("\tOK")
+    print("OK")
 
 def sottofase(corpo: str) -> None:
     global _contatore_sottofase

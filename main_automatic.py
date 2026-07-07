@@ -34,6 +34,7 @@ FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
 
 #DOWNLOAD FILE DAL DROPBOX
 #fase 0
+print("\n\n\n")
 logger.reset_fase()
 
 logger.fase("DROPBOX")
@@ -46,7 +47,7 @@ dbx = db_module.get_dropbox_client(
 
 logger.fine_istanza()
     
-logger.inizio_istanza("Smistamento dei file sul DropBox")
+logger.sottofase("Smistamento dei file sul DropBox")
 
 FILE_SMISTATI = db_module.smista_file_excel(
     dbx = dbx,
@@ -59,7 +60,7 @@ FILE_SMISTATI = db_module.smista_file_excel(
     righe_da_saltare = 1,
     flag_sovrascrivi_raw = FLAG_SOVRASCRIVI_RAW_DBX,
 )
-logger.fine_istanza()
+
 
 LIST_ANNO_MESE = FILE_SMISTATI["SMISTATI"]
 
@@ -166,7 +167,7 @@ for i_anno_mese in LIST_ANNO_MESE:
             raise ValueError()
 
         
-        logger.inizio_istanza("Scrittura su sheet")
+        logger.sottofase("Scrittura su sheet")
         gd_module.sync_month_local(
             client=client,
             anno=ANNO,
@@ -174,7 +175,7 @@ for i_anno_mese in LIST_ANNO_MESE:
             df_prc=PRC_DATAFRAME,
             flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
         )
-        logger.fine_istanza()
+        
         
         logger.inizio_istanza("Salvataggio della tabella processata")
         db_module.upload_dataframe_to_dropbox(
@@ -188,7 +189,7 @@ for i_anno_mese in LIST_ANNO_MESE:
         logger.fine(anno = ANNO, mese_str=MESE)
         logger.separatore()
 
-    except Exception as e:
+    except BaseException as e:
         logger.tipo_messaggio(
             tipo= "ERRORE",
             corpo = "Fallito il flusso per ANNO {ANNO} - MESE {MESE}:",

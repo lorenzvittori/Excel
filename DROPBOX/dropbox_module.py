@@ -191,8 +191,9 @@ def smista_file_excel(
         if f.name.startswith(target_broken_name)
     ]
     for f in file_broken_residui:
+        logger.sottofase("Eliminazione dei broken files esistenti:")
         dbx.files_delete_v2(f"{dropbox_folder_origine}/{f.name}")
-        print(f"[INFO] \t Rimosso broken residuo: {f.name}")
+        print(f"[INFO]\t Rimosso broken residuo: {f.name}")
 
     # ---- LISTA FILE DA PROCESSARE (escludo i broken residui appena eliminati) ----
     file_xlsx = [f for f in file_xlsx if f.name not in {f.name for f in file_broken_residui}]
@@ -288,7 +289,7 @@ def smista_file_excel(
                 continue
             else:
                 dbx.files_delete_v2(nuovo_path)
-                print(f"[INFO] \t {nuovo_path} esistente eliminato per sovrascrittura")
+                print(f"[INFO] \t {nuovo_path} gia' esistente -> sovrascritto")
 
         # ---- SPOSTAMENTO / RINOMINA ----
         try:
