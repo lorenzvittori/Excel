@@ -3,7 +3,7 @@ _profondita = 0
 
 
 def get_tab(n: int) -> str:
-    return "\t" * n
+    return "\t" * 2*n
 
 
 def new_phase(corpo: str) -> None:
@@ -12,9 +12,9 @@ def new_phase(corpo: str) -> None:
 
     if _profondita == 0:
         _contatore_fase += 1
-        print(f"Fase {_contatore_fase} - {corpo}")
+        print(f"Fase {_contatore_fase}: {corpo}")
     else:
-        print(f"{get_tab(_profondita)}- {corpo}")
+        print(f"{get_tab(_profondita)}• {corpo}")
 
     _profondita += 1
 
@@ -27,7 +27,7 @@ def end_phase() -> None:
 def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
     tipo = tipo.strip()
     corpo = corpo.strip()
-    print(f"{get_tab(_profondita)}[{tipo}]\t- {corpo}")
+    print(f"{get_tab(_profondita)}[{tipo}]: \t{corpo}")
 
     if dettaglio is None:
         return
