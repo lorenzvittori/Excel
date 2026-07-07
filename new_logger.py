@@ -1,25 +1,33 @@
-_contatore_phase = 0
-_profonditá = 0
-
-def new_phase(corpo: str):
-if _contatoee_phase == 0:
-print(f"Fase {_contatore_phase} - {corpo})
-else:
-print(f"- {corpo}")
-_profonditá = _profonditá + 1
+_contatore_fase = 0
+_profondita = 0
 
 
-def end_phase:
-_pronfonditá = max(0, _profonditá -1)
-
-def get_tab(n: int)
-return "\t" * n
+def get_tab(n: int) -> str:
+    return "\t" * n
 
 
-def tipe(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
+def new_phase(corpo: str) -> None:
+    global _contatore_fase, _profondita
+    corpo = corpo.strip()
+
+    if _profondita == 0:
+        _contatore_fase += 1
+        print(f"Fase {_contatore_fase} - {corpo}")
+    else:
+        print(f"{get_tab(_profondita)}- {corpo}")
+
+    _profondita += 1
+
+
+def end_phase() -> None:
+    global _profondita
+    _profondita = max(0, _profondita - 1)
+
+
+def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
     tipo = tipo.strip()
     corpo = corpo.strip()
-    print(f"{get_tab(_profonditá)}[{tipo}]\t- {corpo}")
+    print(f"{get_tab(_profondita)}[{tipo}]\t- {corpo}")
 
     if dettaglio is None:
         return
@@ -29,5 +37,11 @@ def tipe(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> Non
 
     for mex in dettaglio:
         mex = mex.strip()
-        if mex:  # salta eventuali stringhe vuote nella lista
-            print(f"{get_tab(_profonditá)}\t{mex}")
+        if mex:
+            print(f"{get_tab(_profondita)}\t{mex}")
+
+
+def reset_fase(valore_iniziale: int = 0) -> None:
+    global _contatore_fase, _profondita
+    _contatore_fase = valore_iniziale
+    _profondita = 0
