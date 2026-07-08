@@ -1,6 +1,7 @@
+## NOME FILE: processing_module.py
 import pandas as pd
 from pathlib import Path
-import configuration as config
+import logger
 
 # ---------------------------------------- FUNZIONI ----------------------------------------
   # FORMATTAZIONE E PULIZIA
@@ -12,7 +13,7 @@ def seleziona_e_rinomina_colonne(df: pd.DataFrame, mappa_colonne: dict, nome_fog
 
     if colonne_mancanti:
         raise ValueError(
-            f"[ERROR]\t- Colonne mancanti nel foglio {nome_foglio}: {colonne_mancanti}"
+            f"Colonne mancanti nel foglio {nome_foglio}: {colonne_mancanti}"
         )
 
     return df[list(mappa_colonne.keys())].rename(columns=mappa_colonne)
@@ -133,10 +134,13 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     duplicati = df[df.duplicated(keep=False)]
 
     if not duplicati.empty:
-        print(f"\n\t[WARNING]\t DUPLICATI TROVATI NELLE {nome_tabella.upper()}:")
-        print("\t" +duplicati.to_string(index=False).replace("\n", "\n\t"))
+        dettaglio = duplicati.to_string(index=False).split("\n")
+        logger.warning_mex(
+            corpo=f"Duplicati trovati nella tabella {nome_tabella.upper()}",
+            dettaglio=dettaglio
+        )
     else:
-        print(f"\n\t[INFO]\t {nome_tabella.upper()} senza duplicati")
+        logger.info_mex(f"{nome_tabella.upper()} senza duplicati")
 
 def stampa_spese_altro(df_spese: pd.DataFrame, design: dict):
     spese_altro = df_spese[
@@ -144,10 +148,13 @@ def stampa_spese_altro(df_spese: pd.DataFrame, design: dict):
     ]
 
     if not spese_altro.empty:
-        print(f"\n[INFO]\t SPESSE CON CATEGORIA \"ALTRO\":")
-        print("\t" + spese_altro.sort_values(by=design["COL_SPESE_DATA"]).to_string(index=False).replace("\n","\n\t"))
+        dettaglio = spese_altro.sort_values(by=design["COL_SPESE_DATA"]).to_string(index=False).split("\n")
+        logger.info_mex(
+            corpo="Spese con categoria \"Altro\"",
+            dettaglio=dettaglio
+        )
     else:
-        print(f"[INFO]\t Nessuna spesa con categoria \"Altro\".")
+        logger.info_mex("Nessuna spesa con categoria \"Altro\".")
 
 # ------------------------------------- FUNZIONE PRINCIPALE -------------------------------------
 def processa_dataframe(
@@ -167,7 +174,7 @@ def processa_dataframe(
 
     
     if not PATH_CSV_ADD_ROWS.exists():
-        print(f"\t[ERROR]\t {PATH_CSV_ADD_ROWS} MANCANTE", end="")
+        logger.error_mex(f"{PATH_CSV_ADD_ROWS} MANCANTE")
         raise SystemExit
     
         
@@ -202,6 +209,8 @@ def processa_dataframe(
     df_spese_prc = formatta_dataframe_output(df_spese_wip, colonna_data=design["COL_SPESE_DATA"], colonna_importo=design["COL_SPESE_IMPORTO"])
     df_entrate_prc = formatta_dataframe_output(df_entrate_wip, colonna_data=design["COL_ENTRATE_DATA"], colonna_importo=design["COL_ENTRATE_IMPORTO"])
     
+    logger.info_mex("Pulizia e formattazione completata")
+
     return {
         NOME_FOGLIO_SPESE: df_spese_prc,
         NOME_FOGLIO_ENTRATE: df_entrate_prc

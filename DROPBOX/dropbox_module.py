@@ -23,16 +23,14 @@ def get_dropbox_client(
         DROPBOX_TOKEN   = dropbox_token
 
         if not DROPBOX_CRED.exists():
-            logger.tipo_messaggio(
-                    tipo = "ERROR",
-                    corpo= "File credenziali DropBox non trovato:",
-                    dettaglio=f"{DROPBOX_CRED}")
+            logger.error_mex(
+                corpo="File credenziali DropBox non trovato",
+                dettaglio=f"{DROPBOX_CRED}")
             raise FileNotFoundError
         if not DROPBOX_TOKEN.exists():
-            logger.tipo_messaggio(
-                    tipo = "ERROR",
-                    corpo= "File token DropBox non trovato:",
-                    dettaglio=f"{DROPBOX_TOKEN}")
+            logger.error_mex(
+                corpo="File token DropBox non trovato",
+                dettaglio=f"{DROPBOX_TOKEN}")
             raise FileNotFoundError
 
         creds = json.loads(DROPBOX_CRED.read_text())
@@ -51,9 +49,7 @@ def get_dropbox_client(
         dbx.users_get_current_account()
         return dbx
     except AuthError:
-        logger.tipo_messaggio(
-            tipo = "ERROR",
-            corpo= "Credenziali non valide")
+        logger.error_mex("Credenziali non valide")
         raise ValueError
 
 
@@ -70,15 +66,16 @@ def get_dataframe_from_dropbox(
     try:
         dbx.files_get_metadata(DROPBOX_DIR)
     except ApiError:
-        print(f"[ERROR] \t File non trovato su Dropbox: {DROPBOX_DIR}")
-        print("[INFO] \t File disponibili nella cartella remota:")
-        for f in dbx.files_list_folder(str(DROPBOX_FOLDER)).entries:  # type: ignore
-            print(f"  - {f.name}")
+        file_disponibili = [f.name for f in dbx.files_list_folder(str(DROPBOX_FOLDER)).entries]  # type: ignore
+        logger.error_mex(
+            corpo=f"File non trovato su Dropbox: {DROPBOX_DIR}",
+            dettaglio=["File disponibili nella cartella remota:"] + file_disponibili
+        )
         raise FileNotFoundError(f"File non presente su Dropbox: {DROPBOX_DIR}")
 
     # ---- DOWNLOAD IN MEMORIA -----
     _, response = dbx.files_download(DROPBOX_DIR)           # type: ignore
-    print(f"[OK] \t File letto da Dropbox: {DROPBOX_DIR}")
+    logger.info_mex(f"File letto da Dropbox: {DROPBOX_DIR}")
 
     return pd.read_excel(io.BytesIO(response.content), header = None, sheet_name=sheet_name)
 
@@ -101,28 +98,29 @@ def download_file_from_dropbox(
     try:
         dbx.files_get_metadata(DROPBOX_DIR)
     except ApiError:
-        print(f"[ERROR] \t File non trovato su Dropbox: {DROPBOX_DIR}")
-        print("[INFO] \t File disponibili nella cartella remota:")
-        for f in dbx.files_list_folder(DROPBOX_FOLDER).entries: # type: ignore
-            print(f"  - {f.name}")
+        file_disponibili = [f.name for f in dbx.files_list_folder(DROPBOX_FOLDER).entries]  # type: ignore
+        logger.error_mex(
+            corpo=f"File non trovato su Dropbox: {DROPBOX_DIR}",
+            dettaglio=["File disponibili nella cartella remota:"] + file_disponibili
+        )
         raise FileNotFoundError(f"File non presente su Dropbox: {DROPBOX_DIR}")
 
     # ---- CHECK LOCALE -----
     if not DOWNLOAD_FOLDER.exists():
-        print(f"[ERROR] \t Cartella di destinazione non esistente: {DOWNLOAD_FOLDER}")
+        logger.error_mex(f"Cartella di destinazione non esistente: {DOWNLOAD_FOLDER}")
         raise FileNotFoundError(f"Cartella di destinazione non esistente: {DOWNLOAD_FOLDER}")
 
     if OUTPUT_DIR.exists():
         if blocca_se_esistente:
-            print(f"[ERROR] \t File gia' esistente -> Download interrotto: {OUTPUT_DIR}")
+            logger.error_mex(f"File gia' esistente -> Download interrotto: {OUTPUT_DIR}")
             return
         else:
-            print(f"[WARNING] \t File gia' esistente -> sovrascritto: {OUTPUT_DIR}")
+            logger.warning_mex(f"File gia' esistente -> sovrascritto: {OUTPUT_DIR}")
 
     # ---- DOWNLOAD -----
     dbx.files_download_to_file(str(OUTPUT_DIR), DROPBOX_DIR)
-    print(f"[OK] \t Download completato: {OUTPUT_DIR}")    
-    print(f"[INFO] \t File creato in: {OUTPUT_DIR}")
+    logger.info_mex(f"Download completato: {OUTPUT_DIR}")
+    logger.info_mex(f"File creato in: {OUTPUT_DIR}")
 
 
 def upload_dataframe_to_dropbox(
@@ -147,7 +145,7 @@ def upload_dataframe_to_dropbox(
     mode = dropbox.files.WriteMode.overwrite if flag_sovrascrivi else dropbox.files.WriteMode.add # type: ignore
 
     dbx.files_upload(buffer.getvalue(), DROPBOX_DIR, mode=mode)
-    print(f"[OK] \t Upload completato: {DROPBOX_DIR}")
+    logger.info_mex(f"Upload completato: {DROPBOX_DIR}")
     
     
 def smista_file_excel(
@@ -159,7 +157,7 @@ def smista_file_excel(
         target_broken_name: str = "BROKEN",
         nome_colonna_data: str = "Data e ora",
         righe_da_saltare: int = 1,
-        flag_sovrascrivi_raw: bool = False #ciao
+        flag_sovrascrivi_raw: bool = False
         ) -> dict[str, list[dict]]:
     """
     Scansiona tutti i file con estensione estesione_files presenti in
@@ -182,7 +180,7 @@ def smista_file_excel(
     file_xlsx = [f for f in entries if f.name.lower().endswith(estesione_files.lower())]
 
     if not file_xlsx:
-        print(f"[INFO] \t Nessun file .xlsx trovato in {dropbox_folder_origine}")
+        logger.info_mex(f"Nessun file .xlsx trovato in {dropbox_folder_origine}")
         return {"SMISTATI": [], "BROKEN": []}
 
     # ---- PULIZIA BROKEN RESIDUI DI RUN PRECEDENTI ----
@@ -190,10 +188,13 @@ def smista_file_excel(
         f for f in file_xlsx
         if f.name.startswith(target_broken_name)
     ]
-    for f in file_broken_residui:
-        logger.sottofase("Eliminazione dei broken files esistenti:")
-        dbx.files_delete_v2(f"{dropbox_folder_origine}/{f.name}")
-        print(f"[INFO]\t Rimosso broken residuo: {f.name}")
+
+    if file_broken_residui:
+        logger.new_phase("Eliminazione dei broken files esistenti")
+        for f in file_broken_residui:
+            dbx.files_delete_v2(f"{dropbox_folder_origine}/{f.name}")
+            logger.info_mex(f"Rimosso broken residuo: {f.name}")
+        logger.end_phase()
 
     # ---- LISTA FILE DA PROCESSARE (escludo i broken residui appena eliminati) ----
     file_xlsx = [f for f in file_xlsx if f.name not in {f.name for f in file_broken_residui}]
@@ -208,13 +209,14 @@ def smista_file_excel(
         file_name = file_entry.name
         dropbox_path = f"{dropbox_folder_origine}/{file_name}"
 
-        print(f"\n[INFO] \t Controllo file: {file_name}")
+        logger.new_phase(f"Controllo file: {file_name}")
 
         # ---- DOWNLOAD ----
         try:
             _, response = dbx.files_download(dropbox_path)  # type: ignore
         except ApiError as e:
-            print(f"[ERROR] \t Impossibile scaricare {file_name}: {e}")
+            logger.error_mex(f"Impossibile scaricare {file_name}", dettaglio=str(e))
+            logger.end_phase()
             continue
 
         # ---- LETTURA PRIMO FOGLIO (salta riga di titolo) ----
@@ -225,18 +227,21 @@ def smista_file_excel(
                 sheet_name=0
             )
         except Exception as e:
-            print(f"[ERROR] \t Impossibile leggere {file_name}: {e} -> SALTATO (non spostato)")
+            logger.error_mex(f"Impossibile leggere {file_name} -> SALTATO (non spostato)", dettaglio=str(e))
+            logger.end_phase()
             continue
 
         if nome_colonna_data not in df.columns:
-            print(f"[WARNING] \t Colonna '{nome_colonna_data}' non trovata in {file_name} -> SALTATO (non spostato)")
+            logger.warning_mex(f"Colonna '{nome_colonna_data}' non trovata in {file_name} -> SALTATO (non spostato)")
+            logger.end_phase()
             continue
 
         # ---- CONTROLLO DATE ----
         date_series = pd.to_datetime(df[nome_colonna_data], errors="coerce", dayfirst=True)
 
         if date_series.isna().all():
-            print(f"[WARNING] \t Nessuna data valida trovata in {file_name} -> SALTATO (non spostato)")
+            logger.warning_mex(f"Nessuna data valida trovata in {file_name} -> SALTATO (non spostato)")
+            logger.end_phase()
             continue
 
         date_valide = date_series.dropna()
@@ -265,7 +270,7 @@ def smista_file_excel(
                 nuovo_nome = f"{target_broken_name}_{contatore_broken}{estesione_files}"
             contatore_broken += 1
 
-            print(f"[WARNING] \t {file_name} contiene date di anni/mesi diversi -> rinominato in {nuovo_nome}")
+            logger.warning_mex(f"{file_name} contiene date di anni/mesi diversi -> rinominato in {nuovo_nome}")
             nuovo_path = f"{dropbox_folder_origine}/{nuovo_nome}"
             
             file_dict = {
@@ -285,19 +290,21 @@ def smista_file_excel(
 
         if esiste_destinazione:
             if not flag_sovrascrivi_raw:
-                print(f"[WARNING] \t {nuovo_path} esiste già -> SALTATO (usa flag_sovrascrivi=True per sovrascrivere)")
+                logger.warning_mex(f"{nuovo_path} esiste già -> SALTATO (usa flag_sovrascrivi_raw=True per sovrascrivere)")
+                logger.end_phase()
                 continue
             else:
                 dbx.files_delete_v2(nuovo_path)
-                print(f"[INFO] \t {nuovo_path} gia' esistente -> sovrascritto")
+                logger.info_mex(f"{nuovo_path} gia' esistente -> sovrascritto")
 
         # ---- SPOSTAMENTO / RINOMINA ----
         try:
             dbx.files_move_v2(dropbox_path, nuovo_path)
             etichetta = "CONFORME" if conforme else "NON CONFORME"
-            print(f"[OK] \t [{etichetta}] {file_name} -> {nuovo_path}")
+            logger.info_mex(f"[{etichetta}] {file_name} -> {nuovo_path}")
         except ApiError as e:
-            print(f"[ERROR] \t Impossibile spostare {file_name}: {e}")
+            logger.error_mex(f"Impossibile spostare {file_name}", dettaglio=str(e))
 
+        logger.end_phase()
 
     return file_smistati

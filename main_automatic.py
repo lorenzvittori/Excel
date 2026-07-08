@@ -1,4 +1,4 @@
-## NOME FILE: FLUSSO_TOTALE.py
+## NOME FILE: main_automatic.py
 from DROPBOX        import dropbox_module       as db_module
 from GOOGLE_DRIVE   import write_module         as gd_module
 from ELABORATION    import processing_module    as pr_module
@@ -37,17 +37,17 @@ FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
 print("\n\n\n")
 logger.reset_fase()
 
-logger.fase("DROPBOX")
-logger.inizio_istanza("Connessione al DropBox")
+logger.new_phase("DROPBOX")
+logger.info_mex("Connessione al DropBox")
 
 dbx = db_module.get_dropbox_client(
     dropbox_credential = DROPBOX_CRED,
     dropbox_token = DROPBOX_TOKEN
 )
 
-logger.fine_istanza()
-    
-logger.sottofase("Smistamento dei file sul DropBox")
+logger.info_mex("Connesso al DropBox")
+
+logger.new_phase("Smistamento dei file sul DropBox")
 
 FILE_SMISTATI = db_module.smista_file_excel(
     dbx = dbx,
@@ -61,14 +61,15 @@ FILE_SMISTATI = db_module.smista_file_excel(
     flag_sovrascrivi_raw = FLAG_SOVRASCRIVI_RAW_DBX,
 )
 
+logger.end_phase()   # chiude "Smistamento dei file sul DropBox"
+logger.end_phase()   # chiude "DROPBOX"
+
 
 LIST_ANNO_MESE = FILE_SMISTATI["SMISTATI"]
 
 
 if not LIST_ANNO_MESE:
-    logger.tipo_messaggio(
-        tipo="ERRORE",
-        corpo="Nessun file conforme trovato da smistare")
+    logger.error_mex("Nessun file conforme trovato da smistare")
     raise SystemExit
 
 
@@ -78,7 +79,9 @@ ERRORI = []
 TOTALE_ANNO_MESE = len(LIST_ANNO_MESE)
 this_anno_mese = 0
 
-logger.start(corpo = f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILES")
+logger.separatore()
+print(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILES")
+logger.separatore()
 
 for i_anno_mese in LIST_ANNO_MESE:
     this_anno_mese += 1
@@ -90,9 +93,9 @@ for i_anno_mese in LIST_ANNO_MESE:
     
     try:
         logger.separatore()
-        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}", end = "")
-        logger.inizio_flusso_anno_mese(anno = ANNO, mese_str = MESE)
-        logger.fase("DROPBOX")
+        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
+
+        logger.new_phase("DROPBOX")
 
         NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
         NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
@@ -104,33 +107,25 @@ for i_anno_mese in LIST_ANNO_MESE:
         )
 
         if isinstance(RAW_DATAFRAME, pd.DataFrame):
-            logger.tipo_messaggio(
-                tipo="ERRORE",
-                corpo=f"Non esistono i fogli {FOGLIO_SPESE} e {FOGLIO_ENTRATE}"
-            )
+            logger.error_mex(f"Non esistono i fogli {FOGLIO_SPESE} e {FOGLIO_ENTRATE}")
             raise ValueError
 
         RAW_DATAFRAME = cast(dict[str, pd.DataFrame], RAW_DATAFRAME)
 
         if FOGLIO_SPESE not in RAW_DATAFRAME.keys():
-            logger.tipo_messaggio(
-                tipo="ERRORE",
-                corpo=f"Non esiste il foglio {FOGLIO_SPESE}"
-            )
+            logger.error_mex(f"Non esiste il foglio {FOGLIO_SPESE}")
             raise ValueError
 
         if FOGLIO_ENTRATE not in RAW_DATAFRAME.keys():
-            logger.tipo_messaggio(
-                tipo="ERRORE",
-                corpo=f"Non esiste il foglio {FOGLIO_ENTRATE}"
-            )
+            logger.error_mex(f"Non esiste il foglio {FOGLIO_ENTRATE}")
             raise ValueError
+
+        logger.end_phase()   # chiude "DROPBOX"
 
 
         #PROCESSA MESE
-        logger.fase("Pulizia e formattazione della tabella")
+        logger.new_phase("Pulizia e formattazione della tabella")
 
-        logger.sottofase("Pulizia e formattazione")
         PRC_DATAFRAME = pr_module.processa_dataframe(
             df_raw=RAW_DATAFRAME,
             anno=ANNO,
@@ -141,15 +136,17 @@ for i_anno_mese in LIST_ANNO_MESE:
             flag_stampa_duplicati = FLAG_LOG_DUPLICATI,
             flag_stampa_spese_altro = FLAG_LOG_ALTRO)
 
+        logger.end_phase()   # chiude "Pulizia e formattazione della tabella"
+
         
         #SCRITTURA SU GOOGLE DRIVE
-        logger.fase("GOOGLE DRIVE")
+        logger.new_phase("GOOGLE DRIVE")
 
         GOOGLE_SERVICE_ACCOUNT = STRUTTURA_REPOSITORY["FILE_GOOGLE_ACCOUNT"]
         
-        logger.inizio_istanza("Connessione a Google Drive")
+        logger.info_mex("Connessione a Google Drive")
         client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
-        logger.fine_istanza()
+        logger.info_mex("Connesso a Google Drive")
         
 
         #Controlla che il file spese abbia le giuste colonne:
@@ -159,15 +156,14 @@ for i_anno_mese in LIST_ANNO_MESE:
         colonne_spese_attese = sorted([DESIGN[c] for c in NOMI_COLONNE_APP["COLONNE_SPESE"].keys()])
 
         if colonne_spese_attuali != colonne_spese_attese:
-            logger.tipo_messaggio(
-                    tipo = "ERRORE", 
-                    corpo=  "Colonne nel foglio spese non corrispondenti a quelle attese",
-                    dettaglio=[ f"colonne attuali : {colonne_spese_attuali}",
-                                f"colonne attese : {colonne_spese_attese}"])
+            logger.error_mex(
+                corpo = "Colonne nel foglio spese non corrispondenti a quelle attese",
+                dettaglio = [ f"colonne attuali : {colonne_spese_attuali}",
+                              f"colonne attese : {colonne_spese_attese}"])
             raise ValueError()
 
         
-        logger.sottofase("Scrittura su sheet")
+        logger.new_phase("Scrittura su sheet")
         gd_module.sync_month_local(
             client=client,
             anno=ANNO,
@@ -175,9 +171,10 @@ for i_anno_mese in LIST_ANNO_MESE:
             df_prc=PRC_DATAFRAME,
             flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
         )
+        logger.end_phase()   # chiude "Scrittura su sheet"
         
         
-        logger.inizio_istanza("Salvataggio della tabella processata")
+        logger.info_mex("Salvataggio della tabella processata su Dropbox")
         db_module.upload_dataframe_to_dropbox(
             dbx = dbx,
             dropbox_folder = DROPBOX_PRC_FOLDER,
@@ -185,15 +182,17 @@ for i_anno_mese in LIST_ANNO_MESE:
             df = PRC_DATAFRAME,
             flag_sovrascrivi = True
         )
-        logger.fine_istanza()
-        logger.fine(anno = ANNO, mese_str=MESE)
+        logger.info_mex("Tabella processata salvata su Dropbox")
+
+        logger.end_phase()   # chiude "GOOGLE DRIVE"
+
+        logger.info_mex(f"Flusso completato per ANNO {ANNO} - MESE {MESE}")
         logger.separatore()
 
     except BaseException as e:
-        logger.tipo_messaggio(
-            tipo= "ERRORE",
-            corpo = "Fallito il flusso per ANNO {ANNO} - MESE {MESE}:",
-            dettaglio = f"{e}")
+        logger.error_mex(
+            corpo = f"Fallito il flusso per ANNO {ANNO} - MESE {MESE}",
+            dettaglio = str(e))
         ERRORI.append((ANNO, MESE, str(e)))
         continue
 
@@ -204,14 +203,12 @@ if ERRORI:
     for anno_err, mese_err, errore in ERRORI:
         log_errori.append(f"ANNO {anno_err} MESE {mese_err}: {errore}")
     
-    logger.tipo_messaggio(
-            tipo = "WARNING",
-            corpo = f"{len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:",
-            dettaglio=log_errori)
+    logger.warning_mex(
+        corpo = f"{len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:",
+        dettaglio = log_errori)
     
     logger.separatore()
     raise SystemExit
 else:
-    logger.tipo_messaggio(tipo = "INFO", corpo = f"Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
+    logger.info_mex(f"Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
     logger.separatore()
-    

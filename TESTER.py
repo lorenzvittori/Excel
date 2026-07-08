@@ -3,9 +3,13 @@
 Script dimostrativo per esplorare l'utilizzo di new_logger.py
 Simula un flusso realistico simile a FLUSSO_TOTALE.py, con fasi annidate,
 messaggi di vario tipo, e reset tra "run" successive.
+[INF]: 
+[OK]: 
+[WAR]: 
+[ERR]: 
 """
 
-import new_logger as logger
+import logger as logger
 
 
 def simula_run(anno: str, mese: str, forza_errore: bool = False) -> None:
@@ -15,14 +19,10 @@ def simula_run(anno: str, mese: str, forza_errore: bool = False) -> None:
     logger.tipo_messaggio("INFO", f"Connessione al Dropbox per {anno}-{mese}")
 
     logger.new_phase("Verifica file raw")
-    logger.tipo_messaggio("INFO", "File trovato: app_2026_07.xlsx")
+    logger.info_mex("File trovato: app_2026_07.xlsx")
 
     if forza_errore:
-        logger.tipo_messaggio(
-            "ERROR",
-            "Colonne mancanti nel foglio Spese",
-            dettaglio=["Data e ora", "Categoria", "Importo in valuta del conto"]
-        )
+        logger.error_mex("Colonne mancanti nel foglio Spese", dettaglio=["Data e ora", "Categoria", "Importo in valuta del conto"])
         logger.end_phase()
         logger.end_phase()
         return
@@ -32,9 +32,8 @@ def simula_run(anno: str, mese: str, forza_errore: bool = False) -> None:
     logger.end_phase()  # chiude "DROPBOX"
 
     logger.new_phase("PROCESSING")
-    logger.tipo_messaggio("INFO", "Pulizia e formattazione in corso")
-    logger.tipo_messaggio(
-        "WARNING",
+    logger.info_mex("Pulizia e formattazione in corso")
+    logger.warning_mex(
         "Trovati record duplicati",
         dettaglio=["Riga 12: Cibo Fuori 20,00", "Riga 45: Cibo Fuori 20,00"]
     )
@@ -47,7 +46,7 @@ def simula_run(anno: str, mese: str, forza_errore: bool = False) -> None:
     logger.end_phase()
 
     logger.new_phase("Scrittura sul foglio")
-    logger.tipo_messaggio("INFO", "Celle B2:D550 svuotate prima della scrittura")
+    logger.info_mex("Celle B2:D550 svuotate prima della scrittura")
     logger.tipo_messaggio("OK", "Scrittura completata")
     logger.end_phase()
 

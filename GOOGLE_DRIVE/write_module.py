@@ -6,6 +6,7 @@ import json
 import configuration as config
 import os
 from pathlib import Path
+import logger
 
 
 def get_google_client(google_service_account: Path) -> gspread.Client:
@@ -43,14 +44,14 @@ def sync_month_local(
     try:
         sheet = client.open_by_key(id_google_sheet)
     except gspread.exceptions.SpreadsheetNotFound:
-        raise FileNotFoundError(f"[ERROR]\t Google Sheet non trovato: {id_google_sheet}")
+        raise FileNotFoundError(f"Google Sheet non trovato: {id_google_sheet}")
     except gspread.exceptions.APIError as e:
-        raise RuntimeError(f"[ERROR]\t API Google Sheets: {e}")
+        raise RuntimeError(f"API Google Sheets: {e}")
 
     try:
         ws = sheet.worksheet(NOME_SHEET_MESE)
     except gspread.exceptions.WorksheetNotFound:
-        raise FileNotFoundError(f"[ERROR]\t Worksheet non trovato: {NOME_SHEET_MESE}")
+        raise FileNotFoundError(f"Worksheet non trovato: {NOME_SHEET_MESE}")
     
     
     NOME_FOGLIO_SPESE   = config.DESIGN["NOME_FOGLIO_SPESE"]
@@ -63,27 +64,27 @@ def sync_month_local(
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
-            print(f"[ERROR]\t Foglio non vuoto: {NOME_SHEET_MESE}")
+            logger.error_mex(f"Foglio non vuoto: {NOME_SHEET_MESE}")
             raise SystemExit
         else:
-            print(f"[INFO]\t Foglio non vuoto - > SOVRASCRIVO CELLE")
+            logger.info_mex("Foglio non vuoto -> SOVRASCRIVO CELLE")
             
     # 2.2 CONTROLLO CHE NON HO PIU DI 500 RIGHE DA SCRIVERE:
     count_rows = len(df_spese_raw.index)
     if count_rows > 500:
-        print("[WARN]\t - Stai scrivendo più di 500 righe")
+        logger.warning_mex("Stai scrivendo più di 500 righe")
         
-    # 2.3 CONTROLLO CHE STO SCRIVENDO IL NUMERO DIUGSTO DI COLONNE
+    # 2.3 CONTROLLO CHE STO SCRIVENDO IL NUMERO GIUSTO DI COLONNE
     count_colums = len(df_spese_raw.columns)
     if count_colums > config.NUMERO_COLONNE_SHEET_SPESE:
-        print(f"[ERROR]\t- Stai scrivendo più di {config.NUMERO_COLONNE_SHEET_SPESE} colonne")
+        logger.error_mex(f"Stai scrivendo più di {config.NUMERO_COLONNE_SHEET_SPESE} colonne")
         raise ValueError
     
     
     # 3. WRITE
     # 3.1 ELIMINO TUTTI I VALORI DELLE CELLE B2:D550
     ws.batch_clear(["B2:D550"])
-    print(f"[INFO]\t Celle B2:D550 svuotate prima della scrittura")
+    logger.info_mex("Celle B2:D550 svuotate prima della scrittura")
     
     
     
@@ -97,3 +98,4 @@ def sync_month_local(
         "B1"
     )
 
+    logger.info_mex(f"Scrittura completata su foglio {NOME_SHEET_MESE}")
