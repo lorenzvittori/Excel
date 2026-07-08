@@ -12,7 +12,7 @@ def separatore() -> None:
     print("=" * BLOCK_LENGTH)
 
 def get_tab(n: int) -> str:
-    return "\t" * n
+    return "   " * n
 
 
 def new_phase(corpo: str) -> None:
