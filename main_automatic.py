@@ -27,6 +27,7 @@ DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
 
 DROPBOX_RAW_FOLDER = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
 DROPBOX_PRC_FOLDER = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
+DROPBOX_TO_SORT_FOLDER = STRUTTURA_DROPBOX["FOLD_TO_SORT"]
 
 FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
 FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
@@ -52,7 +53,7 @@ logger.new_phase("Smistamento dei file sul DropBox")
 FILE_SMISTATI = db_module.smista_file_excel(
     dbx = dbx,
     dropbox_folder_destinazione = DROPBOX_RAW_FOLDER,
-    dropbox_folder_origine = "",
+    dropbox_folder_origine = DROPBOX_TO_SORT_FOLDER,
     get_raw_name = config.get_raw_name,
     estesione_files = ".xlsx",
     target_broken_name = FILE_BROKEN,

@@ -35,6 +35,7 @@ STRUTTURA_REPOSITORY = {
 }
 
 STRUTTURA_DROPBOX = {
+    "FOLD_TO_SORT":     "",
     "FOLD_RAW_TBT":     "/sheets_RAW",
     "FOLD_PRC_TBT":     "/sheets_PROCESSED"
 }
