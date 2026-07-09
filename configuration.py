@@ -50,25 +50,29 @@ ID_GOOGLE_SHEET = {
 # ----------------------------------------- DESIGN -----------------------------------------
 
 DESIGN = {
+    "COL_SPESE_ANNO":           "Anno",
+    "COL_SPESE_MESE":           "Mese",
     "COL_SPESE_DATA":           "Data",
     "COL_SPESE_CATEGORIA":      "Categoria",
     "COL_SPESE_IMPORTO":        "Importo",
     "COL_SPESE_NOTE":           "Note",
     
+    "COL_ENTRATE_ANNO":         "Anno",
+    "COL_ENTRATE_MESE":         "Mese",
     "COL_ENTRATE_DATA":         "Data",
     "COL_ENTRATE_CATEGORIA":    "Categoria",
-    "COL_ENTRATE_MESE":         "Mese",
     "COL_ENTRATE_IMPORTO":      "Importo",
     "COL_ENTRATE_NOTE":         "Note",
     
     "NOME_FOGLIO_SPESE":        "Spese",
     "NOME_FOGLIO_ENTRATE":      "Entrate",
     
+    "NOME_FOGLIO_TOTAL_ENTRATE": "TOTAL_entrate",
     "NOME_FILE_ROTTO":          "BROKEN"        #Nome del file da smistare che non ha unici (anno, mese)
 }
 
-NUMERO_COLONNE_SHEET_SPESE = 4
-NUMERO_COLONNE_SHEET_ENTRATE = 5
+NUMERO_COLONNE_SHEET_SPESE      = sum(1 for x in DESIGN.keys() if x.startswith("COL_SPESE"))
+NUMERO_COLONNE_SHEET_ENTRATE    = sum(1 for x in DESIGN.keys() if x.startswith("COL_ENTRATE"))
 
 NOMI_COLONNE_APP = {
     "COLONNE_SPESE": {

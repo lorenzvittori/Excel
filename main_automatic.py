@@ -8,11 +8,11 @@ import pandas as pd
 import os
 import logger
 
-FLAG_SCRITTURA_SUL_DRIVE = os.getenv("FLAG_SCRITTURA_SUL_DRIVE", default = "false").lower()    == "true"
-FLAG_SOVRASCRIVI_SHEET   = os.getenv("FLAG_SOVRASCRIVI_SHEET", default = "false").lower()      == "true"
-FLAG_SOVRASCRIVI_RAW_DBX = os.getenv("FLAG_SOVRASCRIVI_RAW_DBX", default = "false").lower()    == "true"
-FLAG_LOG_DUPLICATI       = os.getenv("FLAG_LOG_DUPLICATI", default = "false").lower()          == "true"
-FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO", default = "false").lower()              == "true"
+FLAG_SCRITTURA_SUL_DRIVE = os.getenv("FLAG_SCRITTURA_SUL_DRIVE", default = "true").lower()    == "true"
+FLAG_SOVRASCRIVI_SHEET   = os.getenv("FLAG_SOVRASCRIVI_SHEET", default = "true").lower()      == "true"
+FLAG_SOVRASCRIVI_RAW_DBX = os.getenv("FLAG_SOVRASCRIVI_RAW_DBX", default = "true").lower()    == "true"
+FLAG_LOG_DUPLICATI       = os.getenv("FLAG_LOG_DUPLICATI", default = "true").lower()          == "true"
+FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO", default = "true").lower()              == "true"
 
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
@@ -140,6 +140,7 @@ for i_anno_mese in LIST_ANNO_MESE:
         logger.end_phase()   # chiude "Pulizia e formattazione della tabella"
 
         
+        
         #SCRITTURA SU GOOGLE DRIVE
         logger.new_phase("GOOGLE DRIVE")
 
@@ -152,27 +153,54 @@ for i_anno_mese in LIST_ANNO_MESE:
 
         #Controlla che il file spese abbia le giuste colonne:
         PRC_SPESE_DATAFRAME = PRC_DATAFRAME[FOGLIO_SPESE]
-
+        
+        
+        
         colonne_spese_attuali = sorted(PRC_SPESE_DATAFRAME.columns)
-        colonne_spese_attese = sorted([DESIGN[c] for c in NOMI_COLONNE_APP["COLONNE_SPESE"].keys()])
+        colonne_spese_attese = sorted([DESIGN[k] for k in DESIGN.keys() if k.startswith("COL_SPESE")])
 
         if colonne_spese_attuali != colonne_spese_attese:
             logger.error_mex(
                 corpo = "Colonne nel foglio spese non corrispondenti a quelle attese",
                 dettaglio = [ f"colonne attuali : {colonne_spese_attuali}",
-                              f"colonne attese : {colonne_spese_attese}"])
+                            f"colonne attese : {colonne_spese_attese}"])
             raise ValueError()
 
         
-        logger.new_phase("Scrittura su sheet")
-        gd_module.sync_month_local(
+        logger.new_phase("Scrittura SPESE su GoogleSheet")
+        gd_module.sync_spese_mensili(
             client=client,
             anno=ANNO,
             mese_str=MESE,
-            df_prc=PRC_DATAFRAME,
+            df_spese_prc=PRC_SPESE_DATAFRAME,
             flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
         )
-        logger.end_phase()   # chiude "Scrittura su sheet"
+        logger.info_mex(f"Scrittura completata delle spese")
+        logger.end_phase()   # chiude "Scrittura SPESE su GoogleSheet"
+        
+        
+        logger.new_phase("Scrittura ENTRATE su GoogleSheet")
+        PRC_ENTRATE_DATAFRAME = PRC_DATAFRAME[FOGLIO_ENTRATE]
+
+        colonne_entrate_attuali = sorted(PRC_ENTRATE_DATAFRAME.columns)
+        colonne_entrate_attese = sorted([DESIGN[k] for k in DESIGN.keys() if k.startswith("COL_ENTRATE")])
+
+        if colonne_entrate_attuali != colonne_entrate_attese:
+            logger.error_mex(
+                corpo = "Colonne nel foglio entrate non corrispondenti a quelle attese",
+                dettaglio = [ f"colonne attuali : {colonne_entrate_attuali}",
+                            f"colonne attese : {colonne_entrate_attese}"])
+            raise ValueError()
+
+    
+        gd_module.sync_entrate_totali(
+            client=client,
+            anno=ANNO,
+            mese_str=MESE,
+            df_entrate_prc=PRC_ENTRATE_DATAFRAME
+        )
+        logger.info_mex(f"Scrittura completata delle entrate")
+        logger.end_phase()   # chiude "Scrittura ENTRATE su GoogleSheet"
         
         
         logger.info_mex("Salvataggio della tabella processata su Dropbox")

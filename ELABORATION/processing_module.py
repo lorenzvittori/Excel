@@ -95,6 +95,9 @@ def prepara_spese(
     # FORMATTAZIONE DATA
     df_spese[design["COL_SPESE_DATA"]] = pd.to_datetime(df_spese[design["COL_SPESE_DATA"]],errors="coerce",dayfirst=True)
     
+    # INSERISCI ANNO e MESE
+    df_spese.insert(0, design["COL_SPESE_ANNO"], str(anno))
+    df_spese.insert(1, design["COL_SPESE_MESE"], int(mese_str))
     
     df_spese.sort_values(by=design["COL_SPESE_DATA"], inplace=True)
     
@@ -103,6 +106,7 @@ def prepara_spese(
 # ENTRATE
 def prepara_entrate(
     df_entrate_raw: pd.DataFrame,
+    anno: str,
     mese_str: str, 
     design: dict,
     colonne_app_entrate: dict) -> pd.DataFrame:
@@ -123,7 +127,10 @@ def prepara_entrate(
     # FORMATTAZIONE DATA
     df_entrate[design["COL_ENTRATE_DATA"]] = pd.to_datetime(df_entrate[design["COL_ENTRATE_DATA"]],errors="coerce",dayfirst=True)
 
-    df_entrate.insert(0, design["COL_ENTRATE_MESE"], int(mese_str))
+    # INSERISCI ANNO e MESE
+    df_entrate.insert(0, design["COL_ENTRATE_ANNO"], str(anno))
+    df_entrate.insert(1, design["COL_ENTRATE_MESE"], int(mese_str))
+
 
     df_entrate.sort_values(by=design["COL_ENTRATE_DATA"], inplace=True)
 
@@ -192,6 +199,7 @@ def processa_dataframe(
 
     df_entrate_wip = prepara_entrate(
         df_entrate_raw=df_entrate_raw,
+        anno = anno,
         mese_str=mese_str,
         design=design,
         colonne_app_entrate=colonne_app["COLONNE_ENTRATE"]
