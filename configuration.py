@@ -42,7 +42,7 @@ STRUTTURA_DROPBOX = {
 
 ID_GOOGLE_SHEET = {
     "2024": "1Z0PgcNWeSMP5adDeG-Wsj5YpgbXK-V3-I3BQrb8a4jE",
-    "2025": "1A8pxVxMtFhDRcISgSJBKETwfeFh1hRfrYp6mO0kNmgs",
+    "2025": "13_PYR5Whzhq0I9H8GK3-XX0_wRokNia8oM4J85kM77g", #"1A8pxVxMtFhDRcISgSJBKETwfeFh1hRfrYp6mO0kNmgs",
     "2026": "18E_u3WGZUrUJIcHfoC9ylt_uJiE3XxJ7XQyQkJC85kI",
     "2027": None
 }

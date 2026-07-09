@@ -308,3 +308,217 @@ def smista_file_excel(
         logger.end_phase()
 
     return file_smistati
+
+
+
+
+
+def spacchetta_file_annuale(
+        dbx: dropbox.Dropbox,
+        dropbox_folder_origine: str,
+        file_name: str,
+        get_raw_name,
+        nome_foglio_spese: str = "Spese",
+        nome_foglio_entrate: str = "Entrate",
+        nome_colonna_data: str = "Data e ora",
+        righe_da_saltare: int = 1,
+        riga_titolo_fittizia: str = "elenco per il periodo") -> dict[str, list[dict]]:
+    """
+    Scarica un file Excel annuale (con fogli Spese ed Entrate, contenenti
+    tutte le righe dell'anno) da dropbox_folder_origine, e lo spacchetta
+    in 12 file mensili separati (uno per mese, gennaio-dicembre), ciascuno
+    con la stessa struttura di un file raw mensile (riga titolo fittizia +
+    header + dati), caricati su dropbox_folder_origine con nome
+    get_raw_name(anno, mese_str).
+
+    Validazioni:
+    - tutte le date nel foglio Spese e nel foglio Entrate devono appartenere
+      allo stesso anno (altrimenti la funzione si interrompe con errore)
+    - ogni mese da 1 a 12 deve avere almeno una riga nel foglio Spese
+      (altrimenti la funzione si interrompe con errore, nessun file viene
+      caricato)
+    - le Entrate possono avere mesi mancanti (nessun controllo su di esse)
+    - eventuali date non parsabili (NaT) nel file annuale sono considerate
+      un errore bloccante (possibile file corrotto)
+
+    Al termine, se tutto va a buon fine, il file annuale originale viene
+    eliminato da Dropbox.
+    """
+
+    dropbox_path = f"{dropbox_folder_origine}/{file_name}"
+
+    logger.new_phase(f"Spacchettamento file annuale: {file_name}")
+
+    # ---- DOWNLOAD ----
+    try:
+        _, response = dbx.files_download(dropbox_path)  # type: ignore
+    except ApiError as e:
+        logger.error_mex(f"Impossibile scaricare {file_name}", dettaglio=str(e))
+        logger.end_phase()
+        raise
+
+    # ---- LETTURA DEI DUE FOGLI (salta riga di titolo) ----
+    try:
+        df_spese_raw = pd.read_excel(
+            io.BytesIO(response.content),
+            skiprows=righe_da_saltare,
+            sheet_name=nome_foglio_spese
+        )
+        df_entrate_raw = pd.read_excel(
+            io.BytesIO(response.content),
+            skiprows=righe_da_saltare,
+            sheet_name=nome_foglio_entrate
+        )
+    except Exception as e:
+        logger.error_mex(f"Impossibile leggere {file_name}", dettaglio=str(e))
+        logger.end_phase()
+        raise
+
+    # ---- CONTROLLO COLONNA DATA ----
+    if nome_colonna_data not in df_spese_raw.columns:
+        logger.error_mex(f"Colonna '{nome_colonna_data}' non trovata nel foglio {nome_foglio_spese}")
+        logger.end_phase()
+        raise ValueError(f"Colonna '{nome_colonna_data}' non trovata nel foglio {nome_foglio_spese}")
+
+    if nome_colonna_data not in df_entrate_raw.columns:
+        logger.error_mex(f"Colonna '{nome_colonna_data}' non trovata nel foglio {nome_foglio_entrate}")
+        logger.end_phase()
+        raise ValueError(f"Colonna '{nome_colonna_data}' non trovata nel foglio {nome_foglio_entrate}")
+
+    # ---- CONVERSIONE DATE ----
+    date_spese = pd.to_datetime(df_spese_raw[nome_colonna_data], errors="coerce", dayfirst=True)
+    date_entrate = pd.to_datetime(df_entrate_raw[nome_colonna_data], errors="coerce", dayfirst=True)
+
+    if date_spese.isna().any():
+        logger.error_mex(f"Trovate date non valide nel foglio {nome_foglio_spese} -> file possibilmente corrotto")
+        logger.end_phase()
+        raise ValueError(f"Date non valide nel foglio {nome_foglio_spese}")
+
+    if date_entrate.isna().any():
+        logger.error_mex(f"Trovate date non valide nel foglio {nome_foglio_entrate} -> file possibilmente corrotto")
+        logger.end_phase()
+        raise ValueError(f"Date non valide nel foglio {nome_foglio_entrate}")
+
+    # ---- CONTROLLO ANNO UNICO (Spese + Entrate insieme) ----
+    anni_spese = set(date_spese.dt.year.unique())
+    anni_entrate = set(date_entrate.dt.year.unique())
+    anni_totali = anni_spese | anni_entrate
+
+    if len(anni_totali) != 1:
+        logger.error_mex(
+            f"{file_name} contiene date di anni diversi tra Spese ed Entrate",
+            dettaglio=[f"Anni trovati: {sorted(anni_totali)}"]
+        )
+        logger.end_phase()
+        raise ValueError(f"Anni multipli trovati in {file_name}: {sorted(anni_totali)}")
+
+    anno = str(anni_totali.pop())
+
+    # ---- CONTROLLO COPERTURA MENSILE (solo Spese) ----
+    mesi_spese_presenti = set(date_spese.dt.month.unique())
+    mesi_mancanti = set(range(1, 13)) - mesi_spese_presenti
+
+    if mesi_mancanti:
+        logger.error_mex(
+            f"Il foglio {nome_foglio_spese} non copre tutti i mesi dell'anno {anno}",
+            dettaglio=[f"Mesi mancanti: {sorted(mesi_mancanti)}"]
+        )
+        logger.end_phase()
+        raise ValueError(f"Mesi mancanti nel foglio {nome_foglio_spese}: {sorted(mesi_mancanti)}")
+
+    logger.info_mex(f"Anno rilevato: {anno} - Tutti i 12 mesi coperti nel foglio {nome_foglio_spese}")
+
+    # ---- SPACCHETTAMENTO E UPLOAD PER OGNI MESE ----
+    file_prodotti = {"SMISTATI": [], "ERRORI": []}
+
+    df_spese_raw = df_spese_raw.copy()
+    df_spese_raw["_mese_tmp"] = date_spese.dt.month
+
+    df_entrate_raw = df_entrate_raw.copy()
+    df_entrate_raw["_mese_tmp"] = date_entrate.dt.month
+
+    for mese_num in range(1, 13):
+        mese_str = str(mese_num).zfill(2)
+
+        logger.new_phase(f"Creazione file mensile {anno}-{mese_str}")
+
+        df_spese_mese = df_spese_raw[df_spese_raw["_mese_tmp"] == mese_num].drop(columns=["_mese_tmp"])
+        df_entrate_mese = df_entrate_raw[df_entrate_raw["_mese_tmp"] == mese_num].drop(columns=["_mese_tmp"])
+
+        nuovo_nome = get_raw_name(anno, mese_str)
+        nuovo_path = f"{dropbox_folder_origine}/{nuovo_nome}"
+
+        try:
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                _scrivi_foglio_con_titolo_fittizio(
+                    writer, df_spese_mese, nome_foglio_spese, riga_titolo_fittizia
+                )
+                _scrivi_foglio_con_titolo_fittizio(
+                    writer, df_entrate_mese, nome_foglio_entrate, riga_titolo_fittizia
+                )
+
+            dbx.files_upload(
+                buffer.getvalue(), nuovo_path,
+                mode=dropbox.files.WriteMode.overwrite  # type: ignore
+            )
+
+            logger.info_mex(f"Creato {nuovo_nome}", dettaglio=[
+                f"Righe Spese: {len(df_spese_mese)}",
+                f"Righe Entrate: {len(df_entrate_mese)}"
+            ])
+
+            file_prodotti["SMISTATI"].append({
+                "anno": anno,
+                "mese_str": mese_str,
+                "raw_name": nuovo_nome,
+                "raw_path": nuovo_path
+            })
+
+        except Exception as e:
+            logger.error_mex(f"Impossibile creare/caricare {nuovo_nome}", dettaglio=str(e))
+            file_prodotti["ERRORI"].append({"mese_str": mese_str, "errore": str(e)})
+
+        logger.end_phase()
+
+    if file_prodotti["ERRORI"]:
+        logger.error_mex(
+            f"Spacchettamento incompleto: {len(file_prodotti['ERRORI'])} mesi falliti su 12"
+        )
+        logger.end_phase()
+        raise RuntimeError(f"Spacchettamento incompleto per {file_name}: {len(file_prodotti['ERRORI'])} errori")
+
+    # ---- ELIMINA IL FILE ANNUALE ORIGINALE ----
+    try:
+        dbx.files_delete_v2(dropbox_path)
+        logger.info_mex(f"File annuale originale eliminato: {file_name}")
+    except ApiError as e:
+        logger.error_mex(f"Impossibile eliminare il file annuale originale {file_name}", dettaglio=str(e))
+
+    logger.end_phase()  # chiude "Spacchettamento file annuale"
+
+    return file_prodotti
+
+
+def _scrivi_foglio_con_titolo_fittizio(
+        writer: pd.ExcelWriter,
+        df: pd.DataFrame,
+        nome_foglio: str,
+        riga_titolo: str) -> None:
+    """
+    Scrive un DataFrame su un foglio Excel replicando la struttura dei file
+    raw originali: una riga di titolo fittizia in cima, poi l'header vero,
+    poi i dati - così il file prodotto può essere letto dal resto della
+    pipeline con skiprows=1 come un file raw normale.
+    """
+    n_colonne = len(df.columns)
+
+    # Riga 0: titolo fittizio (solo nella prima cella, resto vuoto)
+    riga_titolo_df = pd.DataFrame([[riga_titolo] + [""] * (n_colonne - 1)], columns=df.columns)
+
+    # Riga 1: header vero (i nomi delle colonne come dato, non come intestazione excel)
+    header_df = pd.DataFrame([df.columns.tolist()], columns=df.columns)
+
+    df_completo = pd.concat([riga_titolo_df, header_df, df], ignore_index=True)
+
+    df_completo.to_excel(writer, sheet_name=nome_foglio, index=False, header=False)

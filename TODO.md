@@ -15,6 +15,7 @@
 12. fare flag solo spese o solo entrate
 13. fare action mauale con scelta raw -> prc -> scrittura oppure prc->scrittura
 14. Stamapre il timestamp dell'ultimo aggiornamento
+15. Non posso lanciare il flusso su anni precedenti per via delle add_rows che sono aggiornate sempre al presente
 
 ## Download dal dropbox
 1. FATTO - Fare una funzione che automaticamente capisce anno e mese del file

@@ -221,7 +221,7 @@ for i_anno_mese in LIST_ANNO_MESE:
     except BaseException as e:
         logger.error_mex(
             corpo = f"Fallito il flusso per ANNO {ANNO} - MESE {MESE}",
-            dettaglio = str(e))
+            dettaglio = f"{type(e).__name__}: {e}")
         ERRORI.append((ANNO, MESE, str(e)))
         continue
 
