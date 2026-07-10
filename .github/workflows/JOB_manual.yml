@@ -64,8 +64,6 @@ jobs:
       FLAG_TUTTI_RAW:               ${{ inputs.flag_tutti_raw }}
       FLAG_SCRITTURA_SUL_DRIVE:     ${{ inputs.flag_scrittura_sul_drive }}
       FLAG_SOVRASCRIVO_SHEET:       ${{ inputs.flag_sovrascrivo_sheet }}
-      FLAG_SOVRASCRIVO_RAW_DBX:     ${{ inputs.flag_sovrascrivo_raw_dbx }}
-      FLAG_SOVRASCRIVO_PRC_DBX:     ${{ inputs.flag_sovrascrivo_prc_dbx }}
       FLAG_LOG_DUPLICATI:           ${{ inputs.log_duplicati }}
       FLAG_LOG_ALTRO:               ${{ inputs.log_altro }}
       ANNO: ${{ inputs.anno }}
