@@ -3,49 +3,13 @@ name: Flusso Spese-Entrate Manuale
 on:
   workflow_dispatch:
     inputs:
-      flag_scrittura_sul_drive:
-        description: "Se disattivato non scrive sullo Sheet"
-        required: true
-        default: true
-        type: boolean
-      flag_sovrascrivo_sheet:
-        description: "Se disattivato il flusso si blocca se lo sheet non è vuoto"
-        required: true
-        default: true
-        type: boolean
-      flag_sovrascrivo_raw_dbx:
-        description: "Se disattivato il flusso si blocca all'incontro di un duplicato 'raw'"
-        required: true
-        default: true
-        type: boolean
-      flag_sovrascrivo_prc_dbx:
-        description: "Se disattivato il flusso si blocca all'incontro di un duplicato 'processed'"
-        required: true
-        default: true
-        type: boolean
-      log_duplicati:
-        description: "Stampa i record duplici"
-        required: true
-        default: false
-        type: boolean
-      log_altro:
-        description: "Stampa i record che hanno Categoria = 'Altro'"
-        required: true
-        default: false
-        type: boolean
-      flag_tutti_raw:
-        description: "Esegue il codice su tutti i file raw presenti sul DropBox"
-        required: true
-        default: false
-        type: boolean
       anno:
         description: "Anno (es. 2026)"
-        required: false
-        default: "2026"
+        required: true
         type: string
       mese:
         description: "Mese"
-        required: false
+        required: true
         type: choice
         options:
           - Gennaio
@@ -60,6 +24,36 @@ on:
           - Ottobre
           - Novembre
           - Dicembre
+      flag_prioritizza_prc:
+        description: "Se disattivato elbora i file RAW"
+        required: true
+        default: false
+        type: boolean
+      flag_scrittura_sul_drive:
+        description: "Se disattivato non scrive sullo Sheet"
+        required: false
+        default: true
+        type: boolean
+      flag_sovrascrivo_sheet:
+        description: "Se disattivato il flusso si blocca se lo sheet non è vuoto"
+        required: false
+        default: true
+        type: boolean
+      log_duplicati:
+        description: "Stampa i record duplici"
+        required: false
+        default: false
+        type: boolean
+      log_altro:
+        description: "Stampa i Categoria = 'Altro'"
+        required: false
+        default: false
+        type: boolean
+      flag_tutti_raw:
+        description: "Esegue il codice su tutti i file raw presenti sul DropBox"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   flusso:
@@ -94,4 +88,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Esegui flusso
-        run: python main.py
+        run: python main_manual.py

@@ -3,32 +3,6 @@ name: Flusso Spese-Entrate Automatico
 on:
   workflow_dispatch:
     inputs:
-      anno:
-        description: "Anno (es. 2026)"
-        required: true
-        type: string
-      mese:
-        description: "Mese"
-        required: true
-        type: choice
-        options:
-          - Gennaio
-          - Febbraio
-          - Marzo
-          - Aprile
-          - Maggio
-          - Giugno
-          - Luglio
-          - Agosto
-          - Settembre
-          - Ottobre
-          - Novembre
-          - Dicembre
-      flag_prioritizza_prc:
-        description: "Se disattivato elbora i file RAW"
-        required: true
-        default: false
-        type: boolean
       flag_scrittura_sul_drive:
         description: "Se disattivato non scrive sullo Sheet"
         required: false
@@ -66,9 +40,6 @@ jobs:
 
     env:
       FLAG_AUTOMATIC: true
-      ANNO:                     ${{ inputs.anno }}
-      MESE:                     ${{ inputs.mese }}
-      FLAG_PRIORITIZZA_PRC:     ${{ inputs.flag_prioritizza_prc }}
       FLAG_SCRITTURA_SUL_DRIVE: ${{ inputs.flag_scrittura_sul_drive }}
       FLAG_SOVRASCRIVI_SHEET:   ${{ inputs.flag_sovrascrivi_sheet }}
       FLAG_SOVRASCRIVI_RAW_DBX: ${{ inputs.flag_sovrascrivi_raw_dbx }}
@@ -93,4 +64,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Esegui flusso
-        run: python main_manual.py
+        run: python main_automatic.py
