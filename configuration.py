@@ -69,7 +69,7 @@ DESIGN = {
     "NOME_FOGLIO_SPESE":        "Spese",
     "NOME_FOGLIO_ENTRATE":      "Entrate",
     
-    "NOME_FOGLIO_TOTAL_ENTRATE": "TOTAL_entrate",
+    "NOME_FOGLIO_TOTAL_ENTRATE":"TOTAL_entrate",
     "NOME_FILE_ROTTO":          "BROKEN"        #Nome del file da smistare che non ha unici (anno, mese)
 }
 

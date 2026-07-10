@@ -103,9 +103,10 @@ for i_anno_mese in LIST_ANNO_MESE:
     
     
     try:
-        logger.separatore()
+        print("------ ", end="")
         print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
-
+        print("------")
+        print()
 ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
         logger.new_phase("DROPBOX - Download")
 
