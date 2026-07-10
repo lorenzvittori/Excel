@@ -104,7 +104,7 @@ for i_anno_mese in LIST_ANNO_MESE:
     
     try:
         print("------------")
-        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}", end="")
+        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
         print("------------")
         print()
 ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
@@ -216,8 +216,14 @@ for i_anno_mese in LIST_ANNO_MESE:
             client=client,
             anno=ANNO,
             mese_str=MESE,
-            df_entrate_prc=PRC_ENTRATE_DATAFRAME
-        )
+            col_mese =      DESIGN["COL_ENTRATE_MESE"],
+            col_data =      DESIGN["COL_ENTRATE_DATA"],
+            col_importo =   DESIGN["COL_ENTRATE_IMPORTO"],
+            col_note =      DESIGN["COL_ENTRATE_NOTE"],
+            col_timestamp = DESIGN["COL_ENTRATE_TSTAMP"],
+            top_left_entry =DESIGN["FIRST_ENTRY"],
+            df_entrate_prc =PRC_ENTRATE_DATAFRAME)
+        
         logger.ok_mex(f"Scrittura delle entrate: ✔ COMPLETATA")
         logger.end_phase()   # chiude "Scrittura ENTRATE su GoogleSheet"
         logger.end_phase()

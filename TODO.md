@@ -10,11 +10,11 @@
 7. FATTO - Nel job io farei prima cerca di autentificarsi a dropbox e google drive e verifica che funzionano poi tutto il resto.
 8. FATTO - Pensare di non tenere sul repo i dati, questo ti evita anche i commit
 9. Quando controllo o setto l'ordine delle colonne?
-10. synch_entrate_totali ha tante cose hardcoded
-11. Rifare il giro su 2025 e 2024
+10. FATTO - synch_entrate_totali ha tante cose hardcoded
+11. FATTO - Rifare il giro su 2025 e 2024
 12. fare flag solo spese o solo entrate
 13. fare action mauale con scelta raw -> prc -> scrittura oppure prc->scrittura
-14. Stamapre il timestamp dell'ultimo aggiornamento
+14. FATTO - Stamapre il timestamp dell'ultimo aggiornamento
 15. Non posso lanciare il flusso su anni precedenti per via delle add_rows che sono aggiornate sempre al presente
 
 ## Download dal dropbox

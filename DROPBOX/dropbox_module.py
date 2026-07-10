@@ -57,6 +57,7 @@ def get_dataframe_from_dropbox(
         dbx: dropbox.Dropbox,
         dropbox_folder: str,
         file_name: str,
+        header: int | None = None,
         sheet_name=None) -> dict[str, pd.DataFrame] | pd.DataFrame:
 
     DROPBOX_FOLDER = dropbox_folder
@@ -77,7 +78,7 @@ def get_dataframe_from_dropbox(
     _, response = dbx.files_download(DROPBOX_DIR)           # type: ignore
     logger.info_mex(f"File letto da Dropbox: {DROPBOX_DIR}")
 
-    return pd.read_excel(io.BytesIO(response.content), header = None, sheet_name=sheet_name)
+    return pd.read_excel(io.BytesIO(response.content), header = header, sheet_name=sheet_name)
 
 
 def download_file_from_dropbox(

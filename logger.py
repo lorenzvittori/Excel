@@ -4,7 +4,7 @@ sys.stdout.reconfigure(encoding='utf-8')        #type: ignore
 
 _contatore_fase = 0
 _profondita = 0
-_flag_new_line = False
+_flag_riga_vuota = False
 BLOCK_LENGTH = 46
 BULLET_PHASE = "• "
 BULLET_MEX = ""
@@ -18,10 +18,18 @@ def separatore() -> None:
 def get_tab(n: int) -> str:
     return "   " * n
 
+def end_all_phases() -> None:
+    global _profondita, _flag_riga_vuota
+    _profondita = 0
+    if not(_flag_riga_vuota):
+        _flag_riga_vuota = True
+        print("")
 
 def new_phase(corpo: str) -> None:
-    global _contatore_fase, _profondita, _flag_new_line
-    _flag_new_line = False
+    global _contatore_fase, _profondita, _flag_riga_vuota
+    if not(_flag_riga_vuota):
+        _flag_riga_vuota = True
+        print("")
     corpo = corpo.strip()
 
     if _profondita == 0:
@@ -34,10 +42,10 @@ def new_phase(corpo: str) -> None:
 
 
 def end_phase() -> None:
-    global _profondita, _flag_new_line
+    global _profondita, _flag_riga_vuota
     _profondita = max(0, _profondita - 1)
-    if not(_flag_new_line):
-        _flag_new_line = True
+    if not(_flag_riga_vuota):
+        _flag_riga_vuota = True
         print("")
 
 
@@ -58,8 +66,8 @@ def warning_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
 
 
 def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
-    global _flag_new_line
-    _flag_new_line = False
+    global _flag_riga_vuota
+    _flag_riga_vuota = False
     tipo = tipo.strip()
     corpo = corpo.strip()
     print(f"{get_tab(_profondita)}{BULLET_MEX}[{tipo}]: {corpo}")

@@ -31,11 +31,16 @@ def get_google_client(google_service_account: Path) -> gspread.Client:
     return gspread.authorize(creds)
 
 
-
 def sync_entrate_totali(
         client: gspread.Client,
         anno: str,
         mese_str: str,
+        col_importo: str,
+        col_mese: str,
+        col_data: str,
+        col_note: str,
+        col_timestamp: str,
+        top_left_entry: str,
         df_entrate_prc: pd.DataFrame) -> None:
 
     id_google_sheet = config.ID_GOOGLE_SHEET[anno]
@@ -69,18 +74,18 @@ def sync_entrate_totali(
 
     df_esistente = df_esistente.fillna("")
 
-    df_esistente["Importo"] = df_esistente["Importo"].apply(
+    df_esistente[col_importo] = df_esistente[col_importo].apply(
         lambda x: x.replace("€", "").replace(".", "").strip() if pd.notnull(x) else ""
     )
 
-    df_esistente["Data"] = pd.to_datetime(df_esistente["Data"], errors="coerce", dayfirst=True)
-    df_entrate_nuove["Data"] = pd.to_datetime(df_entrate_nuove["Data"], errors="coerce", dayfirst=True)
+    df_esistente[col_data] = pd.to_datetime(df_esistente[col_data], errors="coerce", dayfirst=True)
+    df_entrate_nuove[col_data] = pd.to_datetime(df_entrate_nuove[col_data], errors="coerce", dayfirst=True)
 
     righe_esistenti_totale = len(df_esistente.index)
 
     # ---- 2. RIMUOVI LE RIGHE DELLO STESSO ANNO/MESE (evita duplicati su rilancio) ----
-    if "Mese" in df_esistente.columns:
-        righe_da_togliere = (df_esistente["Mese"].astype(str) == str(int(mese_str)))
+    if col_mese in df_esistente.columns:
+        righe_da_togliere = (df_esistente[col_mese].astype(str) == str(int(mese_str)))
         righe_rimosse = int(righe_da_togliere.sum())
         maschera = ~righe_da_togliere
         df_esistente = df_esistente[maschera]
@@ -89,9 +94,9 @@ def sync_entrate_totali(
 
     # ---- 3. UNISCI (le righe esistenti mantengono il loro vecchio TimeStamp) ----
     df_union = pd.concat([df_esistente, df_entrate_nuove], ignore_index=True)
-    df_union = df_union.sort_values(by=["Data", "Importo", "Note", "TimeStamp"])
+    df_union = df_union.sort_values(by=[col_data, col_importo, col_note, col_timestamp])
 
-    df_union["Data"] = df_union["Data"].apply(
+    df_union[col_data] = df_union[col_data].apply(
         lambda x: x.strftime("%d/%m/%Y") if pd.notnull(x) else ""
     )
 
@@ -114,7 +119,7 @@ def sync_entrate_totali(
     ws.clear()
     ws.update(
         [df_union.columns.tolist()] + df_union.values.tolist(),
-        "A1"
+        top_left_entry
     )
 
 
