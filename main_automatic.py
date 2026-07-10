@@ -87,7 +87,7 @@ this_anno_mese = 0
 S = "S" if TOTALE_ANNO_MESE > 1 else ""
 
 logger.separatore()
-print(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}")
+print(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}:")
 
 for i_anno_mese in LIST_ANNO_MESE:
     print(f"\t• {i_anno_mese["anno"]}-{i_anno_mese["mese_str"]}")
@@ -104,7 +104,7 @@ for i_anno_mese in LIST_ANNO_MESE:
     
     try:
         print("------ ", end="")
-        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
+        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}", end="")
         print("------")
         print()
 ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
