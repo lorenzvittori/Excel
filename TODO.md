@@ -13,7 +13,7 @@
 10. FATTO - synch_entrate_totali ha tante cose hardcoded
 11. FATTO - Rifare il giro su 2025 e 2024
 12. fare flag solo spese o solo entrate
-13. fare action mauale con scelta raw -> prc -> scrittura oppure prc->scrittura
+13. FATTO - fare action mauale con scelta raw -> prc -> scrittura oppure prc->scrittura
 14. FATTO - Stamapre il timestamp dell'ultimo aggiornamento
 15. Non posso lanciare il flusso su anni precedenti per via delle add_rows che sono aggiornate sempre al presente
 
