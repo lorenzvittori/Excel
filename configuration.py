@@ -8,18 +8,33 @@ def get_prc_name(anno: str, mese_str: str): return f"p_{anno}_{mese_str}.xlsx"
 
 
 MESI = {
-    "01": {"nome_intero": "Gennaio",    "nome_troncato": "Gen", "numero_int": 1,    "nome_foglio_associato": "01"},
-    "02": {"nome_intero": "Febbraio",   "nome_troncato": "Feb", "numero_int": 2,    "nome_foglio_associato": "02"},
-    "03": {"nome_intero": "Marzo",      "nome_troncato": "Mar", "numero_int": 3,    "nome_foglio_associato": "03"},
-    "04": {"nome_intero": "Aprile",     "nome_troncato": "Apr", "numero_int": 4,    "nome_foglio_associato": "04"},
-    "05": {"nome_intero": "Maggio",     "nome_troncato": "Mag", "numero_int": 5,    "nome_foglio_associato": "05"},
-    "06": {"nome_intero": "Giugno",     "nome_troncato": "Giu", "numero_int": 6,    "nome_foglio_associato": "06"},
-    "07": {"nome_intero": "Luglio",     "nome_troncato": "Lug", "numero_int": 7,    "nome_foglio_associato": "07"},
-    "08": {"nome_intero": "Agosto",     "nome_troncato": "Ago", "numero_int": 8,    "nome_foglio_associato": "08"},
-    "09": {"nome_intero": "Settembre",  "nome_troncato": "Set", "numero_int": 9,    "nome_foglio_associato": "09"},
-    "10": {"nome_intero": "Ottobre",    "nome_troncato": "Ott", "numero_int": 10,   "nome_foglio_associato": "10"},
-    "11": {"nome_intero": "Novembre",   "nome_troncato": "Nov", "numero_int": 11,   "nome_foglio_associato": "11"},
-    "12": {"nome_intero": "Dicembre",   "nome_troncato": "Dic", "numero_int": 12,   "nome_foglio_associato": "12"},
+    # Accesso tramite numero
+    "01": {"mese_str": "01", "nome_intero": "Gennaio",   "nome_troncato": "Gen", "numero_int": 1,  "nome_foglio_associato": "01"},
+    "02": {"mese_str": "02", "nome_intero": "Febbraio",  "nome_troncato": "Feb", "numero_int": 2,  "nome_foglio_associato": "02"},
+    "03": {"mese_str": "03", "nome_intero": "Marzo",     "nome_troncato": "Mar", "numero_int": 3,  "nome_foglio_associato": "03"},
+    "04": {"mese_str": "04", "nome_intero": "Aprile",    "nome_troncato": "Apr", "numero_int": 4,  "nome_foglio_associato": "04"},
+    "05": {"mese_str": "05", "nome_intero": "Maggio",    "nome_troncato": "Mag", "numero_int": 5,  "nome_foglio_associato": "05"},
+    "06": {"mese_str": "06", "nome_intero": "Giugno",    "nome_troncato": "Giu", "numero_int": 6,  "nome_foglio_associato": "06"},
+    "07": {"mese_str": "07", "nome_intero": "Luglio",    "nome_troncato": "Lug", "numero_int": 7,  "nome_foglio_associato": "07"},
+    "08": {"mese_str": "08", "nome_intero": "Agosto",    "nome_troncato": "Ago", "numero_int": 8,  "nome_foglio_associato": "08"},
+    "09": {"mese_str": "09", "nome_intero": "Settembre", "nome_troncato": "Set", "numero_int": 9,  "nome_foglio_associato": "09"},
+    "10": {"mese_str": "10", "nome_intero": "Ottobre",   "nome_troncato": "Ott", "numero_int": 10, "nome_foglio_associato": "10"},
+    "11": {"mese_str": "11", "nome_intero": "Novembre",  "nome_troncato": "Nov", "numero_int": 11, "nome_foglio_associato": "11"},
+    "12": {"mese_str": "12", "nome_intero": "Dicembre",  "nome_troncato": "Dic", "numero_int": 12, "nome_foglio_associato": "12"},
+
+    # Accesso tramite nome intero
+    "Gennaio":   {"nome_intero": "Gennaio",  "mese_str": "01", "nome_troncato": "Gen", "numero_int": 1,  "nome_foglio_associato": "01"},
+    "Febbraio":  {"nome_intero": "Febbraio", "mese_str": "02", "nome_troncato": "Feb", "numero_int": 2,  "nome_foglio_associato": "02"},
+    "Marzo":     {"nome_intero": "Marzo",    "mese_str": "03", "nome_troncato": "Mar", "numero_int": 3,  "nome_foglio_associato": "03"},
+    "Aprile":    {"nome_intero": "Aprile",   "mese_str": "04", "nome_troncato": "Apr", "numero_int": 4,  "nome_foglio_associato": "04"},
+    "Maggio":    {"nome_intero": "Maggio",   "mese_str": "05", "nome_troncato": "Mag", "numero_int": 5,  "nome_foglio_associato": "05"},
+    "Giugno":    {"nome_intero": "Giugno",   "mese_str": "06", "nome_troncato": "Giu", "numero_int": 6,  "nome_foglio_associato": "06"},
+    "Luglio":    {"nome_intero": "Luglio",   "mese_str": "07", "nome_troncato": "Lug", "numero_int": 7,  "nome_foglio_associato": "07"},
+    "Agosto":    {"nome_intero": "Agosto",   "mese_str": "08", "nome_troncato": "Ago", "numero_int": 8,  "nome_foglio_associato": "08"},
+    "Settembre": {"nome_intero": "Settembre","mese_str": "09", "nome_troncato": "Set", "numero_int": 9,  "nome_foglio_associato": "09"},
+    "Ottobre":   {"nome_intero": "Ottobre",  "mese_str": "10", "nome_troncato": "Ott", "numero_int": 10, "nome_foglio_associato": "10"},
+    "Novembre":  {"nome_intero": "Novembre", "mese_str": "11", "nome_troncato": "Nov", "numero_int": 11, "nome_foglio_associato": "11"},
+    "Dicembre":  {"nome_intero": "Dicembre", "mese_str": "12", "nome_troncato": "Dic", "numero_int": 12, "nome_foglio_associato": "12"},
 }
 
 

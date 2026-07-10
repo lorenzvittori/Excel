@@ -9,7 +9,10 @@ import os
 import logger
 
 ANNO = os.getenv("ANNO", default = "2026")
+
 MESE = os.getenv("MESE", default = "07")
+MESE = config.MESI[MESE]["mese_str"]
+
 
 FLAG_PRIORITIZZA_PRC     = os.getenv("FLAG_PRIORITIZZA_PRC",    default = "false").lower() == "true"
 FLAG_SCRITTURA_SUL_DRIVE = os.getenv("FLAG_SCRITTURA_SUL_DRIVE",default = "false").lower() == "true"
@@ -45,6 +48,7 @@ print("#" * logger.BLOCK_LENGTH)
 print("FLUSSO MANUALE")
 print("#" * logger.BLOCK_LENGTH)
 print()
+
 
 logger.reset_fase()
 
