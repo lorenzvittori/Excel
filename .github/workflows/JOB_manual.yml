@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       anno:
-        description: "Anno (es. 2026)"
+        description: "Anno"
+        default: "2026"
         required: true
         type: string
       mese:

@@ -5,7 +5,7 @@ sys.stdout.reconfigure(encoding='utf-8')        #type: ignore
 _contatore_fase = 0
 _profondita = 0
 _flag_riga_vuota = False
-BLOCK_LENGTH = 46
+BLOCK_LENGTH = 60
 BULLET_PHASE = "• "
 BULLET_MEX = ""
 
