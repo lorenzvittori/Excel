@@ -4,9 +4,13 @@ sys.stdout.reconfigure(encoding='utf-8')        #type: ignore
 
 _contatore_fase = 0
 _profondita = 0
+_flag_new_line = False
 BLOCK_LENGTH = 46
 BULLET_PHASE = "• "
 BULLET_MEX = ""
+
+def linea() -> None:
+    print("-" * BLOCK_LENGTH)
 
 def separatore() -> None:
     print("=" * BLOCK_LENGTH)
@@ -16,7 +20,8 @@ def get_tab(n: int) -> str:
 
 
 def new_phase(corpo: str) -> None:
-    global _contatore_fase, _profondita
+    global _contatore_fase, _profondita, _flag_new_line
+    _flag_new_line = False
     corpo = corpo.strip()
 
     if _profondita == 0:
@@ -29,8 +34,15 @@ def new_phase(corpo: str) -> None:
 
 
 def end_phase() -> None:
-    global _profondita
+    global _profondita, _flag_new_line
     _profondita = max(0, _profondita - 1)
+    if not(_flag_new_line):
+        _flag_new_line = True
+        print("")
+
+
+def ok_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
+    tipo_messaggio("OK", corpo=corpo, dettaglio=dettaglio)
 
 
 def info_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
@@ -46,6 +58,8 @@ def warning_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
 
 
 def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
+    global _flag_new_line
+    _flag_new_line = False
     tipo = tipo.strip()
     corpo = corpo.strip()
     print(f"{get_tab(_profondita)}{BULLET_MEX}[{tipo}]: {corpo}")

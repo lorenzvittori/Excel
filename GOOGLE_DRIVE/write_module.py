@@ -7,7 +7,7 @@ import configuration as config
 import os
 from pathlib import Path
 import logger
-
+from datetime import datetime
 
 
 def get_google_client(google_service_account: Path) -> gspread.Client:
@@ -29,6 +29,7 @@ def get_google_client(google_service_account: Path) -> gspread.Client:
         creds = Credentials.from_service_account_file(google_service_account, scopes=SCOPES)
 
     return gspread.authorize(creds)
+
 
 
 def sync_entrate_totali(
@@ -55,6 +56,7 @@ def sync_entrate_totali(
     df_entrate_nuove = df_entrate_prc.copy()
     df_entrate_nuove = df_entrate_nuove.fillna("")
 
+
     # ---- 1. LEGGI LA TABELLA ESISTENTE ----
     valori_esistenti = ws.get_all_values()
 
@@ -79,15 +81,15 @@ def sync_entrate_totali(
     # ---- 2. RIMUOVI LE RIGHE DELLO STESSO ANNO/MESE (evita duplicati su rilancio) ----
     if "Mese" in df_esistente.columns:
         righe_da_togliere = (df_esistente["Mese"].astype(str) == str(int(mese_str)))
-        righe_rimosse = int(len(righe_da_togliere))
-        maschera = ~righe_da_togliere                   #inverte i booleani
-        df_esistente = df_esistente[maschera]             #filtra per mastera = True
+        righe_rimosse = int(righe_da_togliere.sum())
+        maschera = ~righe_da_togliere
+        df_esistente = df_esistente[maschera]
     else:
         righe_rimosse = 0
 
-    # ---- 3. UNISCI (nessuna deduplica per contenuto: righe identiche legittime restano entrambe) ----
+    # ---- 3. UNISCI (le righe esistenti mantengono il loro vecchio TimeStamp) ----
     df_union = pd.concat([df_esistente, df_entrate_nuove], ignore_index=True)
-    df_union = df_union.sort_values(by=["Data", "Importo", "Note"])
+    df_union = df_union.sort_values(by=["Data", "Importo", "Note", "TimeStamp"])
 
     df_union["Data"] = df_union["Data"].apply(
         lambda x: x.strftime("%d/%m/%Y") if pd.notnull(x) else ""
@@ -114,8 +116,6 @@ def sync_entrate_totali(
         [df_union.columns.tolist()] + df_union.values.tolist(),
         "A1"
     )
-
-
 
 
 def sync_spese_mensili(
@@ -145,7 +145,7 @@ def sync_spese_mensili(
     # 2. CHECK
     # 2.1 CONTROLLO SE CI SONO VALORI PRESENTI SUL FOGLIO
     check = ws.get("B2:G2")
-    row = check[0] if check else ["", "", "", "", "", ""]
+    row = check[0] if check else [""] * config.NUMERO_COLONNE_SHEET_SPESE
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
@@ -177,3 +177,7 @@ def sync_spese_mensili(
         [df_spese_prc_clean.columns.tolist()] + df_spese_prc_clean.values.tolist(),
         "B1"
     )
+    
+    timestamp_run = datetime.now().strftime("%d/%m/%Y %H.%M.%S")
+    # 3.3 WRITE TIMESTAMP
+    ws.update([[timestamp_run]], "I2")

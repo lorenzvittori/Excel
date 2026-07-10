@@ -56,6 +56,7 @@ DESIGN = {
     "COL_SPESE_CATEGORIA":      "Categoria",
     "COL_SPESE_IMPORTO":        "Importo",
     "COL_SPESE_NOTE":           "Note",
+    "CELLA_SPESE_TSTAMP":       "I2",
     
     "COL_ENTRATE_ANNO":         "Anno",
     "COL_ENTRATE_MESE":         "Mese",
@@ -63,6 +64,7 @@ DESIGN = {
     "COL_ENTRATE_CATEGORIA":    "Categoria",
     "COL_ENTRATE_IMPORTO":      "Importo",
     "COL_ENTRATE_NOTE":         "Note",
+    "COL_ENTRATE_TSTAMP":       "TimeStamp",
     
     "NOME_FOGLIO_SPESE":        "Spese",
     "NOME_FOGLIO_ENTRATE":      "Entrate",

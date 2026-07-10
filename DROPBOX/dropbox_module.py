@@ -145,7 +145,6 @@ def upload_dataframe_to_dropbox(
     mode = dropbox.files.WriteMode.overwrite if flag_sovrascrivi else dropbox.files.WriteMode.add # type: ignore
 
     dbx.files_upload(buffer.getvalue(), DROPBOX_DIR, mode=mode)
-    logger.info_mex(f"Upload completato: {DROPBOX_DIR}")
     
     
 def smista_file_excel(
@@ -159,28 +158,12 @@ def smista_file_excel(
         righe_da_saltare: int = 1,
         flag_sovrascrivi_raw: bool = False
         ) -> dict[str, list[dict]]:
-    """
-    Scansiona tutti i file con estensione estesione_files presenti in
-    dropbox_folder_origine.
-    Per ciascun file:
-    - elimina, prima di iniziare, tutti i file broken residui di run precedenti
-        (qualsiasi file che inizia con target_broken_name)
-    - legge il primo foglio dell'excel, saltando righe_da_saltare righe iniziali
-        (es. una riga di titolo sopra la vera intestazione)
-    - verifica che tutte le date nella colonna nome_colonna_data
-        appartengano allo stesso anno e allo stesso mese
-    - se conforme, rinomina il file usando get_raw_name(anno, mese_str)
-        e lo sposta in dropbox_folder_destinazione
-    - se non conforme (date miste, colonna assente, file illeggibile),
-        lo rinomina con target_broken_name (con un progressivo se ce n'è più
-        di uno nella stessa esecuzione) e lo lascia in dropbox_folder_origine
-    """
 
     entries = dbx.files_list_folder(dropbox_folder_origine).entries  # type: ignore
     file_xlsx = [f for f in entries if f.name.lower().endswith(estesione_files.lower())]
 
     if not file_xlsx:
-        logger.info_mex(f"Nessun file .xlsx trovato in {dropbox_folder_origine}")
+        logger.info_mex(f"Nessun file {estesione_files} trovato in {dropbox_folder_origine}")
         return {"SMISTATI": [], "BROKEN": []}
 
     # ---- PULIZIA BROKEN RESIDUI DI RUN PRECEDENTI ----
@@ -205,6 +188,42 @@ def smista_file_excel(
     }
     contatore_broken = 0
 
+    def _sposta_come_broken(dropbox_path: str, motivo: str) -> None:
+        """Rinomina/sposta il file corrente come broken (con progressivo se necessario)."""
+        nonlocal contatore_broken
+
+        if contatore_broken == 0:
+            nuovo_nome = f"{target_broken_name}{estesione_files}"
+        else:
+            nuovo_nome = f"{target_broken_name}_{contatore_broken}{estesione_files}"
+        contatore_broken += 1
+
+        nuovo_path = f"{dropbox_folder_origine}/{nuovo_nome}"
+
+        logger.warning_mex(f"{motivo} -> rinominato in {nuovo_nome}")
+
+        # ---- CONTROLLO ESISTENZA DESTINAZIONE ----
+        try:
+            dbx.files_get_metadata(nuovo_path)
+            esiste_destinazione = True
+        except ApiError:
+            esiste_destinazione = False
+
+        if esiste_destinazione:
+            dbx.files_delete_v2(nuovo_path)
+            logger.info_mex(f"{nuovo_path} gia' esistente -> sovrascritto")
+
+        try:
+            dbx.files_move_v2(dropbox_path, nuovo_path)
+            logger.info_mex(f"NON CONFORME -> {nuovo_path}")
+
+            file_smistati["BROKEN"].append({
+                "anno": None,
+                "mese_str": None
+            })
+        except ApiError as e:
+            logger.error_mex(f"Impossibile spostare come broken: {nuovo_path}", dettaglio=str(e))
+
     for file_entry in file_xlsx:
         file_name = file_entry.name
         dropbox_path = f"{dropbox_folder_origine}/{file_name}"
@@ -216,6 +235,7 @@ def smista_file_excel(
             _, response = dbx.files_download(dropbox_path)  # type: ignore
         except ApiError as e:
             logger.error_mex(f"Impossibile scaricare {file_name}", dettaglio=str(e))
+            _sposta_come_broken(dropbox_path, f"Impossibile scaricare {file_name}")
             logger.end_phase()
             continue
 
@@ -227,12 +247,13 @@ def smista_file_excel(
                 sheet_name=0
             )
         except Exception as e:
-            logger.error_mex(f"Impossibile leggere {file_name} -> SALTATO (non spostato)", dettaglio=str(e))
+            logger.error_mex(f"Impossibile leggere {file_name}", dettaglio=str(e))
+            _sposta_come_broken(dropbox_path, f"Impossibile leggere {file_name}")
             logger.end_phase()
             continue
 
         if nome_colonna_data not in df.columns:
-            logger.warning_mex(f"Colonna '{nome_colonna_data}' non trovata in {file_name} -> SALTATO (non spostato)")
+            _sposta_come_broken(dropbox_path, f"Colonna '{nome_colonna_data}' non trovata in {file_name}")
             logger.end_phase()
             continue
 
@@ -240,7 +261,7 @@ def smista_file_excel(
         date_series = pd.to_datetime(df[nome_colonna_data], errors="coerce", dayfirst=True)
 
         if date_series.isna().all():
-            logger.warning_mex(f"Nessuna data valida trovata in {file_name} -> SALTATO (non spostato)")
+            _sposta_come_broken(dropbox_path, f"Nessuna data valida trovata in {file_name}")
             logger.end_phase()
             continue
 
@@ -250,36 +271,16 @@ def smista_file_excel(
 
         conforme = (len(anni) == 1 and len(mesi) == 1)
 
-        if conforme:
-            anno = str(int(anni[0]))
-            mese_str = str(int(mesi[0])).zfill(2)
-            nuovo_nome = get_raw_name(anno, mese_str)
-            nuovo_path = f"{dropbox_folder_destinazione}/{nuovo_nome}"
-            
-            file_dict = {
-                "anno": anno,
-                "mese_str": mese_str,
-                "raw_name": nuovo_nome,
-                "raw_path": nuovo_path
-            }
-            file_smistati["SMISTATI"].append(file_dict)
-        else:
-            if contatore_broken == 0:
-                nuovo_nome = f"{target_broken_name}{estesione_files}"
-            else:
-                nuovo_nome = f"{target_broken_name}_{contatore_broken}{estesione_files}"
-            contatore_broken += 1
+        if not conforme:
+            _sposta_come_broken(dropbox_path, f"{file_name} contiene date di anni/mesi diversi")
+            logger.end_phase()
+            continue
 
-            logger.warning_mex(f"{file_name} contiene date di anni/mesi diversi -> rinominato in {nuovo_nome}")
-            nuovo_path = f"{dropbox_folder_origine}/{nuovo_nome}"
-            
-            file_dict = {
-                "anno": None,
-                "mese_str": None,
-                "raw_name": nuovo_nome,
-                "raw_path": nuovo_path
-            }
-            file_smistati["BROKEN"].append(file_dict)
+        # ---- FILE CONFORME: SPOSTAMENTO NORMALE ----
+        anno = str(int(anni[0]))
+        mese_str = str(int(mesi[0])).zfill(2)
+        nuovo_nome = get_raw_name(anno, mese_str)
+        nuovo_path = f"{dropbox_folder_destinazione}/{nuovo_nome}"
 
         # ---- CONTROLLO ESISTENZA DESTINAZIONE ----
         try:
@@ -297,19 +298,20 @@ def smista_file_excel(
                 dbx.files_delete_v2(nuovo_path)
                 logger.info_mex(f"{nuovo_path} gia' esistente -> sovrascritto")
 
-        # ---- SPOSTAMENTO / RINOMINA ----
         try:
             dbx.files_move_v2(dropbox_path, nuovo_path)
-            etichetta = "CONFORME" if conforme else "NON CONFORME"
-            logger.info_mex(f"[{etichetta}] {file_name} -> {nuovo_path}")
+            logger.info_mex(f"CONFORME {file_name} -> {nuovo_path}")
+
+            file_smistati["SMISTATI"].append({
+                "anno": anno,
+                "mese_str": mese_str
+            })
         except ApiError as e:
             logger.error_mex(f"Impossibile spostare {file_name}", dettaglio=str(e))
 
         logger.end_phase()
 
     return file_smistati
-
-
 
 
 

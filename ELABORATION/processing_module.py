@@ -92,8 +92,19 @@ def prepara_spese(
         design=design
     )
     
-    # FORMATTAZIONE DATA
+    # FORMATTAZIONE COLONNA DATA
     df_spese[design["COL_SPESE_DATA"]] = pd.to_datetime(df_spese[design["COL_SPESE_DATA"]],errors="coerce",dayfirst=True)
+    
+    #PULISCI COLONNA_NOTE
+    col = design["COL_SPESE_NOTE"]
+
+    df_spese[col] = (
+        df_spese[col]
+            .astype("string")
+            .str.replace("\n", ", ", regex=False)
+            .str.strip()
+    )
+    
     
     # INSERISCI ANNO e MESE
     df_spese.insert(0, design["COL_SPESE_ANNO"], str(anno))
@@ -126,6 +137,9 @@ def prepara_entrate(
 
     # FORMATTAZIONE DATA
     df_entrate[design["COL_ENTRATE_DATA"]] = pd.to_datetime(df_entrate[design["COL_ENTRATE_DATA"]],errors="coerce",dayfirst=True)
+
+        #PULISCI COLONNA NOTE
+    df_entrate[design["COL_ENTRATE_NOTE"]] = (df_entrate[design["COL_ENTRATE_NOTE"]].astype(str).str.replace("\n", ", ", regex=False).str.strip())
 
     # INSERISCI ANNO e MESE
     df_entrate.insert(0, design["COL_ENTRATE_ANNO"], str(anno))
@@ -184,9 +198,11 @@ def processa_dataframe(
         logger.error_mex(f"{PATH_CSV_ADD_ROWS} MANCANTE")
         raise SystemExit
     
-        
+    
+    # -- SPESE --
+    logger.new_phase("Elaborazione SPESE")
     df_spese_raw = pd.DataFrame(df_raw[NOME_FOGLIO_SPESE])  
-    df_entrate_raw = pd.DataFrame(df_raw[NOME_FOGLIO_ENTRATE])
+    
 
     df_spese_wip = prepara_spese(
         df_spese_raw=df_spese_raw,
@@ -197,6 +213,23 @@ def processa_dataframe(
         colonne_app_spese=colonne_app["COLONNE_SPESE"]
     )
 
+
+    if flag_stampa_duplicati:
+        stampa_duplicati(df_spese_wip, NOME_FOGLIO_SPESE)
+    
+    if flag_stampa_spese_altro: 
+        stampa_spese_altro(df_spese_wip, design)
+        
+    # Formattazione finale per output Excel
+    df_spese_prc = formatta_dataframe_output(df_spese_wip, colonna_data=design["COL_SPESE_DATA"], colonna_importo=design["COL_SPESE_IMPORTO"])
+    
+    logger.ok_mex("Elaborazione spese: ✔ COMPLETATA")
+    logger.end_phase()
+    
+    # -- ENTRATE --
+    logger.new_phase("Elaborazione ENTRATE")
+    df_entrate_raw = pd.DataFrame(df_raw[NOME_FOGLIO_ENTRATE])
+
     df_entrate_wip = prepara_entrate(
         df_entrate_raw=df_entrate_raw,
         anno = anno,
@@ -204,21 +237,15 @@ def processa_dataframe(
         design=design,
         colonne_app_entrate=colonne_app["COLONNE_ENTRATE"]
     )
-
+    
     if flag_stampa_duplicati:
-        stampa_duplicati(df_spese_wip, NOME_FOGLIO_SPESE)
         stampa_duplicati(df_entrate_wip, NOME_FOGLIO_ENTRATE)
     
-    if flag_stampa_spese_altro: 
-        stampa_spese_altro(df_spese_wip, design)
-
     # Formattazione finale per output Excel
-    
-    df_spese_prc = formatta_dataframe_output(df_spese_wip, colonna_data=design["COL_SPESE_DATA"], colonna_importo=design["COL_SPESE_IMPORTO"])
     df_entrate_prc = formatta_dataframe_output(df_entrate_wip, colonna_data=design["COL_ENTRATE_DATA"], colonna_importo=design["COL_ENTRATE_IMPORTO"])
     
-    logger.info_mex("Pulizia e formattazione completata")
-
+    logger.ok_mex("Elaborazione entrate: ✔ COMPLETATA")
+    logger.end_phase()
     return {
         NOME_FOGLIO_SPESE: df_spese_prc,
         NOME_FOGLIO_ENTRATE: df_entrate_prc

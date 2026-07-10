@@ -2,6 +2,7 @@
 from DROPBOX        import dropbox_module       as db_module
 from GOOGLE_DRIVE   import write_module         as gd_module
 from ELABORATION    import processing_module    as pr_module
+from datetime       import datetime
 from typing import cast
 import configuration as config  
 import pandas as pd
@@ -33,22 +34,26 @@ FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
 FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
 
 
-#DOWNLOAD FILE DAL DROPBOX
-#fase 0
-print("\n\n\n")
-logger.reset_fase()
+## ============================================================ 1 - SMISTAMENTO DEL DROPBOX ============================================================
+print("")
+print("#" * 46)
+print("FLUSSO AUTOMATICO")
+print("#" * 46)
+print()
 
-logger.new_phase("DROPBOX")
-logger.info_mex("Connessione al DropBox")
+logger.reset_fase()
+logger.new_phase("SMISTAMENTO DEL DROPBOX")
+logger.new_phase("Connessione al DropBox tramite API.")
 
 dbx = db_module.get_dropbox_client(
     dropbox_credential = DROPBOX_CRED,
     dropbox_token = DROPBOX_TOKEN
 )
 
-logger.info_mex("Connesso al DropBox")
+logger.ok_mex("Connessione al DropBox: ✔ COMPLETATA")
+logger.end_phase
 
-logger.new_phase("Smistamento dei file sul DropBox")
+logger.new_phase("Smistamento dei file")
 
 FILE_SMISTATI = db_module.smista_file_excel(
     dbx = dbx,
@@ -79,9 +84,14 @@ ERRORI = []
 
 TOTALE_ANNO_MESE = len(LIST_ANNO_MESE)
 this_anno_mese = 0
+S = "S" if TOTALE_ANNO_MESE > 1 else ""
 
 logger.separatore()
-print(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILES")
+print(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}")
+
+for i_anno_mese in LIST_ANNO_MESE:
+    print(f"\t• {i_anno_mese["anno"]}-{i_anno_mese["mese_str"]}")
+    
 logger.separatore()
 
 for i_anno_mese in LIST_ANNO_MESE:
@@ -96,7 +106,8 @@ for i_anno_mese in LIST_ANNO_MESE:
         logger.separatore()
         print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
 
-        logger.new_phase("DROPBOX")
+## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
+        logger.new_phase("DROPBOX - Download")
 
         NAME_RAW_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
         NAME_PROCESSED_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
@@ -124,7 +135,8 @@ for i_anno_mese in LIST_ANNO_MESE:
         logger.end_phase()   # chiude "DROPBOX"
 
 
-        #PROCESSA MESE
+## ============================================================ 3 - ELABORAZIONE SPESE ED ENTRATE ============================================================
+
         logger.new_phase("Pulizia e formattazione della tabella")
 
         PRC_DATAFRAME = pr_module.processa_dataframe(
@@ -137,18 +149,19 @@ for i_anno_mese in LIST_ANNO_MESE:
             flag_stampa_duplicati = FLAG_LOG_DUPLICATI,
             flag_stampa_spese_altro = FLAG_LOG_ALTRO)
 
+        logger.ok_mex("Elaborazione: ✔ COMPLETATA")
         logger.end_phase()   # chiude "Pulizia e formattazione della tabella"
 
         
-        
-        #SCRITTURA SU GOOGLE DRIVE
+## ============================================================ 4 - SCRITTURA SU GOOGLE SHEET ============================================================
         logger.new_phase("GOOGLE DRIVE")
 
         GOOGLE_SERVICE_ACCOUNT = STRUTTURA_REPOSITORY["FILE_GOOGLE_ACCOUNT"]
         
-        logger.info_mex("Connessione a Google Drive")
+        logger.new_phase("Connessione a Google Drive tramite API")
         client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
-        logger.info_mex("Connesso a Google Drive")
+        logger.ok_mex("Connessione a Google Drive: ✔ COMPLETATA")
+        logger.end_phase()
         
 
         #Controlla che il file spese abbia le giuste colonne:
@@ -175,12 +188,17 @@ for i_anno_mese in LIST_ANNO_MESE:
             df_spese_prc=PRC_SPESE_DATAFRAME,
             flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
         )
-        logger.info_mex(f"Scrittura completata delle spese")
+        logger.ok_mex(f"Scrittura delle spese: ✔ COMPLETATA")
         logger.end_phase()   # chiude "Scrittura SPESE su GoogleSheet"
         
         
         logger.new_phase("Scrittura ENTRATE su GoogleSheet")
         PRC_ENTRATE_DATAFRAME = PRC_DATAFRAME[FOGLIO_ENTRATE]
+        
+        # ---- AGGIUNTA TIMESTAMP ENTRATE: stesso istante per tutte le righe di questa run ----
+        timestamp_run = datetime.now().strftime("%d/%m/%Y %H.%M.%S")
+        PRC_ENTRATE_DATAFRAME["TimeStamp"] = timestamp_run
+        logger.info_mex(f"TimeStamp entrate: {timestamp_run}")
 
         colonne_entrate_attuali = sorted(PRC_ENTRATE_DATAFRAME.columns)
         colonne_entrate_attese = sorted([DESIGN[k] for k in DESIGN.keys() if k.startswith("COL_ENTRATE")])
@@ -199,11 +217,13 @@ for i_anno_mese in LIST_ANNO_MESE:
             mese_str=MESE,
             df_entrate_prc=PRC_ENTRATE_DATAFRAME
         )
-        logger.info_mex(f"Scrittura completata delle entrate")
+        logger.ok_mex(f"Scrittura delle entrate: ✔ COMPLETATA")
         logger.end_phase()   # chiude "Scrittura ENTRATE su GoogleSheet"
-        
-        
-        logger.info_mex("Salvataggio della tabella processata su Dropbox")
+        logger.end_phase()
+
+## ============================================================ 5 - DROPBOX, UPLOAD ============================================================
+
+        logger.new_phase("DROPBOX - Upload")
         db_module.upload_dataframe_to_dropbox(
             dbx = dbx,
             dropbox_folder = DROPBOX_PRC_FOLDER,
@@ -211,11 +231,11 @@ for i_anno_mese in LIST_ANNO_MESE:
             df = PRC_DATAFRAME,
             flag_sovrascrivi = True
         )
-        logger.info_mex("Tabella processata salvata su Dropbox")
+        logger.ok_mex(f"Upload di {NAME_PROCESSED_FILE}: ✔ COMPLETATO")
 
         logger.end_phase()   # chiude "GOOGLE DRIVE"
 
-        logger.info_mex(f"Flusso completato per ANNO {ANNO} - MESE {MESE}")
+        logger.info_mex(f"Flusso per ANNO {ANNO} - MESE {MESE}: ✔ COMPLETATO")
         logger.separatore()
 
     except BaseException as e:
@@ -225,9 +245,10 @@ for i_anno_mese in LIST_ANNO_MESE:
         ERRORI.append((ANNO, MESE, str(e)))
         continue
 
-
+## ============================================================ 6 - LOG RIASSUNTIVO ============================================================
 logger.separatore()
 if ERRORI:
+    logger.reset_fase()
     log_errori = []
     for anno_err, mese_err, errore in ERRORI:
         log_errori.append(f"ANNO {anno_err} MESE {mese_err}: {errore}")
