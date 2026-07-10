@@ -103,9 +103,9 @@ for i_anno_mese in LIST_ANNO_MESE:
     
     
     try:
-        print("------ ", end="")
+        print("------------")
         print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}", end="")
-        print("------")
+        print("------------")
         print()
 ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
         logger.new_phase("DROPBOX - Download")
@@ -232,17 +232,22 @@ for i_anno_mese in LIST_ANNO_MESE:
             df = PRC_DATAFRAME,
             flag_sovrascrivi = True
         )
-        logger.ok_mex(f"Upload di {NAME_PROCESSED_FILE}: ✔ COMPLETATO")
+        logger.ok_mex(f"Upload di {DROPBOX_PRC_FOLDER}/{NAME_PROCESSED_FILE}: ✔ COMPLETATO")
 
         logger.end_phase()   # chiude "GOOGLE DRIVE"
 
-        logger.info_mex(f"Flusso per ANNO {ANNO} - MESE {MESE}: ✔ COMPLETATO")
+        print("------------")
+        print(f"✔ COMPLETATO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+        print("------------")
+        print()
         logger.separatore()
 
     except BaseException as e:
-        logger.error_mex(
-            corpo = f"Fallito il flusso per ANNO {ANNO} - MESE {MESE}",
-            dettaglio = f"{type(e).__name__}: {e}")
+        print("------------")
+        print(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+        print(e)
+        print("------------")
+        print()
         ERRORI.append((ANNO, MESE, str(e)))
         continue
 

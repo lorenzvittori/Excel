@@ -169,7 +169,7 @@ def sync_spese_mensili(
     # 3. WRITE
     # 3.1 ELIMINO TUTTI I VALORI DELLE CELLE A2:F550
     ws.batch_clear(["B2:G550"])
-    logger.info_mex("Celle B2:G550 svuotate prima della scrittura")
+    logger.info_mex("Celle B2:G550 svuotate")
     
     # 3.2 WRITE SPESA
     df_spese_prc_clean = df_spese_prc.fillna("")

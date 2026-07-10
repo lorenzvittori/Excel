@@ -173,10 +173,10 @@ def smista_file_excel(
     ]
 
     if file_broken_residui:
-        logger.new_phase("Eliminazione dei broken files esistenti")
+        logger.new_phase("Eliminazione dei file BROKEN residui")
         for f in file_broken_residui:
             dbx.files_delete_v2(f"{dropbox_folder_origine}/{f.name}")
-            logger.info_mex(f"Rimosso broken residuo: {f.name}")
+            logger.info_mex(f"Rimosso: {f.name}")
         logger.end_phase()
 
     # ---- LISTA FILE DA PROCESSARE (escludo i broken residui appena eliminati) ----
@@ -200,7 +200,9 @@ def smista_file_excel(
 
         nuovo_path = f"{dropbox_folder_origine}/{nuovo_nome}"
 
-        logger.warning_mex(f"{motivo} -> rinominato in {nuovo_nome}")
+        logger.warning_mex(
+            corpo=f"NON CONFORME -> {nuovo_nome}", 
+            dettaglio=motivo)
 
         # ---- CONTROLLO ESISTENZA DESTINAZIONE ----
         try:
@@ -296,11 +298,11 @@ def smista_file_excel(
                 continue
             else:
                 dbx.files_delete_v2(nuovo_path)
-                logger.info_mex(f"{nuovo_path} gia' esistente -> sovrascritto")
+                logger.info_mex(f"{nuovo_path} gia' esistente -> SOVRASCRIVO")
 
         try:
             dbx.files_move_v2(dropbox_path, nuovo_path)
-            logger.info_mex(f"CONFORME {file_name} -> {nuovo_path}")
+            logger.info_mex(f"CONFORME: {anno}-{mese_str} -> {nuovo_path}")
 
             file_smistati["SMISTATI"].append({
                 "anno": anno,
