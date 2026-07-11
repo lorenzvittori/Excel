@@ -10,7 +10,7 @@ import logger
 
 ANNO = os.getenv("ANNO", default = "2026")
 
-MESE = os.getenv("MESE", default = "07")
+MESE = os.getenv("MESE", default = "06")
 MESE = config.MESI[MESE]["mese_str"]
 
 
@@ -40,8 +40,6 @@ FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
 FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
 
 
-flag_prioritizza_prc = True
-
 ## ============================================================ 1 - SMISTAMENTO DEL DROPBOX ============================================================
 print("")
 print("#" * logger.BLOCK_LENGTH)
@@ -59,7 +57,7 @@ try:
 ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
     logger.new_phase("DROPBOX - Download")
 
-    logger.new_phase("Connessione al DropBox tramite API.")
+    logger.new_phase("Connessione al DropBox tramite API")
 
     dbx = db_module.get_dropbox_client(
         dropbox_credential = DROPBOX_CRED,
@@ -95,7 +93,7 @@ try:
     logger.end_phase()
     
     
-    if not flag_prioritizza_prc:
+    if not FLAG_PRIORITIZZA_PRC:
         logger.info_mex("USO IL FILE RAW")
         
         RAW_DATAFRAME = db_module.get_dataframe_from_dropbox(
@@ -230,7 +228,7 @@ try:
         col_importo =   DESIGN["COL_ENTRATE_IMPORTO"],
         col_note =      DESIGN["COL_ENTRATE_NOTE"],
         col_timestamp = DESIGN["COL_ENTRATE_TSTAMP"],
-        top_left_entry =DESIGN["FIRST_ENTRY"],
+        top_left_entry =DESIGN["CELLA_ENTRATE_FIRST_ENTRY"],
         df_entrate_prc =PRC_ENTRATE_DATAFRAME)
     
     logger.ok_mex(f"Scrittura delle entrate: ✔ COMPLETATA")
@@ -239,7 +237,7 @@ try:
 
 ## ============================================================ 5 - DROPBOX, UPLOAD ============================================================
 
-    if not flag_prioritizza_prc:
+    if not FLAG_PRIORITIZZA_PRC:
         logger.new_phase("DROPBOX - Upload")
         db_module.upload_dataframe_to_dropbox(
             dbx = dbx,

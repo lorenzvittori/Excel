@@ -180,9 +180,9 @@ def sync_spese_mensili(
     df_spese_prc_clean = df_spese_prc.fillna("")
     ws.update(
         [df_spese_prc_clean.columns.tolist()] + df_spese_prc_clean.values.tolist(),
-        "B1"
+        config.DESIGN["CELLA_SEPSE_FIRST_ENTRY"]
     )
     
     timestamp_run = datetime.now().strftime("%d/%m/%Y %H.%M.%S")
     # 3.3 WRITE TIMESTAMP
-    ws.update([[timestamp_run]], "I2")
+    ws.update([[timestamp_run]], config.DESIGN["CELLA_SPESE_TSTAMP"])

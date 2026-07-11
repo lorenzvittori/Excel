@@ -1,6 +1,7 @@
 ## NOME FILE: processing_module.py
+from    pathlib import Path
+from    math    import inf
 import pandas as pd
-from pathlib import Path
 import logger
 
 # ---------------------------------------- FUNZIONI ----------------------------------------
@@ -38,7 +39,8 @@ def aggiungi_righe_spese(
         anno: str, 
         mese_str: str,
         design: dict) -> pd.DataFrame:
-    df_nuove_righe_raw = pd.read_csv(additional_rows_csv)
+
+    df_nuove_righe_raw = pd.read_csv(additional_rows_csv, skipinitialspace=True)
 
     df_nuove_righe_raw[design["COL_SPESE_DATA"]] = df_nuove_righe_raw["GiornoData"].apply(
         lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_str}/{anno}"
@@ -50,11 +52,71 @@ def aggiungi_righe_spese(
         dayfirst=True
     )
 
-    nuove_righe = df_nuove_righe_raw[
-        [design["COL_SPESE_DATA"], design["COL_SPESE_CATEGORIA"], design["COL_SPESE_IMPORTO"]]
-    ].copy()
+    def between(
+            this_anno: str,
+            this_mese_str: str,
+            daANNO_MESE: str,
+            aANNO_MESE: str) -> bool:
 
-    nuove_righe[design["COL_SPESE_NOTE"]] = ""
+        if daANNO_MESE == "":
+            daANNO, daMESE = -inf, -inf
+        else:
+            if (len(daANNO_MESE) != 7) or (daANNO_MESE[4] != "_"):
+                logger.error_mex(f"Formato non valido per daANNO_MESE: '{daANNO_MESE}'")
+                raise ValueError()
+            daANNO = int(daANNO_MESE[:4])
+            daMESE = int(daANNO_MESE[5:])
+            if not (1 <= daMESE <= 12):
+                logger.error_mex(f"Mese fuori range in daANNO_MESE: {daMESE}")
+                raise ValueError()
+
+        if aANNO_MESE == "":
+            aANNO, aMESE = inf, inf
+        else:
+            if (len(aANNO_MESE) != 7) or (aANNO_MESE[4] != "_"):
+                logger.error_mex(f"Formato non valido per aANNO_MESE: '{aANNO_MESE}'")
+                raise ValueError()
+            aANNO = int(aANNO_MESE[:4])
+            aMESE = int(aANNO_MESE[5:])
+            if not (1 <= aMESE <= 12):
+                logger.error_mex(f"Mese fuori range in aANNO_MESE: {aMESE}")
+                raise ValueError()
+
+        MESE = int(this_mese_str)
+        ANNO = int(this_anno)
+
+        if not (1 <= MESE <= 12):
+            logger.error_mex(f"Mese fuori range: {MESE}")
+            raise ValueError()
+
+        if (daANNO, daMESE) > (aANNO, aMESE):
+            logger.error_mex(f"Intervallo non valido: da ({daANNO},{daMESE}) è dopo a ({aANNO},{aMESE})")
+            raise ValueError()
+
+        return (daANNO, daMESE) <= (ANNO, MESE) <= (aANNO, aMESE)
+
+    # ---- FILTRA LE RIGHE IN BASE ALL'INTERVALLO daANNO_MESE / aANNO_MESE ----
+    maschera = df_nuove_righe_raw.apply(
+        lambda row: between(
+            this_anno     = anno,
+            this_mese_str = mese_str,
+            daANNO_MESE   = str(row["daANNO_MESE"]).strip() if pd.notnull(row["daANNO_MESE"]) else "",
+            aANNO_MESE    = str(row["aANNO_MESE"]).strip()  if pd.notnull(row["aANNO_MESE"])  else ""
+        ),
+        axis=1
+    )
+
+    df_nuove_righe_filtered = df_nuove_righe_raw[maschera]
+    
+    nuove_righe = df_nuove_righe_filtered[
+        [design["COL_SPESE_DATA"],
+         design["COL_SPESE_CATEGORIA"],
+         design["COL_SPESE_IMPORTO"],
+         design["COL_SPESE_NOTE"]]
+    ].copy()
+    
+    print("Righe aggiunte:")
+    print(nuove_righe)
 
     df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
 

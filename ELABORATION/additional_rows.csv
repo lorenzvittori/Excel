@@ -1,5 +1,7 @@
-GiornoData,Categoria,Importo
-04,Commissione CC,1.6
-05,Rata PDR,50
-16,Abb. Telefono,4.95
-22,Spotify,3.5
+GiornoData,Categoria,Importo,Note,daANNO_MESE,aANNO_MESE
+04,Commissione CC,1.6,,, 
+05,Rata PDR,50,,,
+11,Abb. Telefono,7.99,Iliad,,2026_03
+17,Abb. Telefono,4.95,ho.,2026_04,
+20,Spotify,3,,2023_09,2025_08
+22,Spotify,3.5,,2025_09,
