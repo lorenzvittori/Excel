@@ -1,4 +1,4 @@
-name: Flusso SINGOLO Spese-Entrate 
+name: Flusso SINGOLO \nSpese-Entrate 
 
 on:
   workflow_dispatch:
