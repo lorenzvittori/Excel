@@ -142,7 +142,7 @@ def prepara_spese(
     df_spese_raw.columns.name = None                            #pulisce l'intestazione
     df_spese_raw = df_spese_raw.iloc[2:].reset_index(drop=True) #ignora le prime due righe per i dati
 
-    mappa_colonne_spese = {colonne_app_spese[k]: design[k] for k in colonne_app_spese}
+    mappa_colonne_spese = {colonne_app_spese[k]: getattr(design, k) for k in colonne_app_spese}
 
     df_spese = seleziona_e_rinomina_colonne(
         df=df_spese_raw,
@@ -197,7 +197,7 @@ def prepara_entrate(
     df_entrate_raw = df_entrate_raw.iloc[2:].reset_index(drop=True) #ignora le prime due righe per i dati
 
     #Pulizia
-    mappa_colonne_entrate = {colonne_app_entrate[k]: design[k] for k in colonne_app_entrate}
+    mappa_colonne_entrate = {colonne_app_entrate[k]: getattr(design, k) for k in colonne_app_entrate}
 
     df_entrate = seleziona_e_rinomina_colonne(
         df=df_entrate_raw,
