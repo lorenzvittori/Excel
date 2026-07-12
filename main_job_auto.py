@@ -1,6 +1,6 @@
 ## NOME FILE: main_automatic.py
 from DROPBOX        import dropbox_module       as db_module
-from GOOGLE_DRIVE   import write_module         as gd_module
+from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
 from datetime       import datetime
 from typing import cast

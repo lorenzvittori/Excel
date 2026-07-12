@@ -1,5 +1,5 @@
 from DROPBOX        import dropbox_module       as db_module
-from GOOGLE_DRIVE   import write_module         as gd_module
+from GOOGLE_DRIVE   import google_drive_module         as gd_module
 from ELABORATION    import processing_module    as pr_module
 from datetime       import datetime
 from typing import cast
@@ -9,14 +9,14 @@ import logger
 
 
 ANNO_MESE_INPUT_DICT = {
-    "2026_01": 0,   
+    "2026_01": 1,   
     "2026_02": 0,   
     "2026_03": 0,   
     "2026_04": 0,   
     "2026_05": 0,   
     "2026_06": 0,   
-    "2026_07": 1,   
-    "2026_08": 1,   
+    "2026_07": 0,
+    "2026_08": 0,   
     "2026_09": 0,   
     "2026_10": 0,   
     "2026_11": 0,   
@@ -24,8 +24,8 @@ ANNO_MESE_INPUT_DICT = {
 }
 
 FLAG_PRIORITIZZA_PRC     = 0
-FLAG_SCRITTURA_SUL_DRIVE = 0
-FLAG_SOVRASCRIVI_SHEET   = 0
+FLAG_SCRITTURA_SUL_DRIVE = 1
+FLAG_SOVRASCRIVI_SHEET   = 1
 FLAG_SOVRASCRIVI_RAW_DBX = 1
 FLAG_LOG_DUPLICATI       = 1
 FLAG_LOG_ALTRO           = 1

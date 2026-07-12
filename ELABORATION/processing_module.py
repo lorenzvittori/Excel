@@ -39,6 +39,7 @@ def aggiungi_righe_spese(
         anno: str, 
         mese_str: str,
         design: dict) -> pd.DataFrame:
+    
 
     df_nuove_righe_raw = pd.read_csv(additional_rows_csv, skipinitialspace=True)
 
@@ -61,7 +62,7 @@ def aggiungi_righe_spese(
         if daANNO_MESE == "":
             daANNO, daMESE = -inf, -inf
         else:
-            if (len(daANNO_MESE) != 7) or (daANNO_MESE[4] != "_"):
+            if (len(daANNO_MESE) != 7) or (daANNO_MESE[4] != "-"):
                 logger.error_mex(f"Formato non valido per daANNO_MESE: '{daANNO_MESE}'")
                 raise ValueError()
             daANNO = int(daANNO_MESE[:4])
@@ -73,7 +74,7 @@ def aggiungi_righe_spese(
         if aANNO_MESE == "":
             aANNO, aMESE = inf, inf
         else:
-            if (len(aANNO_MESE) != 7) or (aANNO_MESE[4] != "_"):
+            if (len(aANNO_MESE) != 7) or (aANNO_MESE[4] != "-"):
                 logger.error_mex(f"Formato non valido per aANNO_MESE: '{aANNO_MESE}'")
                 raise ValueError()
             aANNO = int(aANNO_MESE[:4])
@@ -92,6 +93,7 @@ def aggiungi_righe_spese(
         if (daANNO, daMESE) > (aANNO, aMESE):
             logger.error_mex(f"Intervallo non valido: da ({daANNO},{daMESE}) è dopo a ({aANNO},{aMESE})")
             raise ValueError()
+        
 
         return (daANNO, daMESE) <= (ANNO, MESE) <= (aANNO, aMESE)
 
@@ -115,11 +117,14 @@ def aggiungi_righe_spese(
          design["COL_SPESE_NOTE"]]
     ].copy()
     
-    print("Righe aggiunte:")
-    print(nuove_righe)
 
     df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
-
+    
+    dettaglio = nuove_righe.to_string(index=False).split("\n")
+   
+    logger.info_mex("Righe aggiunte:", dettaglio=dettaglio)
+                        
+                        
     return df_spese
 
 def prepara_spese(
@@ -146,6 +151,8 @@ def prepara_spese(
     )
 
     #Aggiunta di nuove righe
+    logger.new_phase("Aggiunta righe dal csv")
+    
     df_spese = aggiungi_righe_spese(
         df_spese=df_spese,
         additional_rows_csv=additional_rows_csv,
@@ -153,6 +160,7 @@ def prepara_spese(
         mese_str=mese_str,
         design=design
     )
+    logger.end_phase()
     
     # FORMATTAZIONE COLONNA DATA
     df_spese[design["COL_SPESE_DATA"]] = pd.to_datetime(df_spese[design["COL_SPESE_DATA"]],errors="coerce",dayfirst=True)

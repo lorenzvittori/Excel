@@ -317,7 +317,6 @@ def smista_file_excel(
     return file_smistati
 
 
-
 def spacchetta_file_annuale(
         dbx: dropbox.Dropbox,
         dropbox_folder_origine: str,

@@ -31,6 +31,47 @@ def get_google_client(google_service_account: Path) -> gspread.Client:
     return gspread.authorize(creds)
 
 
+def get_dataframe_from_google_sheet(
+        client: gspread.Client,
+        id_google_sheet: str,
+        sheet_name: str,
+        table_range: str,
+        header: bool = True) -> pd.DataFrame:
+
+    try:
+        sheet = client.open_by_key(id_google_sheet)
+    except gspread.exceptions.SpreadsheetNotFound:
+        raise FileNotFoundError(f"Google Sheet non trovato: {id_google_sheet}")
+    except gspread.exceptions.APIError as e:
+        raise RuntimeError(f"API Google Sheets: {e}")
+
+    try:
+        ws = sheet.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        raise FileNotFoundError(f"Worksheet non trovato: {sheet_name}")
+
+    # ---- LETTURA ----
+    try:
+        valori = ws.get(table_range)
+    except gspread.exceptions.APIError as e:
+        raise RuntimeError(f"Impossibile leggere il range '{table_range}': {e}")
+
+    if not valori:
+        logger.warning_mex(f"Nessun dato trovato in '{table_range}' su '{sheet_name}'")
+        return pd.DataFrame()
+
+    if header:
+        intestazione = valori[0]
+        righe = valori[1:]
+        df = pd.DataFrame(righe, columns=intestazione)
+    else:
+        df = pd.DataFrame(valori)
+
+    logger.info_mex(f"Lette {len(df)} righe da '{sheet_name}' ({table_range})")
+
+    return df
+
+
 def sync_entrate_totali(
         client: gspread.Client,
         anno: str,
