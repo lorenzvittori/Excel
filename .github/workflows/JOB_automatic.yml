@@ -1,4 +1,4 @@
-name: Flusso Spese-Entrate Automatico
+name: Flusso AUTOMATICO Spese-Entrate
 
 on:
   workflow_dispatch:
