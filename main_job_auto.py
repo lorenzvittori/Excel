@@ -51,7 +51,7 @@ dbx = db_module.get_dropbox_client(
 )
 
 logger.ok_mex("Connessione al DropBox: ✔ COMPLETATA")
-logger.end_phase
+logger.end_phase()
 
 logger.new_phase("Smistamento dei file")
 
