@@ -64,4 +64,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Esegui flusso
-        run: python main_automatic.py
+        run: python main_job_auto.py

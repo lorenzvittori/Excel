@@ -87,4 +87,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Esegui flusso
-        run: python main_manual.py
+        run: python main_job_single.py

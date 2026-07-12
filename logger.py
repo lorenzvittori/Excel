@@ -8,6 +8,11 @@ _flag_riga_vuota = False
 BLOCK_LENGTH = 60
 BULLET_PHASE = "• "
 BULLET_MEX = ""
+INDENTAZIONE = "   "
+
+def set_indentazione(x: str) -> None:
+    global INDENTAZIONE
+    INDENTAZIONE = x
 
 def linea() -> None:
     print("-" * BLOCK_LENGTH)
@@ -16,7 +21,7 @@ def separatore() -> None:
     print("=" * BLOCK_LENGTH)
 
 def get_tab(n: int) -> str:
-    return "   " * n
+    return INDENTAZIONE * n
 
 def end_all_phases() -> None:
     global _profondita, _flag_riga_vuota
