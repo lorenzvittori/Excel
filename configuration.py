@@ -1,5 +1,5 @@
 ## NOME FILE: configuration.py
-
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -65,34 +65,58 @@ ID_GOOGLE_SHEET = {
 
 # ----------------------------------------- DESIGN -----------------------------------------
 
-DESIGN = {
-    "COL_SPESE_ANNO":           "Anno",
-    "COL_SPESE_MESE":           "Mese",
-    "COL_SPESE_DATA":           "Data",
-    "COL_SPESE_CATEGORIA":      "Categoria",
-    "COL_SPESE_IMPORTO":        "Importo",
-    "COL_SPESE_NOTE":           "Note",
-    "CELLA_SEPSE_FIRST_ENTRY":  "B1",
-    "CELLA_SPESE_TSTAMP":       "J1",
-    
-    "COL_ENTRATE_ANNO":         "Anno",
-    "COL_ENTRATE_MESE":         "Mese",
-    "COL_ENTRATE_DATA":         "Data",
-    "COL_ENTRATE_CATEGORIA":    "Categoria",
-    "COL_ENTRATE_IMPORTO":      "Importo",
-    "COL_ENTRATE_NOTE":         "Note",
-    "COL_ENTRATE_TSTAMP":       "TimeStamp",
-    "CELLA_ENTRATE_FIRST_ENTRY":"A1",
-    
-    "NOME_FOGLIO_SPESE":        "Spese",
-    "NOME_FOGLIO_ENTRATE":      "Entrate",
-    
-    "NOME_FOGLIO_TOTAL_ENTRATE":"TOTAL_entrate",
-    "NOME_FILE_ROTTO":          "BROKEN"        #Nome del file da smistare che non ha unici (anno, mese)
-}
+@dataclass(frozen=True)
+class Design:
+    COL_SPESE_ANNO: str         = "Anno"
+    COL_SPESE_MESE: str         = "Mese"
+    COL_SPESE_DATA: str         = "Data"
+    COL_SPESE_CATEGORIA: str    = "Categoria"
+    COL_SPESE_IMPORTO: str      = "Importo"
+    COL_SPESE_NOTE: str         = "Note"
 
-NUMERO_COLONNE_SHEET_SPESE      = sum(1 for x in DESIGN.keys() if x.startswith("COL_SPESE"))
-NUMERO_COLONNE_SHEET_ENTRATE    = sum(1 for x in DESIGN.keys() if x.startswith("COL_ENTRATE"))
+    COL_ENTRATE_ANNO: str       = "Anno"
+    COL_ENTRATE_MESE: str       = "Mese"
+    COL_ENTRATE_DATA: str       = "Data"
+    COL_ENTRATE_CATEGORIA: str  = "Categoria"
+    COL_ENTRATE_IMPORTO: str    = "Importo"
+    COL_ENTRATE_NOTE: str       = "Note"
+    COL_ENTRATE_TSTAMP: str     = "TimeStamp"
+    
+    CELLA_SPESE_FIRST_ENTRY: str    = "B1"
+    CELLA_SPESE_TSTAMP: str         = "J1"
+    CELLA_ENTRATE_FIRST_ENTRY: str  = "A1"
+
+    NOME_FOGLIO_SPESE: str      = "Spese"
+    NOME_FOGLIO_ENTRATE: str    = "Entrate"
+
+    NOME_FOGLIO_TOTAL_SPESE: str    = "TOTAL_spese"
+    NOME_FOGLIO_TOTAL_ENTRATE: str  = "TOTAL_entrate"
+    NOME_FILE_ROTTO: str        = "BROKEN"
+    
+    @classmethod
+    def colonne_sheet_spese(cls):
+        return [
+            getattr(cls, x)
+            for x in vars(cls)
+            if x.startswith("COL_SPESE")
+        ]
+    
+    @classmethod
+    def colonne_sheet_entrate(cls):
+        return [
+            getattr(cls, x)
+            for x in vars(cls)
+            if x.startswith("COL_ENTRATE")
+        ]
+        
+    @classmethod
+    def num_col_sheet_spese(cls):
+        return len(cls.colonne_sheet_spese())
+
+    @classmethod
+    def num_col_sheet_entrate(cls):
+        return len(cls.colonne_sheet_entrate())
+
 
 NOMI_COLONNE_APP = {
     "COLONNE_SPESE": {

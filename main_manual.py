@@ -32,11 +32,11 @@ FLAG_LOG_ALTRO           = 1
 
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
-DESIGN                  = config.DESIGN
+DESIGN                  = config.Design
 NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
 PATH_CSV_ADD_ROWS       = STRUTTURA_REPOSITORY["FILE_ADD_ROWS"]
 
-FILE_BROKEN = DESIGN["NOME_FILE_ROTTO"]
+FILE_BROKEN = DESIGN.NOME_FILE_ROTTO
 
 DROPBOX_CRED = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
 DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
@@ -45,8 +45,8 @@ DROPBOX_RAW_FOLDER = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
 DROPBOX_PRC_FOLDER = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
 DROPBOX_TO_SORT_FOLDER = STRUTTURA_DROPBOX["FOLD_TO_SORT"]
 
-FOGLIO_SPESE = DESIGN["NOME_FOGLIO_SPESE"]
-FOGLIO_ENTRATE = DESIGN["NOME_FOGLIO_ENTRATE"]
+FOGLIO_SPESE = DESIGN.NOME_FOGLIO_SPESE
+FOGLIO_ENTRATE = DESIGN.NOME_FOGLIO_ENTRATE
 
 logger.set_indentazione("\t")
 
@@ -226,7 +226,7 @@ for i_anno_mese in LIST_ANNO_MESE:
         PRC_SPESE_DATAFRAME = PRC_DATAFRAME[FOGLIO_SPESE]
         
         colonne_spese_attuali = sorted(PRC_SPESE_DATAFRAME.columns)
-        colonne_spese_attese = sorted([DESIGN[k] for k in DESIGN.keys() if k.startswith("COL_SPESE")])
+        colonne_spese_attese = sorted(DESIGN.colonne_sheet_spese())
 
         if colonne_spese_attuali != colonne_spese_attese:
             logger.error_mex(
@@ -257,7 +257,7 @@ for i_anno_mese in LIST_ANNO_MESE:
         logger.info_mex(f"TimeStamp entrate: {timestamp_run}")
 
         colonne_entrate_attuali = sorted(PRC_ENTRATE_DATAFRAME.columns)
-        colonne_entrate_attese = sorted([DESIGN[k] for k in DESIGN.keys() if k.startswith("COL_ENTRATE")])
+        colonne_entrate_attese = sorted(DESIGN.colonne_sheet_entrate())
 
         if colonne_entrate_attuali != colonne_entrate_attese:
             logger.error_mex(
@@ -271,12 +271,12 @@ for i_anno_mese in LIST_ANNO_MESE:
             client=client,
             anno=ANNO,
             mese_str=MESE,
-            col_mese =      DESIGN["COL_ENTRATE_MESE"],
-            col_data =      DESIGN["COL_ENTRATE_DATA"],
-            col_importo =   DESIGN["COL_ENTRATE_IMPORTO"],
-            col_note =      DESIGN["COL_ENTRATE_NOTE"],
-            col_timestamp = DESIGN["COL_ENTRATE_TSTAMP"],
-            top_left_entry =DESIGN["CELLA_ENTRATE_FIRST_ENTRY"],
+            col_mese =      DESIGN.COL_ENTRATE_MESE,
+            col_data =      DESIGN.COL_ENTRATE_DATA,
+            col_importo =   DESIGN.COL_ENTRATE_IMPORTO,
+            col_note =      DESIGN.COL_ENTRATE_NOTE,
+            col_timestamp = DESIGN.COL_ENTRATE_TSTAMP,
+            top_left_entry =DESIGN.CELLA_ENTRATE_FIRST_ENTRY,
             df_entrate_prc =PRC_ENTRATE_DATAFRAME)
         
         logger.ok_mex(f"Scrittura delle entrate: ✔ COMPLETATA")

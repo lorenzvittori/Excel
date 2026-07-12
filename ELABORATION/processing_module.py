@@ -38,17 +38,17 @@ def aggiungi_righe_spese(
         additional_rows_csv: Path, 
         anno: str, 
         mese_str: str,
-        design: dict) -> pd.DataFrame:
+        design) -> pd.DataFrame:
     
 
     df_nuove_righe_raw = pd.read_csv(additional_rows_csv, skipinitialspace=True)
 
-    df_nuove_righe_raw[design["COL_SPESE_DATA"]] = df_nuove_righe_raw["GiornoData"].apply(
+    df_nuove_righe_raw[design.COL_SPESE_DATA] = df_nuove_righe_raw["GiornoData"].apply(
         lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_str}/{anno}"
     )
     
-    df_nuove_righe_raw[design["COL_SPESE_DATA"]] = pd.to_datetime(
-        df_nuove_righe_raw[design["COL_SPESE_DATA"]],
+    df_nuove_righe_raw[design.COL_SPESE_DATA] = pd.to_datetime(
+        df_nuove_righe_raw[design.COL_SPESE_DATA],
         errors="coerce",
         dayfirst=True
     )
@@ -111,10 +111,10 @@ def aggiungi_righe_spese(
     df_nuove_righe_filtered = df_nuove_righe_raw[maschera]
     
     nuove_righe = df_nuove_righe_filtered[
-        [design["COL_SPESE_DATA"],
-         design["COL_SPESE_CATEGORIA"],
-         design["COL_SPESE_IMPORTO"],
-         design["COL_SPESE_NOTE"]]
+        [design.COL_SPESE_DATA,
+         design.COL_SPESE_CATEGORIA,
+         design.COL_SPESE_IMPORTO,
+         design.COL_SPESE_NOTE]
     ].copy()
     
 
@@ -132,10 +132,10 @@ def prepara_spese(
         additional_rows_csv: Path, 
         anno: str, 
         mese_str: str,
-        design: dict,
+        design,
         colonne_app_spese: dict) -> pd.DataFrame:
     
-    NOME_FOGLIO_SPESE = design["NOME_FOGLIO_SPESE"]
+    NOME_FOGLIO_SPESE = design.NOME_FOGLIO_SPESE
 
     #ELIMINAZIONE DELLA PRIMA RIGA E DICHIARAZIONE DELL'INTESTAZIONE
     df_spese_raw.columns = df_spese_raw.iloc[1]                 #dichiara intestazione
@@ -163,10 +163,10 @@ def prepara_spese(
     logger.end_phase()
     
     # FORMATTAZIONE COLONNA DATA
-    df_spese[design["COL_SPESE_DATA"]] = pd.to_datetime(df_spese[design["COL_SPESE_DATA"]],errors="coerce",dayfirst=True)
+    df_spese[design.COL_SPESE_DATA] = pd.to_datetime(df_spese[design.COL_SPESE_DATA],errors="coerce",dayfirst=True)
     
     #PULISCI COLONNA_NOTE
-    col = design["COL_SPESE_NOTE"]
+    col = design.COL_SPESE_NOTE
 
     df_spese[col] = (
         df_spese[col]
@@ -177,10 +177,10 @@ def prepara_spese(
     
     
     # INSERISCI ANNO e MESE
-    df_spese.insert(0, design["COL_SPESE_ANNO"], str(anno))
-    df_spese.insert(1, design["COL_SPESE_MESE"], int(mese_str))
+    df_spese.insert(0, design.COL_SPESE_ANNO, str(anno))
+    df_spese.insert(1, design.COL_SPESE_MESE, int(mese_str))
     
-    df_spese.sort_values(by=design["COL_SPESE_DATA"], inplace=True)
+    df_spese.sort_values(by=design.COL_SPESE_DATA, inplace=True)
     
     return df_spese
 
@@ -189,7 +189,7 @@ def prepara_entrate(
     df_entrate_raw: pd.DataFrame,
     anno: str,
     mese_str: str, 
-    design: dict,
+    design,
     colonne_app_entrate: dict) -> pd.DataFrame:
 
     df_entrate_raw.columns = df_entrate_raw.iloc[1]                 #dichiara intestazione
@@ -206,17 +206,17 @@ def prepara_entrate(
     )
 
     # FORMATTAZIONE DATA
-    df_entrate[design["COL_ENTRATE_DATA"]] = pd.to_datetime(df_entrate[design["COL_ENTRATE_DATA"]],errors="coerce",dayfirst=True)
+    df_entrate[design.COL_ENTRATE_DATA] = pd.to_datetime(df_entrate[design.COL_ENTRATE_DATA],errors="coerce",dayfirst=True)
 
         #PULISCI COLONNA NOTE
-    df_entrate[design["COL_ENTRATE_NOTE"]] = (df_entrate[design["COL_ENTRATE_NOTE"]].astype(str).str.replace("\n", ", ", regex=False).str.strip())
+    df_entrate[design.COL_ENTRATE_NOTE] = (df_entrate[design.COL_ENTRATE_NOTE].astype(str).str.replace("\n", ", ", regex=False).str.strip())
 
     # INSERISCI ANNO e MESE
-    df_entrate.insert(0, design["COL_ENTRATE_ANNO"], str(anno))
-    df_entrate.insert(1, design["COL_ENTRATE_MESE"], int(mese_str))
+    df_entrate.insert(0, design.COL_ENTRATE_ANNO, str(anno))
+    df_entrate.insert(1, design.COL_ENTRATE_MESE, int(mese_str))
 
 
-    df_entrate.sort_values(by=design["COL_ENTRATE_DATA"], inplace=True)
+    df_entrate.sort_values(by=design.COL_ENTRATE_DATA, inplace=True)
 
     return df_entrate
 
@@ -233,13 +233,13 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     else:
         logger.info_mex(f"{nome_tabella.upper()} senza duplicati")
 
-def stampa_spese_altro(df_spese: pd.DataFrame, design: dict):
+def stampa_spese_altro(df_spese: pd.DataFrame, design):
     spese_altro = df_spese[
-        df_spese[design["COL_SPESE_CATEGORIA"]].astype(str).str.strip().str.lower() == "altro"
+        df_spese[design.COL_SPESE_CATEGORIA].astype(str).str.strip().str.lower() == "altro"
     ]
 
     if not spese_altro.empty:
-        dettaglio = spese_altro.sort_values(by=design["COL_SPESE_DATA"]).to_string(index=False).split("\n")
+        dettaglio = spese_altro.sort_values(by=design.COL_SPESE_DATA).to_string(index=False).split("\n")
         logger.info_mex(
             corpo="Spese con categoria \"Altro\"",
             dettaglio=dettaglio
@@ -252,15 +252,15 @@ def processa_dataframe(
         df_raw: dict[str, pd.DataFrame],
         anno: str, 
         mese_str: str,
-        design: dict,
+        design,
         path_csv_add_rows: Path,
         colonne_app: dict,
         flag_stampa_duplicati: bool = False,
         flag_stampa_spese_altro: bool = False) -> dict[str, pd.DataFrame]:
      
     
-    NOME_FOGLIO_SPESE   = design["NOME_FOGLIO_SPESE"]
-    NOME_FOGLIO_ENTRATE = design["NOME_FOGLIO_ENTRATE"]
+    NOME_FOGLIO_SPESE   = design.NOME_FOGLIO_SPESE
+    NOME_FOGLIO_ENTRATE = design.NOME_FOGLIO_ENTRATE
     PATH_CSV_ADD_ROWS = path_csv_add_rows
 
     
@@ -291,7 +291,7 @@ def processa_dataframe(
         stampa_spese_altro(df_spese_wip, design)
         
     # Formattazione finale per output Excel
-    df_spese_prc = formatta_dataframe_output(df_spese_wip, colonna_data=design["COL_SPESE_DATA"], colonna_importo=design["COL_SPESE_IMPORTO"])
+    df_spese_prc = formatta_dataframe_output(df_spese_wip, colonna_data=design.COL_SPESE_DATA, colonna_importo=design.COL_SPESE_IMPORTO)
     
     logger.ok_mex("Elaborazione spese: ✔ COMPLETATA")
     logger.end_phase()
@@ -312,7 +312,7 @@ def processa_dataframe(
         stampa_duplicati(df_entrate_wip, NOME_FOGLIO_ENTRATE)
     
     # Formattazione finale per output Excel
-    df_entrate_prc = formatta_dataframe_output(df_entrate_wip, colonna_data=design["COL_ENTRATE_DATA"], colonna_importo=design["COL_ENTRATE_IMPORTO"])
+    df_entrate_prc = formatta_dataframe_output(df_entrate_wip, colonna_data=design.COL_ENTRATE_DATA, colonna_importo=design.COL_ENTRATE_IMPORTO)
     
     logger.ok_mex("Elaborazione entrate: ✔ COMPLETATA")
     logger.end_phase()

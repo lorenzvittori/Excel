@@ -85,7 +85,7 @@ def sync_entrate_totali(
         df_entrate_prc: pd.DataFrame) -> None:
 
     id_google_sheet = config.ID_GOOGLE_SHEET[anno]
-    NOME_FOGLIO_TOTALE = config.DESIGN["NOME_FOGLIO_TOTAL_ENTRATE"]
+    NOME_FOGLIO_TOTALE = config.Design.NOME_FOGLIO_TOTAL_ENTRATE
 
     try:
         sheet = client.open_by_key(id_google_sheet)
@@ -191,7 +191,7 @@ def sync_spese_mensili(
     # 2. CHECK
     # 2.1 CONTROLLO SE CI SONO VALORI PRESENTI SUL FOGLIO
     check = ws.get("B2:G2")
-    row = check[0] if check else [""] * config.NUMERO_COLONNE_SHEET_SPESE
+    row = check[0] if check else [""] * config.Design.num_col_sheet_spese()
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
@@ -207,8 +207,8 @@ def sync_spese_mensili(
         
     # 2.3 CONTROLLO CHE STO SCRIVENDO IL NUMERO GIUSTO DI COLONNE
     count_colums = len(df_spese_prc.columns)
-    if count_colums > config.NUMERO_COLONNE_SHEET_SPESE:
-        logger.error_mex(f"Stai scrivendo più di {config.NUMERO_COLONNE_SHEET_SPESE} colonne")
+    if count_colums > config.Design.num_col_sheet_spese():
+        logger.error_mex(f"Stai scrivendo più di {config.Design.num_col_sheet_spese()} colonne")
         raise ValueError
     
     
@@ -221,9 +221,9 @@ def sync_spese_mensili(
     df_spese_prc_clean = df_spese_prc.fillna("")
     ws.update(
         [df_spese_prc_clean.columns.tolist()] + df_spese_prc_clean.values.tolist(),
-        config.DESIGN["CELLA_SEPSE_FIRST_ENTRY"]
+        config.Design.CELLA_SPESE_FIRST_ENTRY
     )
     
     timestamp_run = datetime.now().strftime("%d/%m/%Y %H.%M.%S")
     # 3.3 WRITE TIMESTAMP
-    ws.update([[timestamp_run]], config.DESIGN["CELLA_SPESE_TSTAMP"])
+    ws.update([[timestamp_run]], config.Design.CELLA_SPESE_TSTAMP)
