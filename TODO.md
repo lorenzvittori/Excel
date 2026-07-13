@@ -15,7 +15,8 @@
 12. fare flag solo spese o solo entrate
 13. FATTO - fare action mauale con scelta raw -> prc -> scrittura oppure prc->scrittura
 14. FATTO - Stamapre il timestamp dell'ultimo aggiornamento
-15. Non posso lanciare il flusso su anni precedenti per via delle add_rows che sono aggiornate sempre al presente
+15. Aggioranre tutti i file per la nuova classe Design
+16. Togliere le hard dipendenza da design nelle funzioni di processing.py
 
 ## Download dal dropbox
 1. FATTO - Fare una funzione che automaticamente capisce anno e mese del file

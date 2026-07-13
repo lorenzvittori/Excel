@@ -6,7 +6,6 @@ import json
 import os
 import pandas as pd
 import io
-import configuration as config
 import logger
 
 

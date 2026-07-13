@@ -3,7 +3,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import json
-import configuration as config
 import os
 from pathlib import Path
 import logger
@@ -82,10 +81,12 @@ def sync_entrate_totali(
         col_note: str,
         col_timestamp: str,
         top_left_entry: str,
+        id_google_sheet: str,
+        nome_foglio: str,
         df_entrate_prc: pd.DataFrame) -> None:
 
-    id_google_sheet = config.ID_GOOGLE_SHEET[anno]
-    NOME_FOGLIO_TOTALE = config.Design.NOME_FOGLIO_TOTAL_ENTRATE
+    id_google_sheet = id_google_sheet
+    NOME_FOGLIO_TOTALE = nome_foglio
 
     try:
         sheet = client.open_by_key(id_google_sheet)
@@ -166,14 +167,17 @@ def sync_entrate_totali(
 
 def sync_spese_mensili(
         client: gspread.Client,
-        anno: str,
-        mese_str: str,
         df_spese_prc: pd.DataFrame,
+        id_google_sheet: str,
+        nome_foglio_mese: str,
+        num_col_sheet_spese: int,
+        cell_spese_first_entry: str,
+        cell_spese_timestamp: str,
         flag_sovrascrivi_celle: bool = False):
 
     # 1. GOOGLE SHEET
-    NOME_SHEET_MESE = config.MESI[mese_str]["nome_foglio_associato"]
-    id_google_sheet = config.ID_GOOGLE_SHEET[anno]
+    NOME_SHEET_MESE = nome_foglio_mese
+    id_google_sheet = id_google_sheet
 
     try:
         sheet = client.open_by_key(id_google_sheet)
@@ -191,7 +195,7 @@ def sync_spese_mensili(
     # 2. CHECK
     # 2.1 CONTROLLO SE CI SONO VALORI PRESENTI SUL FOGLIO
     check = ws.get("B2:G2")
-    row = check[0] if check else [""] * config.Design.num_col_sheet_spese()
+    row = check[0] if check else [""] * num_col_sheet_spese
 
     if any(str(cell).strip() != "" for cell in row):
         if not flag_sovrascrivi_celle:
@@ -207,8 +211,8 @@ def sync_spese_mensili(
         
     # 2.3 CONTROLLO CHE STO SCRIVENDO IL NUMERO GIUSTO DI COLONNE
     count_colums = len(df_spese_prc.columns)
-    if count_colums > config.Design.num_col_sheet_spese():
-        logger.error_mex(f"Stai scrivendo più di {config.Design.num_col_sheet_spese()} colonne")
+    if count_colums > num_col_sheet_spese:
+        logger.error_mex(f"Stai scrivendo più di {num_col_sheet_spese} colonne")
         raise ValueError
     
     
@@ -221,9 +225,9 @@ def sync_spese_mensili(
     df_spese_prc_clean = df_spese_prc.fillna("")
     ws.update(
         [df_spese_prc_clean.columns.tolist()] + df_spese_prc_clean.values.tolist(),
-        config.Design.CELLA_SPESE_FIRST_ENTRY
+        cell_spese_first_entry
     )
     
     timestamp_run = datetime.now().strftime("%d/%m/%Y %H.%M.%S")
     # 3.3 WRITE TIMESTAMP
-    ws.update([[timestamp_run]], config.Design.CELLA_SPESE_TSTAMP)
+    ws.update([[timestamp_run]], cell_spese_timestamp)
