@@ -4,7 +4,7 @@ from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
 from datetime       import datetime
 from typing import cast
-import configuration as config  
+import configuration as config
 import pandas as pd
 import os
 import logger
@@ -17,8 +17,7 @@ FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO", default = "true").lower()
 
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
-DESIGN                  = config.Design
-NOMI_COLONNE_APP        = config.NOMI_COLONNE_APP
+DESIGN                  = config.Design()
 PATH_CSV_ADD_ROWS       = STRUTTURA_REPOSITORY["FILE_ADD_ROWS"]
 
 FILE_BROKEN = DESIGN.NOME_FILE_ROTTO
@@ -62,7 +61,7 @@ FILE_SMISTATI = db_module.smista_file_excel(
     get_raw_name = config.get_raw_name,
     estesione_files = ".xlsx",
     target_broken_name = FILE_BROKEN,
-    nome_colonna_data = NOMI_COLONNE_APP["COLONNE_SPESE"]["COL_SPESE_DATA"],
+    nome_colonna_data = DESIGN.spese.data.raw,
     righe_da_saltare = 1,
     flag_sovrascrivi_raw = FLAG_SOVRASCRIVI_RAW_DBX,
 )
@@ -146,7 +145,6 @@ for i_anno_mese in LIST_ANNO_MESE:
             mese_str=MESE,
             design = DESIGN,
             path_csv_add_rows= PATH_CSV_ADD_ROWS,
-            colonne_app = NOMI_COLONNE_APP,
             flag_stampa_duplicati = FLAG_LOG_DUPLICATI,
             flag_stampa_spese_altro = FLAG_LOG_ALTRO)
 
@@ -171,7 +169,7 @@ for i_anno_mese in LIST_ANNO_MESE:
         
         
         colonne_spese_attuali = sorted(PRC_SPESE_DATAFRAME.columns)
-        colonne_spese_attese = sorted(DESIGN.colonne_sheet_spese())
+        colonne_spese_attese = sorted(DESIGN.colonne_spese_PRC())
 
         if colonne_spese_attuali != colonne_spese_attese:
             logger.error_mex(
@@ -182,12 +180,16 @@ for i_anno_mese in LIST_ANNO_MESE:
 
         
         logger.new_phase("Scrittura SPESE su GoogleSheet")
+        
         gd_module.sync_spese_mensili(
-            client=client,
-            anno=ANNO,
-            mese_str=MESE,
-            df_spese_prc=PRC_SPESE_DATAFRAME,
-            flag_sovrascrivi_celle=FLAG_SOVRASCRIVI_SHEET
+            client = client,
+            df_spese_prc = PRC_SPESE_DATAFRAME,
+            flag_sovrascrivi_celle = FLAG_SOVRASCRIVI_SHEET,
+            id_google_sheet = config.ID_GOOGLE_SHEET[ANNO],
+            nome_foglio_mese = FOGLIO_SPESE,
+            num_col_sheet_spese = DESIGN.num_col_spese_PRC(),
+            cell_spese_first_entry = DESIGN.CELLA_SPESE_FIRST_ENTRY,
+            cell_spese_timestamp = DESIGN.CELLA_SPESE_TSTAMP
         )
         logger.ok_mex(f"Scrittura delle spese: ✔ COMPLETATA")
         logger.end_phase()   # chiude "Scrittura SPESE su GoogleSheet"
@@ -202,7 +204,7 @@ for i_anno_mese in LIST_ANNO_MESE:
         logger.info_mex(f"TimeStamp entrate: {timestamp_run}")
 
         colonne_entrate_attuali = sorted(PRC_ENTRATE_DATAFRAME.columns)
-        colonne_entrate_attese = sorted(DESIGN.colonne_sheet_entrate())
+        colonne_entrate_attese = sorted(DESIGN.colonne_entrate_PRC())
 
         if colonne_entrate_attuali != colonne_entrate_attese:
             logger.error_mex(
@@ -213,16 +215,18 @@ for i_anno_mese in LIST_ANNO_MESE:
 
     
         gd_module.sync_entrate_totali(
-            client=client,
-            anno=ANNO,
-            mese_str=MESE,
-            col_mese =      DESIGN.COL_ENTRATE_MESE,
-            col_data =      DESIGN.COL_ENTRATE_DATA,
-            col_importo =   DESIGN.COL_ENTRATE_IMPORTO,
-            col_note =      DESIGN.COL_ENTRATE_NOTE,
-            col_timestamp = DESIGN.COL_ENTRATE_TSTAMP,
-            top_left_entry =DESIGN.CELLA_ENTRATE_FIRST_ENTRY,
-            df_entrate_prc =PRC_ENTRATE_DATAFRAME)
+            client = client,
+            anno = ANNO,
+            mese_str = MESE,
+            col_mese    =   DESIGN.entrate.mese.sheet,
+            col_data    =   DESIGN.entrate.data.sheet,
+            col_importo =   DESIGN.entrate.importo.sheet,
+            col_note    =   DESIGN.entrate.note.sheet,
+            col_timestamp = DESIGN.entrate.timestamp.sheet,
+            top_left_entry = DESIGN.CELLA_ENTRATE_FIRST_ENTRY,
+            id_google_sheet = config.ID_GOOGLE_SHEET[ANNO],
+            nome_foglio = DESIGN.NOME_FOGLIO_TOTAL_ENTRATE,
+            df_entrate_prc = PRC_ENTRATE_DATAFRAME)
         
         logger.ok_mex(f"Scrittura delle entrate: ✔ COMPLETATA")
         logger.end_phase()   # chiude "Scrittura ENTRATE su GoogleSheet"

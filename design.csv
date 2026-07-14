@@ -1,15 +1,15 @@
-NOME,campoAPP,campoSHEET,ordineAPP,ordineSHEET,tipo
-GRUPPO,,Gruppo,,1,spese
-ANNO,,Anno,,2,spese
-MESE,,Mese,,3,spese
-DATA,Data e ora,Data,,4,spese
-CATEGORIA,Categoria,Categoria,,5,spese
-IMPORTO,Importo in valuta del conto,Importo,,6,spese
-NOTE,Commento,Note,,7,spese
-ANNO,,Anno,,1,entrate
-MESE,,Mese,,2,entrate
-DATA,Data e ora,Data,,3,entrate
-CATEGORIA,Categoria,Categoria,,4,entrate
-IMPORTO,Importo in valuta del conto,Importo,,5,entrate
-NOTE,Commento,Note,,6,entrate
-TIMESTAMP,,TimeStamp,,7,entrate
+NOME,campoRAW,campoPRC,campoSHEET,tipo,ordine_RAW,ordine_PRC,ordine_SHEET
+GRUPPO,,,Gruppo,spese,,,1
+ANNO,,Anno,Anno,spese,,1,2
+MESE,,Mese,Mese,spese,,2,3
+DATA,Data e ora,Data,Data,spese,1,3,4
+CATEGORIA,Categoria,Categoria,Categoria,spese,2,4,5
+IMPORTO,Importo in valuta del conto,Importo,Importo,spese,4,5,6
+NOTE,Commento,Note,Note,spese,9,6,7
+ANNO,,Anno,Anno,entrate,,1,1
+MESE,,Mese,Mese,entrate,,2,2
+DATA,Data e ora,Data,Data,entrate,1,3,3
+CATEGORIA,Categoria,Categoria,Categoria,entrate,2,4,4
+IMPORTO,Importo in valuta del conto,Importo,Importo,entrate,4,5,5
+NOTE,Commento,Note,Note,entrate,9,6,6
+TIMESTAMP,,TimeStamp,TimeStamp,entrate,,7,7
