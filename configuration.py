@@ -58,7 +58,8 @@ STRUTTURA_REPOSITORY = {
     "FILE_DROPBOX_CRED":    Path("DROPBOX/dropbox_credentials.json"),
     "FILE_DROPBOX_TOKEN":   Path("DROPBOX/dropbox_token.json"),
     "FOLD_GOOGLE":          Path("GOOGLE_DRIVE"),
-    "FILE_GOOGLE_ACCOUNT":  Path("GOOGLE_DRIVE/google_service_account.json")
+    "FILE_GOOGLE_ACCOUNT":  Path("GOOGLE_DRIVE/google_service_account.json"),
+    "FILE_DESIGN_CSV":      Path("design.csv")
 }
 
 STRUTTURA_DROPBOX = {
@@ -80,7 +81,7 @@ ID_GOOGLE_SHEET = {
 # ============================================================
 
 _DESIGN_CSV = pd.read_csv(
-    Path("ELABORATION/design.csv"),
+    STRUTTURA_REPOSITORY["FILE_DESIGN_CSV"],
     skipinitialspace=True,
     keep_default_na=False
 )
@@ -194,4 +195,10 @@ class Design:
     @classmethod
     def num_col_entrate_SHEET(cls) -> int:
         return len(cls.colonne_entrate_SHEET())
+
+"""
+print(Design.colonne_entrate_RAW())
+print(Design.colonne_entrate_PRC())
+print(Design.colonne_entrate_SHEET())
+"""
 

@@ -144,6 +144,7 @@ def sync_entrate_totali(
 
     df_union.reset_index(drop=True, inplace=True)
     df_union = df_union.fillna("")
+    
 
     righe_rimaste = len(df_union.index)
 

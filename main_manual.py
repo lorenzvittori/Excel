@@ -8,14 +8,14 @@ import pandas as pd
 import logger
 
 ANNO_MESE_INPUT_DICT = {
-    "2026_01": 0,   
-    "2026_02": 0,   
-    "2026_03": 0,   
-    "2026_04": 0,   
-    "2026_05": 0,   
-    "2026_06": 0,   
+    "2026_01": 1,   
+    "2026_02": 1,   
+    "2026_03": 1,   
+    "2026_04": 1,   
+    "2026_05": 1,   
+    "2026_06": 1,   
     "2026_07": 1,
-    "2026_08": 0,   
+    "2026_08": 1,   
     "2026_09": 0,   
     "2026_10": 0,   
     "2026_11": 0,   
@@ -176,6 +176,7 @@ for i_anno_mese in LIST_ANNO_MESE:
                 flag_stampa_duplicati = bool(FLAG_LOG_DUPLICATI),
                 flag_stampa_spese_altro = bool(FLAG_LOG_ALTRO)
             )
+            
 
             logger.ok_mex("Elaborazione: ✔ COMPLETATA")
             logger.end_phase()   # chiude "Pulizia e formattazione della tabella"

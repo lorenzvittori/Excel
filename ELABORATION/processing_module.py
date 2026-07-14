@@ -205,8 +205,15 @@ def prepara_entrate(
     # FORMATTAZIONE DATA
     df_entrate[design.entrate.data.prc] = pd.to_datetime(df_entrate[design.entrate.data.prc],errors="coerce",dayfirst=True)
 
-        #PULISCI COLONNA NOTE
-    df_entrate[design.entrate.note.prc] = (df_entrate[design.entrate.note.prc].astype(str).str.replace("\n", ", ", regex=False).str.strip())
+    #PULISCI COLONNA_NOTE
+    col = design.entrate.note.prc
+
+    df_entrate[col] = (
+        df_entrate[col]
+            .astype("string")
+            .str.replace("\n", ", ", regex=False)
+            .str.strip()
+    )
 
     # INSERISCI ANNO e MESE
     df_entrate.insert(0, design.entrate.anno.prc, str(anno))
