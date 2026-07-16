@@ -192,7 +192,7 @@ try:
         df_spese_prc = PRC_SPESE_DATAFRAME,
         flag_sovrascrivi_celle = FLAG_SOVRASCRIVI_SHEET,
         id_google_sheet = config.ID_GOOGLE_SHEET[ANNO],
-        nome_foglio_mese = FOGLIO_SPESE,
+        nome_foglio_mese = config.MESI[MESE]["nome_foglio_associato"],
         num_col_sheet_spese = DESIGN.num_col_spese_PRC(),
         cell_spese_first_entry = DESIGN.CELLA_SPESE_FIRST_ENTRY,
         cell_spese_timestamp = DESIGN.CELLA_SPESE_TSTAMP
