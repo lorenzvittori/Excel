@@ -1,0 +1,65 @@
+## NOME FILE: main_job_auto.py
+from DROPBOX        import dropbox_module       as db_module
+from GOOGLE_DRIVE   import google_drive_module  as gd_module
+from ELABORATION    import processing_module    as pr_module
+from datetime       import datetime
+import WIP_workflow as workflow
+from typing import cast
+import configuration as config
+import pandas as pd
+import os
+import logger
+
+FLAG_SCRITTURA_SUL_DRIVE = os.getenv("FLAG_SCRITTURA_SUL_DRIVE", default = "true").lower()    == "true"
+FLAG_SOVRASCRIVI_SHEET   = os.getenv("FLAG_SOVRASCRIVI_SHEET", default = "true").lower()      == "true"
+FLAG_SOVRASCRIVI_RAW_DBX = os.getenv("FLAG_SOVRASCRIVI_RAW_DBX", default = "true").lower()    == "true"
+FLAG_LOG_DUPLICATI       = os.getenv("FLAG_LOG_DUPLICATI", default = "true").lower()          == "true"
+FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO", default = "true").lower()              == "true"
+
+STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
+STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
+DESIGN                  = config.Design()
+PATH_CSV_ADD_ROWS       = STRUTTURA_REPOSITORY["FILE_ADD_ROWS"]
+
+FILE_BROKEN = DESIGN.NOME_FILE_ROTTO
+
+DROPBOX_CRED = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
+DROPBOX_TOKEN = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
+
+DROPBOX_RAW_FOLDER = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
+DROPBOX_PRC_FOLDER = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
+DROPBOX_TO_SORT_FOLDER = STRUTTURA_DROPBOX["FOLD_TO_SORT"]
+
+FOGLIO_SPESE = DESIGN.NOME_FOGLIO_SPESE
+FOGLIO_ENTRATE = DESIGN.NOME_FOGLIO_ENTRATE
+
+
+## ============================================================ 1 - SMISTAMENTO DEL DROPBOX ============================================================
+print("")
+print("#" * 46)
+print("FLUSSO AUTOMATICO")
+print("#" * 46)
+print()
+
+logger.reset_fase()
+logger.new_phase("SMISTAMENTO DEL DROPBOX")
+logger.new_phase("Connessione al DropBox tramite API.")
+
+dbx = db_module.get_dropbox_client(
+    dropbox_credential = DROPBOX_CRED,
+    dropbox_token = DROPBOX_TOKEN
+)
+
+logger.ok_mex("Connessione al DropBox: ✔ COMPLETATA")
+logger.end_phase()
+
+LIST_ANNO_MESE = workflow.smista_dropbox(
+    dbx=dbx,
+    dropbox_folder_origine=DROPBOX_TO_SORT_FOLDER,
+    dropbox_folder_destinazione=DROPBOX_RAW_FOLDER,
+    target_broken_name=FILE_BROKEN,
+    nome_colonna_data=DESIGN.spese.data.raw,
+    righe_da_saltare=1,
+    flag_sovrascrivi_raw=FLAG_SOVRASCRIVI_RAW_DBX,
+    get_raw_name=config.get_raw_name,
+)

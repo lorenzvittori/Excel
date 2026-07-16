@@ -1,4 +1,4 @@
-name: Flusso SINGOLO \nSpese-Entrate 
+name: Flusso SINGOLO Spese-Entrate 
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ on:
           - Novembre
           - Dicembre
       flag_prioritizza_prc:
-        description: "Se disattivato elbora i file RAW"
+        description: "Salto elaborazione"
         required: true
         default: false
         type: boolean
