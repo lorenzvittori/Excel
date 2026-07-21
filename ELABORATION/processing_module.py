@@ -37,7 +37,7 @@ def formatta_dataframe_output(df: pd.DataFrame, colonna_data: str, colonna_impor
 def aggiungi_righe_spese(
         df_spese: pd.DataFrame, 
         additional_rows_csv: Path, 
-        anno: str, 
+        anno_str: str, 
         mese_str: str,
         design: config.Design) -> pd.DataFrame:
     
@@ -45,7 +45,7 @@ def aggiungi_righe_spese(
     df_nuove_righe_raw = pd.read_csv(additional_rows_csv, skipinitialspace=True)
 
     df_nuove_righe_raw[design.spese.data.prc] = df_nuove_righe_raw["GiornoData"].apply(
-        lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_str}/{anno}"
+        lambda giorno: f"{str(int(giorno)).zfill(2)}/{mese_str}/{anno_str}"
     )
     
     df_nuove_righe_raw[design.spese.data.prc] = pd.to_datetime(
@@ -55,7 +55,7 @@ def aggiungi_righe_spese(
     )
 
     def between(
-            this_anno: str,
+            this_anno_str: str,
             this_mese_str: str,
             daANNO_MESE: str,
             aANNO_MESE: str) -> bool:
@@ -85,7 +85,7 @@ def aggiungi_righe_spese(
                 raise ValueError()
 
         MESE = int(this_mese_str)
-        ANNO = int(this_anno)
+        ANNO = int(this_anno_str)
 
         if not (1 <= MESE <= 12):
             logger.error_mex(f"Mese fuori range: {MESE}")
@@ -101,7 +101,7 @@ def aggiungi_righe_spese(
     # ---- FILTRA LE RIGHE IN BASE ALL'INTERVALLO daANNO_MESE / aANNO_MESE ----
     maschera = df_nuove_righe_raw.apply(
         lambda row: between(
-            this_anno     = anno,
+            this_anno_str = anno_str,
             this_mese_str = mese_str,
             daANNO_MESE   = str(row["daANNO_MESE"]).strip() if pd.notnull(row["daANNO_MESE"]) else "",
             aANNO_MESE    = str(row["aANNO_MESE"]).strip()  if pd.notnull(row["aANNO_MESE"])  else ""
@@ -131,7 +131,7 @@ def aggiungi_righe_spese(
 def prepara_spese(
         df_spese_raw: pd.DataFrame, #senza header
         additional_rows_csv: Path, 
-        anno: str, 
+        anno_str: str, 
         mese_str: str,
         design: config.Design) -> pd.DataFrame:
     
@@ -155,7 +155,7 @@ def prepara_spese(
     df_spese = aggiungi_righe_spese(
         df_spese=df_spese,
         additional_rows_csv=additional_rows_csv,
-        anno=anno,
+        anno_str=anno_str,
         mese_str=mese_str,
         design=design
     )
@@ -176,7 +176,7 @@ def prepara_spese(
     
     
     # INSERISCI ANNO e MESE
-    df_spese.insert(0, design.spese.anno.prc, str(anno))
+    df_spese.insert(0, design.spese.anno.prc, str(anno_str))
     df_spese.insert(1, design.spese.mese.prc, int(mese_str))
     
     df_spese.sort_values(by=design.spese.data.prc, inplace=True)
@@ -186,7 +186,7 @@ def prepara_spese(
 # ENTRATE
 def prepara_entrate(
     df_entrate_raw: pd.DataFrame,
-    anno: str,
+    anno_str: str,
     mese_str: str, 
     design: config.Design) -> pd.DataFrame:
 
@@ -216,7 +216,7 @@ def prepara_entrate(
     )
 
     # INSERISCI ANNO e MESE
-    df_entrate.insert(0, design.entrate.anno.prc, str(anno))
+    df_entrate.insert(0, design.entrate.anno.prc, str(anno_str))
     df_entrate.insert(1, design.entrate.mese.prc, int(mese_str))
 
 
@@ -254,7 +254,7 @@ def stampa_spese_altro(df_spese: pd.DataFrame, design: config.Design):
 # ------------------------------------- FUNZIONE PRINCIPALE -------------------------------------
 def processa_dataframe(
         df_raw: dict[str, pd.DataFrame],
-        anno: str, 
+        anno_str: str, 
         mese_str: str,
         design: config.Design,
         path_csv_add_rows: Path,
@@ -279,7 +279,7 @@ def processa_dataframe(
     df_spese_wip = prepara_spese(
         df_spese_raw=df_spese_raw,
         additional_rows_csv=path_csv_add_rows,
-        anno=anno,
+        anno_str=anno_str,
         mese_str=mese_str,
         design=design)
 
@@ -305,7 +305,7 @@ def processa_dataframe(
 
     df_entrate_wip = prepara_entrate(
         df_entrate_raw=df_entrate_raw,
-        anno = anno,
+        anno_str = anno_str,
         mese_str=mese_str,
         design=design)
     

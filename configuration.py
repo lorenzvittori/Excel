@@ -8,8 +8,8 @@ from pathlib import Path
 # FUNZIONI NAMING FILE
 # ============================================================
 
-def get_raw_name(anno: str, mese_str: str) -> str: return f"app_{anno}_{mese_str}.xlsx"
-def get_prc_name(anno: str, mese_str: str) -> str: return f"p_{anno}_{mese_str}.xlsx"
+def get_raw_name(anno: str | int, mese_str: str) -> str: return f"app_{str(anno)}_{mese_str}.xlsx"
+def get_prc_name(anno: str | int, mese_str: str) -> str: return f"p_{str(anno)}_{mese_str}.xlsx"
 
 
 # ============================================================

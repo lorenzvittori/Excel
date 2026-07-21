@@ -1,32 +1,25 @@
-from typing import Any
-from typing import cast
-import configuration as config
-import logger
-from DROPBOX import dropbox_module as db_module
-import pandas as pd
-import configuration as config
 from DROPBOX        import dropbox_module       as db_module
-from GOOGLE_DRIVE   import google_drive_module         as gd_module
+from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
-from datetime       import datetime
-from typing import cast
-import configuration as config 
-import pandas as pd
-import os
+from typing     import Any, cast, Callable
+from datetime   import datetime
+from pathlib    import Path
 import logger
-from pathlib import Path
+import dropbox
+import gspread
+import pandas as pd
 
 
 def smista_dropbox(
     *,
-    dbx: Any,
+    dbx: dropbox.Dropbox,
     dropbox_folder_origine: str,
     dropbox_folder_destinazione: str,
     target_broken_name: str,
     nome_colonna_data: str,
     righe_da_saltare: int,
     flag_sovrascrivi_raw: bool,
-    get_raw_name
+    get_raw_name: Callable[[int | str, str], str]
 ) -> list[dict[str, str]]:
     """
     Smista i file Excel presenti nella cartella Dropbox di origine.
@@ -65,12 +58,11 @@ def smista_dropbox(
     return lista_anno_mese
 
 
-
 def download_dropbox(
     *,
-    dbx,
-    anno: str,
-    mese: str,
+    dbx: Any,
+    raw_name: str,
+    prc_name: str,
     dropbox_raw_folder: str,
     dropbox_prc_folder: str,
     foglio_spese: str,
@@ -79,16 +71,6 @@ def download_dropbox(
 ) -> dict[str, pd.DataFrame]:
 
     logger.new_phase("DROPBOX - Download")
-
-    nome_raw = config.get_raw_name(
-        anno=anno,
-        mese_str=mese,
-    )
-
-    nome_prc = config.get_prc_name(
-        anno=anno,
-        mese_str=mese,
-    )
 
     # ------------------------------------------------------------------
     # Controllo presenza file
@@ -101,12 +83,12 @@ def download_dropbox(
         for f in dbx.files_list_folder(str(dropbox_raw_folder)).entries
     ]
 
-    if nome_raw in raw_disponibili:
-        logger.info_mex(f"Trovato file RAW: {dropbox_raw_folder}/{nome_raw}")
+    if raw_name in raw_disponibili:
+        logger.info_mex(f"Trovato file RAW: {dropbox_raw_folder}/{raw_name}")
     else:
         logger.error_mex(
             corpo="File RAW inesistente",
-            dettaglio=f"{dropbox_raw_folder}/{nome_raw}",
+            dettaglio=f"{dropbox_raw_folder}/{raw_name}",
         )
         raise ValueError
 
@@ -115,8 +97,8 @@ def download_dropbox(
         for f in dbx.files_list_folder(str(dropbox_prc_folder)).entries
     ]
 
-    if nome_prc in prc_disponibili:
-        logger.info_mex(f"Trovato file PROCESSED: {dropbox_prc_folder}/{nome_prc}")
+    if prc_name in prc_disponibili:
+        logger.info_mex(f"Trovato file PROCESSED: {dropbox_prc_folder}/{prc_name}")
     else:
         logger.info_mex("File PROCESSED inesistente")
 
@@ -133,7 +115,7 @@ def download_dropbox(
         dataframe = db_module.get_dataframe_from_dropbox(
             dbx=dbx,
             dropbox_folder=dropbox_prc_folder,
-            file_name=nome_prc,
+            file_name=prc_name,
             header=0,
         )
 
@@ -144,7 +126,7 @@ def download_dropbox(
         dataframe = db_module.get_dataframe_from_dropbox(
             dbx=dbx,
             dropbox_folder=dropbox_raw_folder,
-            file_name=nome_raw,
+            file_name=raw_name,
         )
 
     # ------------------------------------------------------------------
@@ -172,21 +154,21 @@ def download_dropbox(
     return dataframe
 
 
-
-def elabora_spese_entrate(
-    df_raw: dict[str, pd.DataFrame], 
-    anno, 
-    mese_str: str, 
-    design,
+def elabora_dataframe(
+    df_raw: dict[str, pd.DataFrame],
+    anno: int,
+    mese_str: str,
+    design: Any,
     path_csv_add_rows: Path,
     flag_stampa_duplicati: bool,
-    flag_stampa_spese_altro: bool) -> dict[str, pd.DataFrame]:
+    flag_stampa_spese_altro: bool,
+) -> dict[str, pd.DataFrame]:
     
     logger.new_phase("Pulizia e formattazione della tabella")
 
     PRC_DATAFRAME = pr_module.processa_dataframe(
         df_raw=df_raw,
-        anno=anno,
+        anno_str=str(anno),
         mese_str=mese_str,
         design = design,
         path_csv_add_rows= path_csv_add_rows,
@@ -199,23 +181,38 @@ def elabora_spese_entrate(
     return PRC_DATAFRAME
 
 
-def scrivi__su_sheet(
-    client, 
-    df_spese_prc: pd.DataFrame, 
-    design, 
-    anno, 
-    mese_str: str, 
+def scrivi_google_sheet(
+    *,
+    client: gspread.Client,
+    df_spese_prc: pd.DataFrame,
+    design: Any,
+    anno: int,
+    id_google_sheet: str,
+    nome_foglio_mese: str,
+    nome_foglio_entrate: str,
+    mese_str: str,
     flag_sovrascrivi_celle: bool,
-    df_entrate_prc: pd.DataFrame, 
-    config,) -> None:
+    df_entrate_prc: pd.DataFrame,
+) -> None:
+    
+    
+    colonne_spese_attuali = sorted(df_spese_prc.columns)
+    colonne_spese_attese = sorted(design.colonne_spese_PRC())
+
+    if colonne_spese_attuali != colonne_spese_attese:
+        logger.error_mex(
+            corpo = "Colonne nel foglio spese non corrispondenti a quelle attese",
+            dettaglio = [ f"colonne attuali : {colonne_spese_attuali}",
+                        f"colonne attese : {colonne_spese_attese}"])
+        raise ValueError()
     
     logger.new_phase("Scrittura SPESE su GoogleSheet")
     gd_module.sync_spese_mensili(
         client = client,
         df_spese_prc = df_spese_prc,
         flag_sovrascrivi_celle = flag_sovrascrivi_celle,
-        id_google_sheet = config.ID_GOOGLE_SHEET[anno],
-        nome_foglio_mese = config.MESI[mese_str]["nome_foglio_associato"],
+        id_google_sheet = id_google_sheet,
+        nome_foglio_mese = nome_foglio_mese,
         num_col_sheet_spese = design.num_col_spese_PRC(),
         cell_spese_first_entry = design.CELLA_SPESE_FIRST_ENTRY,
         cell_spese_timestamp = design.CELLA_SPESE_TSTAMP
@@ -244,7 +241,7 @@ def scrivi__su_sheet(
 
     gd_module.sync_entrate_totali(
         client = client,
-        anno = anno,
+        anno_str = str(anno),
         mese_str = mese_str,
         col_mese    =   design.entrate.mese.sheet,
         col_data    =   design.entrate.data.sheet,
@@ -252,9 +249,34 @@ def scrivi__su_sheet(
         col_note    =   design.entrate.note.sheet,
         col_timestamp = design.entrate.timestamp.sheet,
         top_left_entry = design.CELLA_ENTRATE_FIRST_ENTRY,
-        id_google_sheet = config.ID_GOOGLE_SHEET[anno],
-        nome_foglio = design.NOME_FOGLIO_TOTAL_ENTRATE,
+        id_google_sheet = id_google_sheet,
+        nome_foglio = nome_foglio_entrate,
         df_entrate_prc = df_entrate_prc)
 
     logger.ok_mex(f"Scrittura delle entrate: ✔ COMPLETATA")
     logger.end_phase()   # chiude "Scrittura ENTRATE su GoogleSheet"
+    
+    
+def upload_dropbox(
+    *,
+    dbx: dropbox.Dropbox,
+    dropbox_prc_folder: str,
+    prc_file_name: str,
+    df_prc: dict[str, pd.DataFrame],
+) -> None:
+    
+    logger.new_phase("DROPBOX - Upload")
+    db_module.upload_dataframe_to_dropbox(
+        dbx = dbx,
+        dropbox_folder = dropbox_prc_folder,
+        file_name = prc_file_name,
+        df = df_prc,
+        flag_sovrascrivi = True
+    )
+    logger.ok_mex(f"Upload di {dropbox_prc_folder}/{prc_file_name}: ✔ COMPLETATO")
+
+    logger.end_phase()   # chiude "GOOGLE DRIVE"
+
+
+
+   

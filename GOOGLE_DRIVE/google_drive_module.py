@@ -73,7 +73,7 @@ def get_dataframe_from_google_sheet(
 
 def sync_entrate_totali(
         client: gspread.Client,
-        anno: str,
+        anno_str: str,
         mese_str: str,
         col_importo: str,
         col_mese: str,
@@ -149,7 +149,7 @@ def sync_entrate_totali(
     righe_rimaste = len(df_union.index)
 
     logger.info_mex(
-        f"'{NOME_FOGLIO_TOTALE}' aggiornato per ANNO {anno} - MESE {mese_str}",
+        f"'{NOME_FOGLIO_TOTALE}' aggiornato per ANNO {anno_str} - MESE {mese_str}",
         dettaglio=[
             f"Righe esistenti prima dell'update: {righe_esistenti_totale}",
             f"Righe rimosse (stesso ANNO/MESE, sostituite): {righe_rimosse}",
