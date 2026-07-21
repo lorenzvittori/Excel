@@ -1,3 +1,4 @@
+## NOME FILE: WIP_workflow.py
 from DROPBOX        import dropbox_module       as db_module
 from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
@@ -149,7 +150,7 @@ def download_dropbox(
         logger.error_mex(f"Non esiste il foglio {foglio_entrate}")
         raise ValueError
 
-    logger.end_all_phases()
+    logger.end_phase()
 
     return dataframe
 
@@ -275,7 +276,7 @@ def upload_dropbox(
     )
     logger.ok_mex(f"Upload di {dropbox_prc_folder}/{prc_file_name}: ✔ COMPLETATO")
 
-    logger.end_phase()   # chiude "GOOGLE DRIVE"
+    logger.end_phase() 
 
 
 
