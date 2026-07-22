@@ -4,11 +4,11 @@ from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
 from datetime       import datetime
 from typing import cast
-import workflow as wf
-import configuration as config 
+import scripts.workflow as wf
+import configuration.configuration as config 
 import pandas as pd
 import os
-import logger
+import configuration.logger as logger
 
 ANNO = os.getenv("ANNO", default = "2026")
 

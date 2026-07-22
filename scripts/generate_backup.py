@@ -1,8 +1,8 @@
 from DROPBOX        import dropbox_module       as db_module
 from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
-import configuration as config
-import logger
+import configuration.configuration as config
+import configuration.logger as logger
 
 from datetime       import datetime
 from typing     import cast
@@ -12,7 +12,7 @@ import os
 import io
 
 
-
+"""
 
 STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
 STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
@@ -76,3 +76,6 @@ data_oggi = datetime.date.today().strftime("%d_%m_%y")
 with pd.ExcelWriter(Path(f"DataBase/sheet_BACKUP/bk{anno}_{data_oggi}.xlsx"), engine="openpyxl") as writer:
     df_spese.to_excel(writer, sheet_name="Spese", index=False)
     df_entrate.to_excel(writer, sheet_name="Entrate", index=False)
+    
+    
+"""

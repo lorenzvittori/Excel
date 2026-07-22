@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import os
 from pathlib import Path
-import logger
+import configuration.logger as logger
 from datetime import datetime
 
 

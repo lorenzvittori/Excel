@@ -2,10 +2,10 @@
 from DROPBOX        import dropbox_module       as db_module
 from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
-import workflow as wf
-import configuration as config
+import scripts.workflow as wf
+import configuration.configuration as config
 import os
-import logger
+import configuration.logger as logger
 
 FLAG_SCRITTURA_SUL_DRIVE = os.getenv("FLAG_SCRITTURA_SUL_DRIVE", default = "true").lower()    == "true"
 FLAG_SOVRASCRIVI_SHEET   = os.getenv("FLAG_SOVRASCRIVI_SHEET", default = "true").lower()      == "true"

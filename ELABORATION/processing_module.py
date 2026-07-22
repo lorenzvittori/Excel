@@ -2,8 +2,8 @@
 from    pathlib import Path
 from    math    import inf
 import pandas as pd
-import logger
-import configuration as config
+import configuration.logger as logger
+import configuration.configuration as config
 
 # ---------------------------------------- FUNZIONI ----------------------------------------
   # FORMATTAZIONE E PULIZIA

@@ -6,7 +6,7 @@ import json
 import os
 import pandas as pd
 import io
-import logger
+import configuration.logger as logger
 
 
 def get_dropbox_client(

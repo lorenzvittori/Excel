@@ -3,9 +3,9 @@
 from DROPBOX import dropbox_module as db_module
 from GOOGLE_DRIVE import google_drive_module as gd_module
 
-import workflow as wf
-import configuration as config
-import logger
+import scripts.workflow as wf
+import configuration.configuration as config
+import configuration.logger as logger
 
 ANNO_MESE_INPUT_DICT = {
     "2026_01": 0,

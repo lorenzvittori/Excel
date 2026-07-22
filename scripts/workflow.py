@@ -5,7 +5,7 @@ from ELABORATION    import processing_module    as pr_module
 from typing     import Any, cast, Callable
 from datetime   import datetime
 from pathlib    import Path
-import logger
+import configuration.logger as logger
 import dropbox
 import gspread
 import pandas as pd

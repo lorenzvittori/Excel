@@ -52,14 +52,14 @@ MESI = {
 # ============================================================
 
 STRUTTURA_REPOSITORY = {
-    "FOLD_DATI":            Path("ELABORATION"),
+    "FOLD_DATI":            Path("DataBase"),
     "FILE_ADD_ROWS":        Path("ELABORATION/additional_rows.csv"),
     "FOLD_DROPBOX":         Path("DROPBOX"),
     "FILE_DROPBOX_CRED":    Path("DROPBOX/dropbox_credentials.json"),
     "FILE_DROPBOX_TOKEN":   Path("DROPBOX/dropbox_token.json"),
     "FOLD_GOOGLE":          Path("GOOGLE_DRIVE"),
     "FILE_GOOGLE_ACCOUNT":  Path("GOOGLE_DRIVE/google_service_account.json"),
-    "FILE_DESIGN_CSV":      Path("design.csv")
+    "FILE_DESIGN_CSV":      Path("configuration/design.csv")
 }
 
 STRUTTURA_DROPBOX = {
