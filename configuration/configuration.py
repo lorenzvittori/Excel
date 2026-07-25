@@ -132,8 +132,8 @@ class Design:
 
     NOME_FOGLIO_SPESE:          str = "Spese"
     NOME_FOGLIO_ENTRATE:        str = "Entrate"
-    NOME_FOGLIO_TOTAL_SPESE:    str = "TOTAL_spese"
-    NOME_FOGLIO_TOTAL_ENTRATE:  str = "TOTAL_entrate"
+    NOME_FOGLIO_TOTAL_SPESE:    str = "TOT_spese"
+    NOME_FOGLIO_TOTAL_ENTRATE:  str = "TOT_entrate"
     NOME_FILE_ROTTO:            str = "BROKEN"
 
     # ---- SPESE ----

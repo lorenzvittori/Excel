@@ -7,20 +7,9 @@ import scripts.workflow as wf
 import configuration.configuration as config
 import configuration.logger as logger
 
-ANNO_MESE_INPUT_DICT = {
-    "2026_01": 0,
-    "2026_02": 0,
-    "2026_03": 0,
-    "2026_04": 0,
-    "2026_05": 0,
-    "2026_06": 0,
-    "2026_07": 0,
-    "2026_08": 0,
-    "2026_09": 0,
-    "2026_10": 0,
-    "2026_11": 0,
-    "2026_12": 0,
-}
+ANNO_MESE_INPUT = [
+    "2026_07",
+    ]
 
 FLAG_PRIORITIZZA_PRC     = False
 FLAG_SCRITTURA_SUL_DRIVE = True
@@ -62,8 +51,7 @@ LIST_ANNO_MESE = [
         "anno": x[:4],
         "mese_str": x[5:]
     }
-    for x, mask in ANNO_MESE_INPUT_DICT.items()
-    if mask
+    for x in ANNO_MESE_INPUT
 ]
 
 if not LIST_ANNO_MESE:
