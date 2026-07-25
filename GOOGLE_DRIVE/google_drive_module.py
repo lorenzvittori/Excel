@@ -85,7 +85,6 @@ def sync_entrate_totali(
         nome_foglio: str,
         df_entrate_prc: pd.DataFrame) -> None:
 
-    id_google_sheet = id_google_sheet
     NOME_FOGLIO_TOTALE = nome_foglio
 
     try:
@@ -126,13 +125,23 @@ def sync_entrate_totali(
     righe_esistenti_totale = len(df_esistente.index)
 
     # ---- 2. RIMUOVI LE RIGHE DELLO STESSO ANNO/MESE (evita duplicati su rilancio) ----
-    if col_mese in df_esistente.columns:
-        righe_da_togliere = (df_esistente[col_mese].astype(str) == str(int(mese_str)))
-        righe_rimosse = int(righe_da_togliere.sum())
-        maschera = ~righe_da_togliere
-        df_esistente = df_esistente[maschera]
-    else:
-        righe_rimosse = 0
+    #        il confronto si basa sul mese/anno ricavato dalla colonna Data
+    #        (non da col_mese, che può essere assente o errata per righe manuali),
+    #        e preserva le righe inserite manualmente (TimeStamp == "manual")
+    stesso_mese_anno = (
+        (df_esistente[col_data].dt.month == int(mese_str))
+        & (df_esistente[col_data].dt.year == int(anno_str))
+    )
+    inserita_a_mano = (
+        df_esistente[col_timestamp].astype(str).str.strip().str.lower() == "manual"
+    )
+    righe_da_togliere = stesso_mese_anno & ~inserita_a_mano
+
+    righe_rimosse = int(righe_da_togliere.sum())
+    righe_manuali_preservate = int((stesso_mese_anno & inserita_a_mano).sum())
+
+    maschera = ~righe_da_togliere
+    df_esistente = df_esistente[maschera]
 
     # ---- 3. UNISCI (le righe esistenti mantengono il loro vecchio TimeStamp) ----
     df_union = pd.concat([df_esistente, df_entrate_nuove], ignore_index=True)
@@ -153,6 +162,7 @@ def sync_entrate_totali(
         dettaglio=[
             f"Righe esistenti prima dell'update: {righe_esistenti_totale}",
             f"Righe rimosse (stesso ANNO/MESE, sostituite): {righe_rimosse}",
+            f"Righe manuali preservate (TimeStamp='manual'): {righe_manuali_preservate}",
             f"Righe nuove aggiunte: {len(df_entrate_nuove)}",
             f"Righe totali finali: {righe_rimaste}"
         ]
