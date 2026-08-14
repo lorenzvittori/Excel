@@ -1,5 +1,8 @@
 #NOME MODULO: logger.py
 import sys
+from pathlib import Path
+from datetime import datetime
+
 sys.stdout.reconfigure(encoding='utf-8')        #type: ignore
 
 _contatore_fase = 0
@@ -10,38 +13,110 @@ BULLET_PHASE = "• "
 BULLET_MEX = ""
 INDENTAZIONE = "   "
 
+# ============================================================
+# REPORT — buffer che accumula tutto ciò che viene "stampato"
+# ============================================================
+
+_REPORT_LINES: list[str] = []
+_FLAG_STAMPA_TERMINALE = True   # se False: il report viene comunque accumulato ma non stampato
+
+
+def set_stampa_terminale(flag: bool) -> None:
+    """Abilita/disabilita la stampa a terminale. Il report viene sempre accumulato comunque."""
+    global _FLAG_STAMPA_TERMINALE
+    _FLAG_STAMPA_TERMINALE = flag
+
+
+def _emit(riga: str = "") -> None:
+    """Punto unico di output: ogni riga passa da qui."""
+    _REPORT_LINES.append(riga)
+    if _FLAG_STAMPA_TERMINALE:
+        print(riga)
+
+
+def stampa(*args, sep: str = " ") -> None:
+    """
+    Sostituto di print() da usare al posto dei print "nudi" sparsi nel codice
+    (es. in main_manual.py, main_job_auto.py, main_job_single.py), così anche
+    quelle righe finiscono nel report.
+    """
+    _emit(sep.join(str(a) for a in args))
+
+
+def get_report(separatore: str = "\n") -> str:
+    """Restituisce l'intero report accumulato come stringa unica."""
+    return separatore.join(_REPORT_LINES)
+
+
+def get_report_righe() -> list[str]:
+    """Restituisce l'intero report come lista di righe (copia)."""
+    return list(_REPORT_LINES)
+
+
+def reset_report() -> None:
+    """Svuota il buffer del report. Da chiamare tipicamente a inizio run."""
+    global _REPORT_LINES
+    _REPORT_LINES = []
+
+
+def salva_report(path: Path, aggiungi_timestamp_nome: bool = False) -> Path:
+    """
+    Salva il report accumulato su file locale (crea le cartelle mancanti).
+    Se aggiungi_timestamp_nome=True, appende un timestamp al nome del file
+    (utile per non sovrascrivere i report delle run precedenti).
+    """
+    path = Path(path)
+
+    if aggiungi_timestamp_nome:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        path = path.with_name(f"{path.stem}_{timestamp}{path.suffix}")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(get_report(), encoding="utf-8")
+    return path
+
+
+# ============================================================
+# FUNZIONI ORIGINALI — invariate nella firma, usano _emit al posto di print
+# ============================================================
+
 def set_indentazione(x: str) -> None:
     global INDENTAZIONE
     INDENTAZIONE = x
 
+
 def linea() -> None:
-    print("-" * BLOCK_LENGTH)
+    _emit("-" * BLOCK_LENGTH)
+
 
 def separatore() -> None:
-    print("=" * BLOCK_LENGTH)
+    _emit("=" * BLOCK_LENGTH)
+
 
 def get_tab(n: int) -> str:
     return INDENTAZIONE * n
+
 
 def end_all_phases() -> None:
     global _profondita, _flag_riga_vuota
     _profondita = 0
     if not(_flag_riga_vuota):
         _flag_riga_vuota = True
-        print("")
+        _emit("")
+
 
 def new_phase(corpo: str) -> None:
     global _contatore_fase, _profondita, _flag_riga_vuota
     if not(_flag_riga_vuota):
         _flag_riga_vuota = True
-        print("")
+        _emit("")
     corpo = corpo.strip()
 
     if _profondita == 0:
         _contatore_fase += 1
-        print(f"Fase {_contatore_fase}: {corpo}")
+        _emit(f"Fase {_contatore_fase}: {corpo}")
     else:
-        print(f"{get_tab(_profondita)}{BULLET_PHASE}{corpo}:")
+        _emit(f"{get_tab(_profondita)}{BULLET_PHASE}{corpo}:")
 
     _profondita += 1
 
@@ -51,8 +126,10 @@ def end_phase() -> None:
     _profondita = max(0, _profondita - 1)
     if not(_flag_riga_vuota):
         _flag_riga_vuota = True
-        print("")
+        _emit("")
 
+def riga_libera(testo: str = "") -> None:
+    _emit(str(testo))
 
 def ok_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
     tipo_messaggio("OK", corpo=corpo, dettaglio=dettaglio)
@@ -75,7 +152,7 @@ def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = No
     _flag_riga_vuota = False
     tipo = tipo.strip()
     corpo = corpo.strip()
-    print(f"{get_tab(_profondita)}{BULLET_MEX}[{tipo}]: {corpo}")
+    _emit(f"{get_tab(_profondita)}{BULLET_MEX}[{tipo}]: {corpo}")
 
     if dettaglio is None:
         return
@@ -86,7 +163,7 @@ def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = No
     for mex in dettaglio:
         mex = mex.strip()
         if mex:
-            print(f"{get_tab(_profondita + 2)}{mex}")
+            _emit(f"{get_tab(_profondita + 2)}{mex}")
 
 
 def reset_fase(valore_iniziale: int = 0) -> None:

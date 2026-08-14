@@ -4,6 +4,7 @@ from GOOGLE_DRIVE   import google_drive_module  as gd_module
 from ELABORATION    import processing_module    as pr_module
 import scripts.workflow as wf
 import configuration.configuration as config
+from configuration.configuration import STRUTTURA_DROPBOX, STRUTTURA_REPOSITORY, Design
 import os
 import configuration.logger as logger
 
@@ -13,12 +14,8 @@ FLAG_SOVRASCRIVI_RAW_DBX = os.getenv("FLAG_SOVRASCRIVI_RAW_DBX", default = "true
 FLAG_LOG_DUPLICATI       = os.getenv("FLAG_LOG_DUPLICATI", default = "true").lower()          == "true"
 FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO", default = "true").lower()              == "true"
 
-STRUTTURA_REPOSITORY    = config.STRUTTURA_REPOSITORY
-STRUTTURA_DROPBOX       = config.STRUTTURA_DROPBOX
-DESIGN                  = config.Design()
 
-
-FILE_BROKEN = DESIGN.NOME_FILE_ROTTO
+FILE_BROKEN = Design.NOME_FILE_ROTTO
 
 DROPBOX_CRED            = STRUTTURA_REPOSITORY["FILE_DROPBOX_CRED"]
 DROPBOX_TOKEN           = STRUTTURA_REPOSITORY["FILE_DROPBOX_TOKEN"]
@@ -29,17 +26,22 @@ DROPBOX_RAW_FOLDER      = STRUTTURA_DROPBOX["FOLD_RAW_TBT"]
 DROPBOX_PRC_FOLDER      = STRUTTURA_DROPBOX["FOLD_PRC_TBT"]
 DROPBOX_TO_SORT_FOLDER  = STRUTTURA_DROPBOX["FOLD_TO_SORT"]
 
-FOGLIO_SPESE    = DESIGN.NOME_FOGLIO_SPESE
-FOGLIO_ENTRATE  = DESIGN.NOME_FOGLIO_ENTRATE
+FOGLIO_SPESE    = Design.NOME_FOGLIO_SPESE
+FOGLIO_ENTRATE  = Design.NOME_FOGLIO_ENTRATE
+
+
+## ================= 0 - INIZIALIZZAZIONE REPORT =================
+logger.reset_report()
+logger.reset_fase()
+
 
 ## ============================================================ 1 - SMISTAMENTO DEL DROPBOX ============================================================
-print("")
-print("#" * 46)
-print("FLUSSO AUTOMATICO")
-print("#" * 46)
-print()
+logger.riga_libera("")
+logger.riga_libera("#" * 46)
+logger.riga_libera("FLUSSO AUTOMATICO")
+logger.riga_libera("#" * 46)
+logger.riga_libera("\n")
 
-logger.reset_fase()
 logger.new_phase("SMISTAMENTO DEL DROPBOX")
 
 #-----------
@@ -65,7 +67,7 @@ LIST_ANNO_MESE = wf.smista_dropbox(
     dropbox_folder_origine = DROPBOX_TO_SORT_FOLDER,
     dropbox_folder_destinazione = DROPBOX_RAW_FOLDER,
     target_broken_name = FILE_BROKEN,
-    nome_colonna_data = DESIGN.spese.data.raw,
+    nome_colonna_data = Design.spese.data.raw,
     righe_da_saltare = 1,
     flag_sovrascrivi_raw = FLAG_SOVRASCRIVI_RAW_DBX,
     get_raw_name = config.get_raw_name
@@ -79,10 +81,10 @@ this_anno_mese = 0
 S = "S" if TOTALE_ANNO_MESE > 1 else ""
 
 logger.separatore()
-print(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}:")
+logger.riga_libera(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}:")
 
 for i_anno_mese in LIST_ANNO_MESE:
-    print(f"\t• {i_anno_mese["anno"]}-{i_anno_mese["mese_str"]}")
+    logger.riga_libera(f"\t• {i_anno_mese["anno"]}-{i_anno_mese["mese_str"]}")
     
 logger.separatore()
 
@@ -98,10 +100,10 @@ for i_anno_mese in LIST_ANNO_MESE:
     
     
     try:
-        print("------------")
-        print(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
-        print("------------")
-        print()
+        logger.riga_libera("------------")
+        logger.riga_libera(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
+        logger.riga_libera("------------")
+        logger.riga_libera("\n")
 ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
         RAW_DATAFRAME = wf.download_dropbox(
             dbx                 = dbx,
@@ -118,7 +120,7 @@ for i_anno_mese in LIST_ANNO_MESE:
             df_raw                  = RAW_DATAFRAME,
             anno                    = int(ANNO),
             mese_str                = MESE,
-            design                  = DESIGN,
+            design                  = Design,
             path_csv_add_rows       = PATH_CSV_ADD_ROWS,
             flag_stampa_duplicati   = FLAG_LOG_DUPLICATI,
             flag_stampa_spese_altro = FLAG_LOG_ALTRO
@@ -134,11 +136,11 @@ for i_anno_mese in LIST_ANNO_MESE:
         wf.scrivi_google_sheet(
             client                  = client,
             df_spese_prc            = PRC_SPESE_DATAFRAME,
-            design                  = DESIGN,
+            design                  = Design,
             anno                    = int(ANNO),
             id_google_sheet         = config.ID_GOOGLE_SHEET[ANNO],
             nome_foglio_mese        = config.MESI[MESE]["nome_foglio_associato"],
-            nome_foglio_entrate     = DESIGN.NOME_FOGLIO_TOTAL_ENTRATE,
+            nome_foglio_entrate     = Design.NOME_FOGLIO_TOTAL_ENTRATE,
             mese_str                = MESE,
             flag_sovrascrivi_celle  = FLAG_SOVRASCRIVI_SHEET,
             df_entrate_prc          = PRC_ENTRATE_DATAFRAME,
@@ -156,18 +158,18 @@ for i_anno_mese in LIST_ANNO_MESE:
             )
         #-----------
 
-        print("------------")
-        print(f"✔ COMPLETATO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
-        print("------------")
-        print()
+        logger.riga_libera("------------")
+        logger.riga_libera(f"✔ COMPLETATO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+        logger.riga_libera("------------")
+        logger.riga_libera()
         logger.separatore()
 
     except BaseException as e:
-        print("------------")
-        print(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
-        print(e)
-        print("------------")
-        print()
+        logger.riga_libera("------------")
+        logger.riga_libera(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+        logger.riga_libera(str(e))
+        logger.riga_libera("------------")
+        logger.riga_libera()
         ERRORI.append((ANNO, MESE, str(e)))
         continue
 ## ============================================================ 6 - LOG RIASSUNTIVO ============================================================
@@ -187,3 +189,5 @@ if ERRORI:
 else:
     logger.info_mex(f"Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
     logger.separatore()
+
+#print(logger.get_report())

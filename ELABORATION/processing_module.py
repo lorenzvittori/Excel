@@ -239,7 +239,7 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
 
 def stampa_spese_altro(df_spese: pd.DataFrame, design: config.Design):
     spese_altro = df_spese[
-        df_spese[design.spese.categoria.prc].astype(str).str.strip().str.lower() == "altro"
+        df_spese[design.spese.categoria.prc].astype(str).str.strip().str.lower() == "altro"     #type: ignore
     ]
 
     if not spese_altro.empty:

@@ -133,7 +133,7 @@ def sync_entrate_totali(
         & (df_esistente[col_data].dt.year == int(anno_str))
     )
     inserita_a_mano = (
-        df_esistente[col_timestamp].astype(str).str.strip().str.lower() == "manual"
+        df_esistente[col_timestamp].astype(str).str.strip().str.lower() == "manual"         #type: ignore
     )
     righe_da_togliere = stesso_mese_anno & ~inserita_a_mano
 
