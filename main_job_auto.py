@@ -200,4 +200,4 @@ try:
 
 except:
     report = logger.get_report()
-    #print(report)
+    logger.invia_report_mail(report, "lorenzvittori@gmail.com")

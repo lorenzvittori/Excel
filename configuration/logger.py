@@ -170,3 +170,23 @@ def reset_fase(valore_iniziale: int = 0) -> None:
     global _contatore_fase, _profondita
     _contatore_fase = valore_iniziale
     _profondita = 0
+    
+
+# ============================================================
+# FUNZIONI MAIL
+# ============================================================
+
+import smtplib
+from email.message import EmailMessage
+
+def invia_report_mail(report_text: str, destinatario: str):
+    msg = EmailMessage()
+    msg["Subject"] = "Report flusso Spese-Entrate"
+    msg["From"] = "lorenzvittori@gmail.com"
+    msg["To"] = destinatario
+    msg.set_content(report_text)
+
+    # Gmail richiede SMTP SSL su porta 465
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login("lorenzvittori@gmail.com", "cdgn xstu dbgs qzjs")
+        smtp.send_message(msg)
