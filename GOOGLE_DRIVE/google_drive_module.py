@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import configuration.logger as logger
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 def get_google_client(google_service_account: Path) -> gspread.Client:
@@ -239,6 +240,6 @@ def sync_spese_mensili(
         cell_spese_first_entry
     )
     
-    timestamp_run = datetime.now().strftime("%d/%m/%Y %H.%M.%S")
+    timestamp_run = datetime.now(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y %H.%M.%S")
     # 3.3 WRITE TIMESTAMP
     ws.update([[timestamp_run]], cell_spese_timestamp)
