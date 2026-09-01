@@ -35,170 +35,169 @@ logger.reset_report()
 logger.reset_fase()
 
 
-    ## ============================================================ 1 - SMISTAMENTO DEL DROPBOX ============================================================
-try:
-    logger.riga_libera("")
-    logger.riga_libera("#" * 46)
-    logger.riga_libera("FLUSSO AUTOMATICO")
-    logger.riga_libera("#" * 46)
-    logger.riga_libera("\n")
+## ============================================================ 1 - SMISTAMENTO DEL DROPBOX ============================================================
+logger.riga_libera("")
+logger.riga_libera("#" * 46)
+logger.riga_libera("FLUSSO AUTOMATICO")
+logger.riga_libera("#" * 46)
+logger.riga_libera("\n")
 
-    logger.new_phase("SMISTAMENTO DEL DROPBOX")
+logger.new_phase("SMISTAMENTO DEL DROPBOX")
 
-    #-----------
-    logger.new_phase("Connessione al DropBox tramite API.")
-    dbx = db_module.get_dropbox_client(
-        dropbox_credential = DROPBOX_CRED,
-        dropbox_token = DROPBOX_TOKEN
+#-----------
+logger.new_phase("Connessione al DropBox tramite API.")
+dbx = db_module.get_dropbox_client(
+    dropbox_credential = DROPBOX_CRED,
+    dropbox_token = DROPBOX_TOKEN
+)
+logger.ok_mex("Connessione al DropBox: ✔ COMPLETATA")
+logger.end_phase()
+#-----------
+
+#-----------
+logger.new_phase("Connessione a Google Drive tramite API")
+client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
+logger.ok_mex("Connessione a Google Drive: ✔ COMPLETATA")
+logger.end_phase()
+#-----------
+
+#-----------
+
+LIST_ANNO_MESE = wf.smista_dropbox(
+    dbx = dbx,
+    dropbox_folder_origine = DROPBOX_TO_SORT_FOLDER,
+    dropbox_folder_destinazione = DROPBOX_RAW_FOLDER,
+    target_broken_name = FILE_BROKEN,
+    nome_colonna_data = Design.spese.data.raw,
+    righe_da_saltare = 1,
+    flag_sovrascrivi_raw = FLAG_SOVRASCRIVI_RAW_DBX,
+    get_raw_name = config.get_raw_name
     )
-    logger.ok_mex("Connessione al DropBox: ✔ COMPLETATA")
-    logger.end_phase()
-    #-----------
-
-    #-----------
-    logger.new_phase("Connessione a Google Drive tramite API")
-    client = gd_module.get_google_client(google_service_account=GOOGLE_SERVICE_ACCOUNT)
-    logger.ok_mex("Connessione a Google Drive: ✔ COMPLETATA")
-    logger.end_phase()
-    #-----------
-
-    #-----------
-
-    LIST_ANNO_MESE = wf.smista_dropbox(
-        dbx = dbx,
-        dropbox_folder_origine = DROPBOX_TO_SORT_FOLDER,
-        dropbox_folder_destinazione = DROPBOX_RAW_FOLDER,
-        target_broken_name = FILE_BROKEN,
-        nome_colonna_data = Design.spese.data.raw,
-        righe_da_saltare = 1,
-        flag_sovrascrivi_raw = FLAG_SOVRASCRIVI_RAW_DBX,
-        get_raw_name = config.get_raw_name
-        )
 
 
-    #-----------
-    logger.end_phase()
-    ERRORI = []
+#-----------
+logger.end_phase()
+ERRORI = []
 
-    TOTALE_ANNO_MESE = len(LIST_ANNO_MESE)
-    this_anno_mese = 0
-    S = "S" if TOTALE_ANNO_MESE > 1 else ""
+TOTALE_ANNO_MESE = len(LIST_ANNO_MESE)
+this_anno_mese = 0
+S = "S" if TOTALE_ANNO_MESE > 1 else ""
 
-    logger.separatore()
-    logger.riga_libera(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}:")
+logger.separatore()
+logger.riga_libera(f"INIZIO FLUSSO AUTOMATICO DI {TOTALE_ANNO_MESE} FILE{S}:")
 
 
-    for i_anno_mese in LIST_ANNO_MESE:
-        logger.riga_libera(f"\t• {i_anno_mese["anno"]}-{i_anno_mese["mese_str"]}")
+for i_anno_mese in LIST_ANNO_MESE:
+    logger.riga_libera(f"\t• {i_anno_mese["anno"]}-{i_anno_mese["mese_str"]}")
+    
+logger.separatore()
+
+
+
+
+for i_anno_mese in LIST_ANNO_MESE:
+    this_anno_mese += 1
+    ANNO = i_anno_mese["anno"]
+    MESE = i_anno_mese["mese_str"]
+    
+    logger.reset_fase()
+
+    RAW_NAME_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
+    PRC_NAME_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
+    
+    
+    try:
+        logger.riga_libera("------------")
+        logger.riga_libera(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
+        logger.riga_libera("------------")
+        logger.riga_libera("\n")
+## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
+        RAW_DATAFRAME = wf.download_dropbox(
+            dbx                 = dbx,
+            raw_name            = RAW_NAME_FILE,
+            prc_name            = PRC_NAME_FILE,
+            dropbox_raw_folder  = DROPBOX_RAW_FOLDER,
+            dropbox_prc_folder  = DROPBOX_PRC_FOLDER,
+            foglio_spese        = FOGLIO_SPESE,
+            foglio_entrate      = FOGLIO_ENTRATE,
+            prioritizza_prc     = False
+            )
+## ============================================================ 3 - ELABORAZIONE SPESE ED ENTRATE ============================================================
+        PRC_DATAFRAME = wf.elabora_dataframe(
+            df_raw                  = RAW_DATAFRAME,
+            anno                    = int(ANNO),
+            mese_str                = MESE,
+            design                  = Design,
+            path_csv_add_rows       = PATH_CSV_ADD_ROWS,
+            flag_stampa_duplicati   = FLAG_LOG_DUPLICATI,
+            flag_stampa_spese_altro = FLAG_LOG_ALTRO
+            )
+## ============================================================ 4 - SCRITTURA SU GOOGLE SHEET ============================================================
+        logger.new_phase("GOOGLE DRIVE")
+
+        #Controlla che il file spese abbia le giuste colonne:
+        PRC_SPESE_DATAFRAME     = PRC_DATAFRAME[FOGLIO_SPESE]
+        PRC_ENTRATE_DATAFRAME   = PRC_DATAFRAME[FOGLIO_ENTRATE]
         
-    logger.separatore()
-
-
-
-
-    for i_anno_mese in LIST_ANNO_MESE:
-        this_anno_mese += 1
-        ANNO = i_anno_mese["anno"]
-        MESE = i_anno_mese["mese_str"]
+        #-----------
+        wf.scrivi_google_sheet(
+            client                  = client,
+            df_spese_prc            = PRC_SPESE_DATAFRAME,
+            design                  = Design,
+            anno                    = int(ANNO),
+            id_google_sheet         = config.ID_GOOGLE_SHEET[ANNO],
+            nome_foglio_mese        = config.MESI[MESE]["nome_foglio_associato"],
+            nome_foglio_entrate     = Design.NOME_FOGLIO_TOTAL_ENTRATE,
+            mese_str                = MESE,
+            flag_sovrascrivi_celle  = FLAG_SOVRASCRIVI_SHEET,
+            df_entrate_prc          = PRC_ENTRATE_DATAFRAME,
+            )
+        #-----------
         
-        logger.reset_fase()
+        logger.end_phase()
+## ============================================================ 5 - DROPBOX, UPLOAD ============================================================
+        #-----------
+        wf.upload_dropbox(
+            dbx                 = dbx,
+            dropbox_prc_folder  = DROPBOX_PRC_FOLDER,
+            prc_file_name       = PRC_NAME_FILE,
+            df_prc              = PRC_DATAFRAME,
+            )
+        #-----------
 
-        RAW_NAME_FILE = config.get_raw_name(anno = ANNO, mese_str = MESE)
-        PRC_NAME_FILE = config.get_prc_name(anno = ANNO, mese_str = MESE)
-        
-        
-        try:
-            logger.riga_libera("------------")
-            logger.riga_libera(f"Flusso {this_anno_mese}/{TOTALE_ANNO_MESE} - ANNO {ANNO} - MESE {MESE}")
-            logger.riga_libera("------------")
-            logger.riga_libera("\n")
-    ## ============================================================ 2 - DROPBOX, DOWNLOAD ============================================================
-            RAW_DATAFRAME = wf.download_dropbox(
-                dbx                 = dbx,
-                raw_name            = RAW_NAME_FILE,
-                prc_name            = PRC_NAME_FILE,
-                dropbox_raw_folder  = DROPBOX_RAW_FOLDER,
-                dropbox_prc_folder  = DROPBOX_PRC_FOLDER,
-                foglio_spese        = FOGLIO_SPESE,
-                foglio_entrate      = FOGLIO_ENTRATE,
-                prioritizza_prc     = False
-                )
-    ## ============================================================ 3 - ELABORAZIONE SPESE ED ENTRATE ============================================================
-            PRC_DATAFRAME = wf.elabora_dataframe(
-                df_raw                  = RAW_DATAFRAME,
-                anno                    = int(ANNO),
-                mese_str                = MESE,
-                design                  = Design,
-                path_csv_add_rows       = PATH_CSV_ADD_ROWS,
-                flag_stampa_duplicati   = FLAG_LOG_DUPLICATI,
-                flag_stampa_spese_altro = FLAG_LOG_ALTRO
-                )
-    ## ============================================================ 4 - SCRITTURA SU GOOGLE SHEET ============================================================
-            logger.new_phase("GOOGLE DRIVE")
-
-            #Controlla che il file spese abbia le giuste colonne:
-            PRC_SPESE_DATAFRAME     = PRC_DATAFRAME[FOGLIO_SPESE]
-            PRC_ENTRATE_DATAFRAME   = PRC_DATAFRAME[FOGLIO_ENTRATE]
-            
-            #-----------
-            wf.scrivi_google_sheet(
-                client                  = client,
-                df_spese_prc            = PRC_SPESE_DATAFRAME,
-                design                  = Design,
-                anno                    = int(ANNO),
-                id_google_sheet         = config.ID_GOOGLE_SHEET[ANNO],
-                nome_foglio_mese        = config.MESI[MESE]["nome_foglio_associato"],
-                nome_foglio_entrate     = Design.NOME_FOGLIO_TOTAL_ENTRATE,
-                mese_str                = MESE,
-                flag_sovrascrivi_celle  = FLAG_SOVRASCRIVI_SHEET,
-                df_entrate_prc          = PRC_ENTRATE_DATAFRAME,
-                )
-            #-----------
-            
-            logger.end_phase()
-    ## ============================================================ 5 - DROPBOX, UPLOAD ============================================================
-            #-----------
-            wf.upload_dropbox(
-                dbx                 = dbx,
-                dropbox_prc_folder  = DROPBOX_PRC_FOLDER,
-                prc_file_name       = PRC_NAME_FILE,
-                df_prc              = PRC_DATAFRAME,
-                )
-            #-----------
-
-            logger.riga_libera("------------")
-            logger.riga_libera(f"✔ COMPLETATO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
-            logger.riga_libera("------------")
-            logger.riga_libera()
-            logger.separatore()
-
-        except BaseException as e:
-            logger.riga_libera("------------")
-            logger.riga_libera(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
-            logger.riga_libera(str(e))
-            logger.riga_libera("------------")
-            logger.riga_libera()
-            ERRORI.append((ANNO, MESE, str(e)))
-            continue
-    ## ============================================================ 6 - LOG RIASSUNTIVO ============================================================
-    logger.separatore()
-    if ERRORI:
-        logger.reset_fase()
-        log_errori = []
-        for anno_err, mese_err, errore in ERRORI:
-            log_errori.append(f"ANNO {anno_err} MESE {mese_err}: {errore}")
-        
-        logger.warning_mex(
-            corpo = f"{len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:",
-            dettaglio = log_errori)
-        
-        logger.separatore()
-        raise SystemExit
-    else:
-        logger.info_mex(f"Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
+        logger.riga_libera("------------")
+        logger.riga_libera(f"✔ COMPLETATO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+        logger.riga_libera("------------")
+        logger.riga_libera()
         logger.separatore()
 
-except:
-    report = logger.get_report()
-    print("Invio mail")
-    logger.invia_report_mail(report, "lorenzvittori@gmail.com")
+    except BaseException as e:
+        logger.riga_libera("------------")
+        logger.riga_libera(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+        logger.riga_libera(str(e))
+        logger.riga_libera("------------")
+        logger.riga_libera()
+        ERRORI.append((ANNO, MESE, str(e)))
+        continue
+## ============================================================ 6 - LOG RIASSUNTIVO ============================================================
+logger.separatore()
+if ERRORI:
+    logger.reset_fase()
+    log_errori = []
+    for anno_err, mese_err, errore in ERRORI:
+        log_errori.append(f"ANNO {anno_err} MESE {mese_err}: {errore}")
+    
+    logger.warning_mex(
+        corpo = f"{len(ERRORI)} su {len(LIST_ANNO_MESE)} file hanno fallito:",
+        dettaglio = log_errori)
+    
+    logger.separatore()
+    raise SystemExit
+else:
+    logger.info_mex(f"Tutti i {len(LIST_ANNO_MESE)} file sono stati processati con successo")
+    logger.separatore()
+
+
+report = logger.get_report()
+print("Invio mail")
+logger.invia_report_mail(report, "lorenzvittori@gmail.com")
