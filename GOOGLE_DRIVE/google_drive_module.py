@@ -125,7 +125,7 @@ def sync_entrate_totali(
 
     righe_esistenti_totale = len(df_esistente.index)
 
-    # ---- 2. RIMUOVI LE RIGHE DELLO STESSO ANNO/MESE (evita duplicati su rilancio) ----
+    # ---- 2. RIMUOVI LE RIGHE DELLO STESSO ANNO/MESE (serve per evitare duplicati su rilancio) ----
     #        il confronto si basa sul mese/anno ricavato dalla colonna Data
     #        (non da col_mese, che può essere assente o errata per righe manuali),
     #        e preserva le righe inserite manualmente (TimeStamp == "manual")
@@ -133,9 +133,46 @@ def sync_entrate_totali(
         (df_esistente[col_data].dt.month == int(mese_str))
         & (df_esistente[col_data].dt.year == int(anno_str))
     )
+    
+    
+    
     inserita_a_mano = (
         df_esistente[col_timestamp].astype(str).str.strip().str.lower() == "manual"         #type: ignore
     )
+
+    # ---- 2bis. SCARTA LE NUOVE RIGHE CHE DUPLICANO UNA RIGA GIA' INSERITA A MANO ----
+    #        confronto per CONTENUTO (Data + Importo + Note), non per posizione/indice
+    #        (Data e Importo possono avere formati diversi tra foglio esistente e dati
+    #        appena elaborati, quindi vengono normalizzati prima del confronto)
+    def _importo_a_float(valore):
+        s = str(valore).replace("€", "").strip()
+        if not s:
+            return None
+        if "," in s:
+            s = s.replace(".", "").replace(",", ".")
+        try:
+            return round(float(s), 2)
+        except ValueError:
+            return None
+
+    def _chiave_riga(data, importo, note):
+        data_norm = data.date() if pd.notnull(data) else None
+        return (data_norm, _importo_a_float(importo), str(note).strip().lower())
+
+    righe_inserite_a_mano = df_esistente[inserita_a_mano]
+    chiavi_manuali = {
+        _chiave_riga(r[col_data], r[col_importo], r[col_note])
+        for r in righe_inserite_a_mano[[col_data, col_importo, col_note]].to_dict("records")
+    }
+
+    duplica_riga_manuale = df_entrate_nuove.apply(
+        lambda r: _chiave_riga(r[col_data], r[col_importo], r[col_note]) in chiavi_manuali,
+        axis=1
+    ) if not df_entrate_nuove.empty else pd.Series([], dtype=bool)
+
+    righe_duplicate_di_manuali = int(duplica_riga_manuale.sum())
+    df_entrate_nuove = df_entrate_nuove[~duplica_riga_manuale]
+
     righe_da_togliere = stesso_mese_anno & ~inserita_a_mano
 
     righe_rimosse = int(righe_da_togliere.sum())
@@ -164,6 +201,7 @@ def sync_entrate_totali(
             f"Righe esistenti prima dell'update: {righe_esistenti_totale}",
             f"Righe rimosse (stesso ANNO/MESE, sostituite): {righe_rimosse}",
             f"Righe manuali preservate (TimeStamp='manual'): {righe_manuali_preservate}",
+            f"Righe nuove scartate (duplicano una riga manuale): {righe_duplicate_di_manuali}",
             f"Righe nuove aggiunte: {len(df_entrate_nuove)}",
             f"Righe totali finali: {righe_rimaste}"
         ]
