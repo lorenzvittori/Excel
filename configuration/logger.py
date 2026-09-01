@@ -2,6 +2,8 @@
 import sys
 from pathlib import Path
 from datetime import datetime
+from tabulate import tabulate
+import pandas as pd
 
 sys.stdout.reconfigure(encoding='utf-8')        #type: ignore
 
@@ -164,6 +166,18 @@ def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = No
         mex = mex.strip()
         if mex:
             _emit(f"{get_tab(_profondita + 2)}{mex}")
+
+
+def formatta_tabella(df: pd.DataFrame) -> list[str]:
+    """
+    Converte un DataFrame in righe di una tabella ASCII (con bordi),
+    pronte per essere passate come `dettaglio` a tipo_messaggio/ok_mex/warning_mex/ecc.
+    Usa la libreria 'tabulate'. Ritorna [] se il DataFrame è vuoto.
+    """
+    if df.empty:
+        return []
+    testo = tabulate(df, headers="keys", tablefmt="grid", showindex=False)     #type: ignore
+    return testo.split("\n")
 
 
 def reset_fase(valore_iniziale: int = 0) -> None:
