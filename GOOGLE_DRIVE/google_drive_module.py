@@ -79,6 +79,7 @@ def sync_entrate_totali(
         col_importo: str,
         col_mese: str,
         col_data: str,
+        col_categoria: str,
         col_note: str,
         col_timestamp: str,
         top_left_entry: str,
@@ -141,9 +142,10 @@ def sync_entrate_totali(
     )
 
     # ---- 2bis. SCARTA LE NUOVE RIGHE CHE DUPLICANO UNA RIGA GIA' INSERITA A MANO ----
-    #        confronto per CONTENUTO (Data + Importo + Note), non per posizione/indice
-    #        (Data e Importo possono avere formati diversi tra foglio esistente e dati
-    #        appena elaborati, quindi vengono normalizzati prima del confronto)
+    #        confronto per CONTENUTO (Data + Categoria + Importo), non per posizione/indice
+    #        e non sulla Note (che tra versione manuale e automatica ha spesso un testo diverso).
+    #        Data e Importo possono avere formati diversi tra foglio esistente e dati
+    #        appena elaborati, quindi vengono normalizzati prima del confronto.
     def _importo_a_float(valore):
         s = str(valore).replace("€", "").strip()
         if not s:
@@ -155,18 +157,18 @@ def sync_entrate_totali(
         except ValueError:
             return None
 
-    def _chiave_riga(data, importo, note):
+    def _chiave_riga(data, categoria, importo):
         data_norm = data.date() if pd.notnull(data) else None
-        return (data_norm, _importo_a_float(importo), str(note).strip().lower())
+        return (data_norm, str(categoria).strip().lower(), _importo_a_float(importo))
 
     righe_inserite_a_mano = df_esistente[inserita_a_mano]
     chiavi_manuali = {
-        _chiave_riga(r[col_data], r[col_importo], r[col_note])
-        for r in righe_inserite_a_mano[[col_data, col_importo, col_note]].to_dict("records")
+        _chiave_riga(r[col_data], r[col_categoria], r[col_importo])
+        for r in righe_inserite_a_mano[[col_data, col_categoria, col_importo]].to_dict("records")
     }
 
     duplica_riga_manuale = df_entrate_nuove.apply(
-        lambda r: _chiave_riga(r[col_data], r[col_importo], r[col_note]) in chiavi_manuali,
+        lambda r: _chiave_riga(r[col_data], r[col_categoria], r[col_importo]) in chiavi_manuali,
         axis=1
     ) if not df_entrate_nuove.empty else pd.Series([], dtype=bool)
 
