@@ -180,6 +180,19 @@ def formatta_tabella(df: pd.DataFrame) -> list[str]:
     return testo.split("\n")
 
 
+def tabella_mex(tipo: str, corpo: str, df: pd.DataFrame) -> None:
+    """
+    Come tipo_messaggio, ma il dettaglio è un DataFrame stampato come tabella
+    ASCII (vedi formatta_tabella). Dopo la tabella viene lasciata una riga vuota.
+    """
+    global _flag_riga_vuota
+    righe = formatta_tabella(df)
+    tipo_messaggio(tipo, corpo=corpo, dettaglio=righe if righe else None)
+    if righe:
+        _flag_riga_vuota = True
+        _emit("")
+
+
 def reset_fase(valore_iniziale: int = 0) -> None:
     global _contatore_fase, _profondita
     _contatore_fase = valore_iniziale

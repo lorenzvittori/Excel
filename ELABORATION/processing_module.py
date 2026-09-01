@@ -229,9 +229,10 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     duplicati = df[df.duplicated(keep=False)]
 
     if not duplicati.empty:
-        logger.warning_mex(
+        logger.tabella_mex(
+            "WARNING",
             corpo=f"Duplicati trovati nella tabella {nome_tabella.upper()}",
-            dettaglio=logger.formatta_tabella(duplicati)
+            df=duplicati
         )
     else:
         logger.info_mex(f"{nome_tabella.upper()} senza duplicati")
@@ -243,9 +244,10 @@ def stampa_spese_altro(df_spese: pd.DataFrame, design: config.Design):
 
     if not spese_altro.empty:
         spese_altro_ordinate = spese_altro.sort_values(by=design.spese.data.prc)
-        logger.info_mex(
+        logger.tabella_mex(
+            "INFO",
             corpo="Spese con categoria \"Altro\"",
-            dettaglio=logger.formatta_tabella(spese_altro_ordinate)
+            df=spese_altro_ordinate
         )
     else:
         logger.info_mex("Nessuna spesa con categoria \"Altro\".")
