@@ -1,5 +1,7 @@
 # TO DO LIST
 
+Aggiungere le righe di spese manuali solo se queste sono i periodi alla data del lancio del flusso
+
 ## Principale
 1. FATTO - Fare uno script orchestratore che gestisce tutti gli altri
 2. FATTO - Controllare ogni errore possibile e farne un print
