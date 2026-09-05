@@ -4,6 +4,8 @@ from    math    import inf
 import pandas as pd
 import configuration.logger as logger
 import configuration.configuration as config
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # ---------------------------------------- FUNZIONI ----------------------------------------
   # FORMATTAZIONE E PULIZIA
@@ -63,7 +65,7 @@ def aggiungi_righe_spese(
         if daANNO_MESE == "":
             daANNO, daMESE = -inf, -inf
         else:
-            if (len(daANNO_MESE) != 7) or (daANNO_MESE[4] != "-"):
+            if (len(daANNO_MESE) != 7) or (daANNO_MESE[4] not in ("-", "_")):
                 logger.error_mex(f"Formato non valido per daANNO_MESE: '{daANNO_MESE}'")
                 raise ValueError()
             daANNO = int(daANNO_MESE[:4])
@@ -75,7 +77,7 @@ def aggiungi_righe_spese(
         if aANNO_MESE == "":
             aANNO, aMESE = inf, inf
         else:
-            if (len(aANNO_MESE) != 7) or (aANNO_MESE[4] != "-"):
+            if (len(aANNO_MESE) != 7) or (aANNO_MESE[4] not in ("-", "_")):
                 logger.error_mex(f"Formato non valido per aANNO_MESE: '{aANNO_MESE}'")
                 raise ValueError()
             aANNO = int(aANNO_MESE[:4])
@@ -99,13 +101,16 @@ def aggiungi_righe_spese(
         return (daANNO, daMESE) <= (ANNO, MESE) <= (aANNO, aMESE)
 
     # ---- FILTRA LE RIGHE IN BASE ALL'INTERVALLO daANNO_MESE / aANNO_MESE ----
+    data_oggi = int(datetime.now(ZoneInfo("Europe/Rome")).strftime("%d"))
+    
     maschera = df_nuove_righe_raw.apply(
         lambda row: between(
             this_anno_str = anno_str,
             this_mese_str = mese_str,
             daANNO_MESE   = str(row["daANNO_MESE"]).strip() if pd.notnull(row["daANNO_MESE"]) else "",
             aANNO_MESE    = str(row["aANNO_MESE"]).strip()  if pd.notnull(row["aANNO_MESE"])  else ""
-        ),
+        ) 
+        and (data_oggi <= int(row["GiornoData"])),          #Aggiunge solo le righe la cui data è passata al tempo di caricamento
         axis=1
     )
 
