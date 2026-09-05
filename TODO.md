@@ -1,6 +1,6 @@
 # TO DO LIST
 
-1. Aggiungere le righe di spese manuali solo se queste sono i periodi alla data del lancio del flusso.
+1. FATTO Aggiungere le righe di spese manuali solo se queste sono i periodi alla data del lancio del flusso.
 2. Ricontrollare duplicazione dei manuali nelle entrate.
 3. Bloccare il flusso se le spese che sto caricando sono un sottoinsieme delle spese già presenti.
 
