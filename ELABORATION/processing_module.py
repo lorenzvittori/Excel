@@ -110,7 +110,7 @@ def aggiungi_righe_spese(
             daANNO_MESE   = str(row["daANNO_MESE"]).strip() if pd.notnull(row["daANNO_MESE"]) else "",
             aANNO_MESE    = str(row["aANNO_MESE"]).strip()  if pd.notnull(row["aANNO_MESE"])  else ""
         ) 
-        and (data_oggi <= int(row["GiornoData"])),          #Aggiunge solo le righe la cui data è passata al tempo di caricamento
+        and (data_oggi >= int(row["GiornoData"])),          #Aggiunge solo le righe la cui data è passata al tempo di caricamento
         axis=1
     )
 
