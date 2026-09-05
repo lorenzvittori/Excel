@@ -41,7 +41,6 @@ try:
     logger.riga_libera("#" * 46)
     logger.riga_libera("FLUSSO AUTOMATICO")
     logger.riga_libera("#" * 46)
-    logger.riga_libera("\n")
 
     logger.new_phase("SMISTAMENTO DEL DROPBOX")
 
