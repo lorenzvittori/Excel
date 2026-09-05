@@ -145,8 +145,52 @@ def upload_dataframe_to_dropbox(
     mode = dropbox.files.WriteMode.overwrite if flag_sovrascrivi else dropbox.files.WriteMode.add # type: ignore
 
     dbx.files_upload(buffer.getvalue(), DROPBOX_DIR, mode=mode)
-    
-    
+
+
+def sposta_file_come_broken(
+        dbx: dropbox.Dropbox,
+        dropbox_folder: str,
+        file_name: str,
+        target_broken_name: str = "BROKEN",
+        estensione_files: str = ".xlsx") -> str:
+    """
+    Rinomina/sposta un file già presente in dropbox_folder cosi' che risulti 'BROKEN'
+    (con suffisso progressivo se il nome è già occupato da un run precedente), in modo
+    che non venga più raccolto come input valido dal resto della pipeline.
+
+    Usata quando l'elaborazione di un file rileva che è già stato caricato in una run
+    precedente (es. tutte le righe spese/entrate hanno una chiave Data/Categoria/Importo
+    già presente sul foglio di destinazione): il flusso per quel file viene interrotto e
+    il RAW corrispondente marcato come BROKEN, cosi' non resta nella cartella con un nome
+    che verrebbe rielaborato al prossimo run.
+
+    Restituisce il path Dropbox del file rinominato.
+    """
+    dropbox_path = f"{dropbox_folder}/{file_name}"
+
+    contatore = 0
+    while True:
+        nuovo_nome = (
+            f"{target_broken_name}{estensione_files}" if contatore == 0
+            else f"{target_broken_name}_{contatore}{estensione_files}"
+        )
+        nuovo_path = f"{dropbox_folder}/{nuovo_nome}"
+        try:
+            dbx.files_get_metadata(nuovo_path)
+            contatore += 1
+        except ApiError:
+            break
+
+    try:
+        dbx.files_move_v2(dropbox_path, nuovo_path)
+        logger.error_mex(f"File spostato come BROKEN: {nuovo_path}")
+    except ApiError as e:
+        logger.error_mex(f"Impossibile spostare {file_name} come BROKEN", dettaglio=str(e))
+        raise
+
+    return nuovo_path
+
+
 def smista_file_excel(
         dbx: dropbox.Dropbox,
         dropbox_folder_origine: str,

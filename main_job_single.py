@@ -192,6 +192,20 @@ try:
     print()
     logger.separatore()
 
+except gd_module.CaricamentoGiaEseguito as e:
+    db_module.sposta_file_come_broken(
+        dbx=dbx,
+        dropbox_folder=DROPBOX_RAW_FOLDER,
+        file_name=RAW_NAME_FILE,
+        target_broken_name=FILE_BROKEN,
+    )
+    logger.error_mex(f"Flusso bloccato, file spostato come BROKEN: {e}")
+
+    print("------------")
+    print(f"✗ FALLITO: Flusso ANNO {ANNO} - MESE {MESE}")
+    print("------------")
+    print()
+
 except BaseException:
     print("------------")
     print(f"✗ FALLITO: Flusso ANNO {ANNO} - MESE {MESE}")

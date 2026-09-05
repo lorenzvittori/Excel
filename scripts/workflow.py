@@ -216,7 +216,10 @@ def scrivi_google_sheet(
         nome_foglio_mese = nome_foglio_mese,
         num_col_sheet_spese = design.num_col_spese_PRC(),
         cell_spese_first_entry = design.CELLA_SPESE_FIRST_ENTRY,
-        cell_spese_timestamp = design.CELLA_SPESE_TSTAMP
+        cell_spese_timestamp = design.CELLA_SPESE_TSTAMP,
+        col_data = design.spese.data.sheet,
+        col_categoria = design.spese.categoria.sheet,
+        col_importo = design.spese.importo.sheet,
     )
     logger.ok_mex(f"Scrittura delle spese: ✔ COMPLETATA")
     logger.end_phase()   # chiude "Scrittura SPESE su GoogleSheet"

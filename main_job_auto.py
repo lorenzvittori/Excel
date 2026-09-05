@@ -172,6 +172,23 @@ try:
             logger.riga_libera()
             logger.separatore()
 
+        except gd_module.CaricamentoGiaEseguito as e:
+            db_module.sposta_file_come_broken(
+                dbx=dbx,
+                dropbox_folder=DROPBOX_RAW_FOLDER,
+                file_name=RAW_NAME_FILE,
+                target_broken_name=FILE_BROKEN,
+            )
+            logger.error_mex(f"Flusso bloccato, file spostato come BROKEN: {e}")
+
+            logger.riga_libera("------------")
+            logger.riga_libera(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
+            logger.riga_libera(str(e))
+            logger.riga_libera("------------")
+            logger.riga_libera()
+            ERRORI.append((ANNO, MESE, str(e)))
+            continue
+
         except BaseException as e:
             logger.riga_libera("------------")
             logger.riga_libera(f"✗ FALLITO: Flusso {this_anno_mese}/{TOTALE_ANNO_MESE}: ANNO {ANNO} - MESE {MESE}")
