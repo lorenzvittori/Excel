@@ -177,7 +177,28 @@ for idx, item in enumerate(LIST_ANNO_MESE, start=1):
         logger.separatore()
         print()
         SUCCESSI.append((ANNO, MESE))
-        
+
+    except gd_module.CaricamentoGiaEseguito as e:
+        db_module.sposta_file_come_broken(
+            dbx=dbx,
+            dropbox_folder=DROPBOX_RAW_FOLDER,
+            file_name=RAW_NAME_FILE,
+            target_broken_name=FILE_BROKEN,
+        )
+        logger.error_mex(f"Flusso bloccato, file spostato come BROKEN: {e}")
+
+        print("------------")
+        print(
+            f"✗ FALLITO: Flusso {idx}/{TOTALE_ANNO_MESE}: "
+            f"ANNO {ANNO} - MESE {MESE}")
+        print(e)
+        print("------------")
+        print()
+
+        FALLITI.append((ANNO, MESE, str(e)))
+        logger.separatore()
+        continue
+
     except BaseException as e:
         print("------------")
         print(
