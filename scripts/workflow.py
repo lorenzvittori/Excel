@@ -246,6 +246,7 @@ def scrivi_google_sheet(
         mese_str = mese_str,
         col_mese    =   design.entrate.mese.sheet,
         col_data    =   design.entrate.data.sheet,
+        col_categoria = design.entrate.categoria.sheet,
         col_importo =   design.entrate.importo.sheet,
         col_note    =   design.entrate.note.sheet,
         col_timestamp = design.entrate.timestamp.sheet,

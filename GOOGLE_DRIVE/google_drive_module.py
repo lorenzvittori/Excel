@@ -72,6 +72,34 @@ def get_dataframe_from_google_sheet(
     return df
 
 
+def _normalizza_importo_per_chiave(valore) -> float | None:
+    """Converte un importo (stringa con virgola o punto decimale, con o senza simbolo di
+    valuta/separatore delle migliaia) in un float arrotondato a 2 decimali, per poterlo
+    confrontare in modo affidabile indipendentemente dal formato di provenienza."""
+    try:
+        pulito = str(valore).replace("€", "").strip()
+        if "," in pulito and "." in pulito:
+            # "." separatore delle migliaia, "," separatore decimale (es. "1.234,56")
+            pulito = pulito.replace(".", "").replace(",", ".")
+        elif "," in pulito:
+            pulito = pulito.replace(",", ".")
+        return round(float(pulito), 2)
+    except (TypeError, ValueError):
+        return None
+
+
+def _chiave_univoca_entrate(df: pd.DataFrame, col_data: str, col_categoria: str, col_importo: str) -> pd.Series:
+    """Costruisce la chiave (Data, Categoria, Importo) usata per individuare i duplicati.
+    ASSUNZIONE: la Categoria viene confrontata senza tener conto di spazi ai bordi e
+    maiuscole/minuscole, per evitare mancate corrispondenze dovute a differenze banali
+    di formattazione."""
+    return list(zip(
+        df[col_data].dt.date,
+        df[col_categoria].astype(str).str.strip().str.casefold(),
+        df[col_importo].apply(_normalizza_importo_per_chiave),
+    ))
+
+
 def sync_entrate_totali(
         client: gspread.Client,
         anno_str: str,
@@ -79,6 +107,7 @@ def sync_entrate_totali(
         col_importo: str,
         col_mese: str,
         col_data: str,
+        col_categoria: str,
         col_note: str,
         col_timestamp: str,
         top_left_entry: str,
@@ -144,6 +173,25 @@ def sync_entrate_totali(
     maschera = ~righe_da_togliere
     df_esistente = df_esistente[maschera]
 
+    # ---- 2bis. SCARTA LE NUOVE RIGHE CHE DUPLICANO UNA RIGA MANUALE ----
+    #            chiave univoca = (Data, Categoria, Importo): se una nuova riga ha la
+    #            stessa chiave di una riga manuale già presente per lo stesso ANNO/MESE,
+    #            la riga manuale ha la precedenza e la nuova riga viene scartata.
+    chiavi_manuali_stesso_periodo = set(
+        _chiave_univoca_entrate(
+            df_esistente[stesso_mese_anno.loc[df_esistente.index] & inserita_a_mano.loc[df_esistente.index]],
+            col_data=col_data, col_categoria=col_categoria, col_importo=col_importo,
+        )
+    )
+
+    chiavi_nuove = _chiave_univoca_entrate(
+        df_entrate_nuove, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo
+    )
+    maschera_duplicato_manuale = pd.Series(chiavi_nuove, index=df_entrate_nuove.index).isin(chiavi_manuali_stesso_periodo)
+
+    righe_scartate_duplicate = int(maschera_duplicato_manuale.sum())
+    df_entrate_nuove = df_entrate_nuove[~maschera_duplicato_manuale]
+
     # ---- 3. UNISCI (le righe esistenti mantengono il loro vecchio TimeStamp) ----
     df_union = pd.concat([df_esistente, df_entrate_nuove], ignore_index=True)
     df_union = df_union.sort_values(by=[col_data, col_importo, col_note, col_timestamp])
@@ -164,6 +212,7 @@ def sync_entrate_totali(
             f"Righe esistenti prima dell'update: {righe_esistenti_totale}",
             f"Righe rimosse (stesso ANNO/MESE, sostituite): {righe_rimosse}",
             f"Righe manuali preservate (TimeStamp='manual'): {righe_manuali_preservate}",
+            f"Righe nuove scartate (duplicati di una riga manuale, stessa chiave Data/Categoria/Importo): {righe_scartate_duplicate}",
             f"Righe nuove aggiunte: {len(df_entrate_nuove)}",
             f"Righe totali finali: {righe_rimaste}"
         ]
