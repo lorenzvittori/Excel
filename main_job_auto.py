@@ -13,6 +13,7 @@ FLAG_SOVRASCRIVI_SHEET   = os.getenv("FLAG_SOVRASCRIVI_SHEET", default = "true")
 FLAG_SOVRASCRIVI_RAW_DBX = os.getenv("FLAG_SOVRASCRIVI_RAW_DBX", default = "true").lower()    == "true"
 FLAG_LOG_DUPLICATI       = os.getenv("FLAG_LOG_DUPLICATI", default = "true").lower()          == "true"
 FLAG_LOG_ALTRO           = os.getenv("FLAG_LOG_ALTRO", default = "true").lower()              == "true"
+FLAG_INVIA_MAIL          = os.getenv("FLAG_INVIA_MAIL", default = "true").lower()             == "true"
 
 
 FILE_BROKEN = Design.NOME_FILE_ROTTO
@@ -218,5 +219,8 @@ try:
 
 except:
     report = logger.get_report()
-    print("Invio mail")
-    logger.invia_report_mail(report, "lorenzvittori@gmail.com")
+    if FLAG_INVIA_MAIL:
+        print("Invio mail")
+        logger.invia_report_mail(report, "lorenzvittori@gmail.com")
+    else:
+        print("Invio mail disattivato (FLAG_INVIA_MAIL=false)")
