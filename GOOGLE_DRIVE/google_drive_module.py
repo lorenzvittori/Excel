@@ -330,11 +330,20 @@ def sync_spese_mensili(
         esistono_altre_righe_sul_foglio = bool(chiavi_esistenti - chiavi_nuove)
 
         if tutte_gia_presenti and esistono_altre_righe_sul_foglio:
+            chiavi_esistenti_per_riga = _chiave_univoca(
+                df_spese_esistenti, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo
+            )
+            chiavi_solo_sul_foglio = chiavi_esistenti - chiavi_nuove
+            righe_solo_sul_foglio = df_spese_esistenti[
+                pd.Series(chiavi_esistenti_per_riga, index=df_spese_esistenti.index).isin(chiavi_solo_sul_foglio)
+            ]
+
             logger.error_mex(
                 f"Tutte le {len(chiavi_nuove)} righe SPESE da caricare hanno chiave "
                 f"(Data, Categoria, Importo) già presente in '{NOME_SHEET_MESE}', che contiene "
                 "anche altre righe non coperte da questo carico: il file sembra già stato "
-                "caricato -> flusso bloccato"
+                "caricato -> flusso bloccato. Righe presenti sul foglio ma non nel file caricato:",
+                tabella=righe_solo_sul_foglio
             )
             raise CaricamentoGiaEseguito(
                 f"SPESE '{NOME_SHEET_MESE}': tutte le righe da caricare sono un sottoinsieme di quelle già presenti"
