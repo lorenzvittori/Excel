@@ -88,7 +88,7 @@ def _normalizza_importo_per_chiave(valore) -> float | None:
         return None
 
 
-def _chiave_univoca_entrate(df: pd.DataFrame, col_data: str, col_categoria: str, col_importo: str) -> pd.Series:
+def _chiave_univoca_entrate(df: pd.DataFrame, col_data: str, col_categoria: str, col_importo: str) -> list[tuple]:
     """Costruisce la chiave (Data, Categoria, Importo) usata per individuare i duplicati.
     ASSUNZIONE: la Categoria viene confrontata senza tener conto di spazi ai bordi e
     maiuscole/minuscole, per evitare mancate corrispondenze dovute a differenze banali
