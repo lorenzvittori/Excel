@@ -125,10 +125,8 @@ def aggiungi_righe_spese(
     
 
     df_spese = pd.concat([df_spese, nuove_righe], ignore_index=True)
-    
-    dettaglio = nuove_righe.to_string(index=False).split("\n")
-   
-    logger.info_mex("Righe aggiunte:", dettaglio=dettaglio)
+
+    logger.info_mex("Righe aggiunte:", tabella=nuove_righe)
                         
                         
     return df_spese
@@ -234,10 +232,9 @@ def stampa_duplicati(df: pd.DataFrame, nome_tabella: str):
     duplicati = df[df.duplicated(keep=False)]
 
     if not duplicati.empty:
-        dettaglio = duplicati.to_string(index=False).split("\n")
         logger.warning_mex(
             corpo=f"Duplicati trovati nella tabella {nome_tabella.upper()}",
-            dettaglio=dettaglio
+            tabella=duplicati
         )
     else:
         logger.info_mex(f"{nome_tabella.upper()} senza duplicati")
@@ -248,10 +245,9 @@ def stampa_spese_altro(df_spese: pd.DataFrame, design: config.Design):
     ]
 
     if not spese_altro.empty:
-        dettaglio = spese_altro.sort_values(by=design.spese.data.prc).to_string(index=False).split("\n")
         logger.info_mex(
             corpo="Spese con categoria \"Altro\"",
-            dettaglio=dettaglio
+            tabella=spese_altro.sort_values(by=design.spese.data.prc)
         )
     else:
         logger.info_mex("Nessuna spesa con categoria \"Altro\".")

@@ -2,6 +2,8 @@
 import sys
 from pathlib import Path
 from datetime import datetime
+import pandas as pd
+from tabulate import tabulate
 
 sys.stdout.reconfigure(encoding='utf-8')        #type: ignore
 
@@ -131,28 +133,48 @@ def end_phase() -> None:
 def riga_libera(testo: str = "") -> None:
     _emit(str(testo))
 
-def ok_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
-    tipo_messaggio("OK", corpo=corpo, dettaglio=dettaglio)
+def ok_mex(corpo: str, tabella: pd.DataFrame | None = None, dettaglio: str | list[str] | None = None) -> None:
+    tipo_messaggio("OK", corpo=corpo, tabella=tabella, dettaglio=dettaglio)
 
 
-def info_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
-    tipo_messaggio("INFO", corpo=corpo, dettaglio=dettaglio)
+def info_mex(corpo: str, tabella: pd.DataFrame | None = None, dettaglio: str | list[str] | None = None) -> None:
+    tipo_messaggio("INFO", corpo=corpo, tabella=tabella, dettaglio=dettaglio)
 
 
-def error_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
-    tipo_messaggio("ERROR", corpo=corpo, dettaglio=dettaglio)
+def error_mex(corpo: str, tabella: pd.DataFrame | None = None, dettaglio: str | list[str] | None = None) -> None:
+    tipo_messaggio("ERROR", corpo=corpo, tabella=tabella, dettaglio=dettaglio)
 
 
-def warning_mex(corpo: str, dettaglio: str | list[str] | None = None) -> None:
-    tipo_messaggio("WARNING", corpo=corpo, dettaglio=dettaglio)
+def warning_mex(corpo: str, tabella: pd.DataFrame | None = None, dettaglio: str | list[str] | None = None) -> None:
+    tipo_messaggio("WARNING", corpo=corpo, tabella=tabella, dettaglio=dettaglio)
 
 
-def tipo_messaggio(tipo: str, corpo: str, dettaglio: str | list[str] | None = None) -> None:
+def _righe_tabella_ascii(tabella: pd.DataFrame) -> list[str]:
+    """Renderizza un DataFrame come tabella ASCII (bordi in caratteri +/-/|),
+    leggibile sia a terminale sia dentro la mail di riepilogo in testo semplice."""
+    testo = tabulate(
+        tabella.fillna(""),
+        headers="keys",
+        tablefmt="grid",
+        showindex=False,
+    )
+    return testo.split("\n")
+
+
+def tipo_messaggio(
+        tipo: str,
+        corpo: str,
+        tabella: pd.DataFrame | None = None,
+        dettaglio: str | list[str] | None = None) -> None:
     global _flag_riga_vuota
     _flag_riga_vuota = False
     tipo = tipo.strip()
     corpo = corpo.strip()
     _emit(f"{get_tab(_profondita)}{BULLET_MEX}[{tipo}]: {corpo}")
+
+    if tabella is not None and not tabella.empty:
+        for riga in _righe_tabella_ascii(tabella):
+            _emit(f"{get_tab(_profondita + 2)}{riga}")
 
     if dettaglio is None:
         return
