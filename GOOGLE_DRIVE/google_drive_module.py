@@ -88,7 +88,7 @@ def _normalizza_importo_per_chiave(valore) -> float | None:
         return None
 
 
-def _chiave_univoca_entrate(df: pd.DataFrame, col_data: str, col_categoria: str, col_importo: str) -> list[tuple]:
+def _chiave_univoca(df: pd.DataFrame, col_data: str, col_categoria: str, col_importo: str) -> list[tuple]:
     """Costruisce la chiave (Data, Categoria, Importo) usata per individuare i duplicati.
     ASSUNZIONE: la Categoria viene confrontata senza tener conto di spazi ai bordi e
     maiuscole/minuscole, per evitare mancate corrispondenze dovute a differenze banali
@@ -178,13 +178,13 @@ def sync_entrate_totali(
     #            stessa chiave di una riga manuale già presente per lo stesso ANNO/MESE,
     #            la riga manuale ha la precedenza e la nuova riga viene scartata.
     chiavi_manuali_stesso_periodo = set(
-        _chiave_univoca_entrate(
+        _chiave_univoca(
             df_esistente[stesso_mese_anno.loc[df_esistente.index] & inserita_a_mano.loc[df_esistente.index]],
             col_data=col_data, col_categoria=col_categoria, col_importo=col_importo,
         )
     )
 
-    chiavi_nuove = _chiave_univoca_entrate(
+    chiavi_nuove = _chiave_univoca(
         df_entrate_nuove, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo
     )
     maschera_duplicato_manuale = pd.Series(chiavi_nuove, index=df_entrate_nuove.index).isin(chiavi_manuali_stesso_periodo)
@@ -234,6 +234,9 @@ def sync_spese_mensili(
         num_col_sheet_spese: int,
         cell_spese_first_entry: str,
         cell_spese_timestamp: str,
+        col_data: str,
+        col_categoria: str,
+        col_importo: str,
         flag_sovrascrivi_celle: bool = False):
 
     # 1. GOOGLE SHEET
@@ -275,8 +278,52 @@ def sync_spese_mensili(
     if count_colums > num_col_sheet_spese:
         logger.error_mex(f"Stai scrivendo più di {num_col_sheet_spese} colonne")
         raise ValueError
-    
-    
+
+    # 2.4 CONTROLLO DUPLICATI: blocca l'upload se una spesa che sto per scrivere ha la
+    #     stessa chiave (Data, Categoria, Importo) di una spesa già presente sul foglio
+    #     (es. stesso file additional_rows.csv processato due volte)
+    valori_esistenti = ws.get(f"{cell_spese_first_entry}:G550")
+
+    if valori_esistenti:
+        header_esistente = valori_esistenti[0]
+        righe_esistenti = [
+            (riga + [""] * (len(header_esistente) - len(riga)))[:len(header_esistente)]
+            for riga in valori_esistenti[1:]
+        ]
+        df_spese_esistenti = pd.DataFrame(righe_esistenti, columns=header_esistente)
+        df_spese_esistenti = df_spese_esistenti[
+            df_spese_esistenti[col_data].astype(str).str.strip() != ""
+        ]
+    else:
+        df_spese_esistenti = pd.DataFrame(columns=df_spese_prc.columns.tolist())
+
+    if not df_spese_esistenti.empty:
+        df_spese_esistenti = df_spese_esistenti.copy()
+        df_spese_esistenti[col_data] = pd.to_datetime(df_spese_esistenti[col_data], errors="coerce", dayfirst=True)
+
+        df_spese_nuove_check = df_spese_prc.copy()
+        df_spese_nuove_check[col_data] = pd.to_datetime(df_spese_nuove_check[col_data], errors="coerce", dayfirst=True)
+
+        chiavi_esistenti = set(
+            _chiave_univoca(df_spese_esistenti, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo)
+        )
+        chiavi_nuove = _chiave_univoca(
+            df_spese_nuove_check, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo
+        )
+        maschera_duplicati = pd.Series(chiavi_nuove, index=df_spese_nuove_check.index).isin(chiavi_esistenti)
+
+        if maschera_duplicati.any():
+            righe_duplicate = df_spese_prc[maschera_duplicati]
+            dettaglio = righe_duplicate.to_string(index=False).split("\n")
+            logger.error_mex(
+                corpo=(
+                    f"Trovate {int(maschera_duplicati.sum())} spese con chiave "
+                    f"(Data, Categoria, Importo) già presente in '{NOME_SHEET_MESE}': upload BLOCCATO"
+                ),
+                dettaglio=dettaglio
+            )
+            raise SystemExit
+
     # 3. WRITE
     # 3.1 ELIMINO TUTTI I VALORI DELLE CELLE A2:F550
     ws.batch_clear(["B2:G550"])
