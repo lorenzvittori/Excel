@@ -101,16 +101,19 @@ def aggiungi_righe_spese(
         return (daANNO, daMESE) <= (ANNO, MESE) <= (aANNO, aMESE)
 
     # ---- FILTRA LE RIGHE IN BASE ALL'INTERVALLO daANNO_MESE / aANNO_MESE ----
-    data_oggi = int(datetime.now(ZoneInfo("Europe/Rome")).strftime("%d"))
-    
+    data_oggi = datetime.now(ZoneInfo("Europe/Rome")).date()
+
     maschera = df_nuove_righe_raw.apply(
         lambda row: between(
             this_anno_str = anno_str,
             this_mese_str = mese_str,
             daANNO_MESE   = str(row["daANNO_MESE"]).strip() if pd.notnull(row["daANNO_MESE"]) else "",
             aANNO_MESE    = str(row["aANNO_MESE"]).strip()  if pd.notnull(row["aANNO_MESE"])  else ""
-        ) 
-        and (data_oggi >= int(row["GiornoData"])),          #Aggiunge solo le righe la cui data è passata al tempo di caricamento
+        )
+        # Aggiunge solo le righe con data (Giorno/Mese/Anno, non il solo giorno) gia' passata
+        # rispetto a oggi: confronto su date complete, non solo sul numero del giorno.
+        and pd.notnull(row[design.spese.data.prc])
+        and (data_oggi > row[design.spese.data.prc].date()),
         axis=1
     )
 
