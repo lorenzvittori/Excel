@@ -176,17 +176,27 @@ def reset_fase(valore_iniziale: int = 0) -> None:
 # FUNZIONI MAIL
 # ============================================================
 
+import os
 import smtplib
 from email.message import EmailMessage
 
 def invia_report_mail(report_text: str, destinatario: str):
+    mittente = "lorenzvittori@gmail.com"
+
+    password = os.environ.get("GMAIL_APP_PASSWORD")
+    if not password:
+        error_mex(
+            "Variabile d'ambiente GMAIL_APP_PASSWORD mancante: impossibile inviare la mail"
+        )
+        raise ValueError("GMAIL_APP_PASSWORD non impostata")
+
     msg = EmailMessage()
     msg["Subject"] = "Report flusso Spese-Entrate"
-    msg["From"] = "lorenzvittori@gmail.com"
+    msg["From"] = mittente
     msg["To"] = destinatario
     msg.set_content(report_text)
 
     # Gmail richiede SMTP SSL su porta 465
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login("lorenzvittori@gmail.com", "cdgn xstu dbgs qzjs")
+        smtp.login(mittente, password)
         smtp.send_message(msg)
