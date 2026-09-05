@@ -3,35 +3,10 @@ name: Flusso AUTOMATICO Spese-Entrate
 on:
   workflow_dispatch:
     inputs:
-      flag_scrittura_sul_drive:
-        description: "Scrivo sul worksheet"
+      invia_mail:
+        description: "Invia mail di riepilogo/errore al termine del flusso"
         required: false
         default: true
-        type: boolean
-      flag_sovrascrivi_sheet:
-        description: "Se disattivato il flusso si blocca se lo sheet non è vuoto"
-        required: false
-        default: true
-        type: boolean
-      flag_sovrascrivi_raw_dbx:
-        description: "Se disattivato il flusso si blocca all'incontro di un duplicato 'raw'"
-        required: false
-        default: true
-        type: boolean
-      flag_sovrascrivi_prc_dbx:
-        description: "Se disattivato il flusso si blocca all'incontro di un duplicato 'processed'"
-        required: false
-        default: true
-        type: boolean
-      log_duplicati:
-        description: "Stampa i record duplici"
-        required: false
-        default: false
-        type: boolean
-      log_altro:
-        description: "Stampa i record che hanno Categoria = 'Altro'"
-        required: false
-        default: false
         type: boolean
 
 jobs:
@@ -40,12 +15,12 @@ jobs:
 
     env:
       FLAG_AUTOMATIC: true
-      FLAG_SCRITTURA_SUL_DRIVE: ${{ inputs.flag_scrittura_sul_drive }}
-      FLAG_SOVRASCRIVI_SHEET:   ${{ inputs.flag_sovrascrivi_sheet }}
-      FLAG_SOVRASCRIVI_RAW_DBX: ${{ inputs.flag_sovrascrivi_raw_dbx }}
-      FLAG_SOVRASCRIVI_PRC_DBX: ${{ inputs.flag_sovrascrivi_prc_dbx }}
-      FLAG_LOG_DUPLICATI:       ${{ inputs.log_duplicati }}
-      FLAG_LOG_ALTRO:           ${{ inputs.log_altro }}
+      FLAG_SCRITTURA_SUL_DRIVE: true
+      FLAG_SOVRASCRIVI_SHEET:   true
+      FLAG_SOVRASCRIVI_RAW_DBX: true
+      FLAG_LOG_DUPLICATI:       true
+      FLAG_LOG_ALTRO:           true
+      FLAG_INVIA_MAIL:          ${{ inputs.invia_mail }}
       DROPBOX_APP_KEY:          ${{ secrets.DROPBOX_APP_KEY }}
       DROPBOX_APP_SECRET:       ${{ secrets.DROPBOX_APP_SECRET }}
       DROPBOX_REFRESH_TOKEN:    ${{ secrets.DROPBOX_REFRESH_TOKEN }}
