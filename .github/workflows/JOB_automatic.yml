@@ -18,8 +18,8 @@ jobs:
       FLAG_SCRITTURA_SUL_DRIVE: true
       FLAG_SOVRASCRIVI_SHEET:   true
       FLAG_SOVRASCRIVI_RAW_DBX: true
-      FLAG_LOG_DUPLICATI:       false
-      FLAG_LOG_ALTRO:           false
+      FLAG_LOG_DUPLICATI:       true
+      FLAG_LOG_ALTRO:           true
       FLAG_INVIA_MAIL:          ${{ inputs.invia_mail }}
       DROPBOX_APP_KEY:          ${{ secrets.DROPBOX_APP_KEY }}
       DROPBOX_APP_SECRET:       ${{ secrets.DROPBOX_APP_SECRET }}
