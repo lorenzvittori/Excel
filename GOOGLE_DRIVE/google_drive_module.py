@@ -163,30 +163,6 @@ def sync_entrate_totali(
 
     righe_esistenti_totale = len(df_esistente.index)
 
-    # ---- 1bis. CONTROLLO CARICAMENTO GIA' EFFETTUATO ----
-    #            se OGNI riga ENTRATE che sto per caricare ha una chiave (Data, Categoria,
-    #            Importo) già presente nel foglio (indipendentemente da ANNO/MESE), è il
-    #            segnale che questo file è già stato caricato in precedenza: blocco tutto
-    #            il flusso invece di procedere (anche solo parzialmente).
-    if not df_entrate_nuove.empty:
-        chiavi_esistenti_totali = set(
-            _chiave_univoca(df_esistente, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo)
-        )
-        chiavi_nuove_totali = _chiave_univoca(
-            df_entrate_nuove, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo
-        )
-        tutte_gia_presenti = all(chiave in chiavi_esistenti_totali for chiave in chiavi_nuove_totali)
-
-        if tutte_gia_presenti:
-            logger.error_mex(
-                f"Tutte le {len(chiavi_nuove_totali)} righe ENTRATE da caricare hanno chiave "
-                f"(Data, Categoria, Importo) già presente in '{NOME_FOGLIO_TOTALE}': "
-                "il file sembra già stato caricato -> flusso bloccato"
-            )
-            raise CaricamentoGiaEseguito(
-                f"ENTRATE ANNO {anno_str} MESE {mese_str}: tutte le righe risultano già presenti in '{NOME_FOGLIO_TOTALE}'"
-            )
-
     # ---- 2. RIMUOVI LE RIGHE DELLO STESSO ANNO/MESE (evita duplicati su rilancio) ----
     #        il confronto si basa sul mese/anno ricavato dalla colonna Data
     #        (non da col_mese, che può essere assente o errata per righe manuali),
@@ -312,10 +288,15 @@ def sync_spese_mensili(
         logger.error_mex(f"Stai scrivendo più di {num_col_sheet_spese} colonne")
         raise ValueError
 
-    # 2.4 CONTROLLO CARICAMENTO GIA' EFFETTUATO: blocca l'intero flusso se OGNI spesa che
-    #     sto per scrivere ha la stessa chiave (Data, Categoria, Importo) di una spesa già
-    #     presente sul foglio (segnale che questo file è già stato caricato in precedenza,
-    #     es. stesso file additional_rows.csv/estratto conto processato due volte)
+    # 2.4 CONTROLLO CARICAMENTO GIA' EFFETTUATO: blocca l'intero flusso solo se VALGONO
+    #     ENTRAMBE le condizioni:
+    #       1. tutte le spese che sto per scrivere hanno una chiave (Data, Categoria,
+    #          Importo) già presente sul foglio (il nuovo carico è un sottoinsieme)
+    #       2. sul foglio ci sono ANCHE altre righe non coperte da quelle nuove (altrimenti
+    #          il nuovo carico coinciderebbe esattamente col foglio: un rilancio identico
+    #          non è un errore, è solo idempotente, e NON deve bloccare)
+    #     Segnala il caso in cui il file sembra già stato caricato in una run precedente
+    #     E il foglio contiene dati aggiuntivi che l'overwrite cancellerebbe.
     valori_esistenti = ws.get(f"{cell_spese_first_entry}:G550")
 
     if valori_esistenti:
@@ -341,19 +322,22 @@ def sync_spese_mensili(
         chiavi_esistenti = set(
             _chiave_univoca(df_spese_esistenti, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo)
         )
-        chiavi_nuove = _chiave_univoca(
+        chiavi_nuove = set(_chiave_univoca(
             df_spese_nuove_check, col_data=col_data, col_categoria=col_categoria, col_importo=col_importo
-        )
-        maschera_duplicati = pd.Series(chiavi_nuove, index=df_spese_nuove_check.index).isin(chiavi_esistenti)
+        ))
 
-        if maschera_duplicati.all():
+        tutte_gia_presenti = chiavi_nuove.issubset(chiavi_esistenti)
+        esistono_altre_righe_sul_foglio = bool(chiavi_esistenti - chiavi_nuove)
+
+        if tutte_gia_presenti and esistono_altre_righe_sul_foglio:
             logger.error_mex(
                 f"Tutte le {len(chiavi_nuove)} righe SPESE da caricare hanno chiave "
-                f"(Data, Categoria, Importo) già presente in '{NOME_SHEET_MESE}': "
-                "il file sembra già stato caricato -> flusso bloccato"
+                f"(Data, Categoria, Importo) già presente in '{NOME_SHEET_MESE}', che contiene "
+                "anche altre righe non coperte da questo carico: il file sembra già stato "
+                "caricato -> flusso bloccato"
             )
             raise CaricamentoGiaEseguito(
-                f"SPESE '{NOME_SHEET_MESE}': tutte le righe risultano già presenti sul foglio"
+                f"SPESE '{NOME_SHEET_MESE}': tutte le righe da caricare sono un sottoinsieme di quelle già presenti"
             )
 
     # 3. WRITE
