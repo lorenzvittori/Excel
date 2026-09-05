@@ -149,24 +149,32 @@ def upload_dataframe_to_dropbox(
 
 def sposta_file_come_broken(
         dbx: dropbox.Dropbox,
-        dropbox_folder: str,
+        dropbox_folder_origine: str,
         file_name: str,
+        dropbox_folder_broken: str,
         target_broken_name: str = "BROKEN",
         estensione_files: str = ".xlsx") -> str:
     """
-    Rinomina/sposta un file già presente in dropbox_folder cosi' che risulti 'BROKEN'
-    (con suffisso progressivo se il nome è già occupato da un run precedente), in modo
-    che non venga più raccolto come input valido dal resto della pipeline.
+    Sposta un file già presente in dropbox_folder_origine dentro dropbox_folder_broken,
+    rinominandolo cosi' che risulti 'BROKEN' (con suffisso progressivo se il nome è già
+    occupato da un run precedente), in modo che non venga più raccolto come input valido
+    dal resto della pipeline.
+
+    dropbox_folder_broken è la stessa cartella "da smistare" usata da smista_file_excel
+    (dropbox_folder_origine di quella funzione): è li' che vivono già i file BROKEN
+    prodotti dallo smistamento iniziale, ed è li' che smista_file_excel ripulisce
+    automaticamente i BROKEN residui a ogni run. Se il file venisse invece rinominato
+    "in place" dentro la cartella RAW, resterebbe per sempre in mezzo ai file validi
+    (nessuno lo ripulisce da li').
 
     Usata quando l'elaborazione di un file rileva che è già stato caricato in una run
     precedente (es. tutte le righe spese/entrate hanno una chiave Data/Categoria/Importo
     già presente sul foglio di destinazione): il flusso per quel file viene interrotto e
-    il RAW corrispondente marcato come BROKEN, cosi' non resta nella cartella con un nome
-    che verrebbe rielaborato al prossimo run.
+    il RAW corrispondente marcato come BROKEN.
 
-    Restituisce il path Dropbox del file rinominato.
+    Restituisce il path Dropbox del file spostato.
     """
-    dropbox_path = f"{dropbox_folder}/{file_name}"
+    dropbox_path = f"{dropbox_folder_origine}/{file_name}"
 
     contatore = 0
     while True:
@@ -174,7 +182,7 @@ def sposta_file_come_broken(
             f"{target_broken_name}{estensione_files}" if contatore == 0
             else f"{target_broken_name}_{contatore}{estensione_files}"
         )
-        nuovo_path = f"{dropbox_folder}/{nuovo_nome}"
+        nuovo_path = f"{dropbox_folder_broken}/{nuovo_nome}"
         try:
             dbx.files_get_metadata(nuovo_path)
             contatore += 1

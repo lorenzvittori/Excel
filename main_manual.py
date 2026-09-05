@@ -181,8 +181,9 @@ for idx, item in enumerate(LIST_ANNO_MESE, start=1):
     except gd_module.CaricamentoGiaEseguito as e:
         db_module.sposta_file_come_broken(
             dbx=dbx,
-            dropbox_folder=DROPBOX_RAW_FOLDER,
+            dropbox_folder_origine=DROPBOX_RAW_FOLDER,
             file_name=RAW_NAME_FILE,
+            dropbox_folder_broken=DROPBOX_TO_SORT_FOLDER,
             target_broken_name=FILE_BROKEN,
         )
         logger.error_mex(f"Flusso bloccato, file spostato come BROKEN: {e}")
