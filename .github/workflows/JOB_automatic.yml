@@ -25,6 +25,7 @@ jobs:
       DROPBOX_APP_SECRET:       ${{ secrets.DROPBOX_APP_SECRET }}
       DROPBOX_REFRESH_TOKEN:    ${{ secrets.DROPBOX_REFRESH_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT:   ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      GMAIL_APP_PASSWORD:       ${{ secrets.GMAIL_APP_PASSWORD }}
 
     steps:
       - name: Checkout repo
