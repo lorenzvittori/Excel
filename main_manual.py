@@ -8,7 +8,7 @@ import configuration.configuration as config
 import configuration.logger as logger
 
 ANNO_MESE_INPUT = [
-    "2026_07",
+    "2026_08",
     ]
 
 FLAG_PRIORITIZZA_PRC     = False
